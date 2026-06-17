@@ -52,6 +52,80 @@ app.get("/api/flavors", (req, res) => {
   res.json(flavors);
 });
 
+app.post("/api/flavors/supply", (req, res) => {
+  const { brand, name, weight, quantity, tags, minStock } = req.body;
+
+  if (!brand || !name || !weight || !quantity) {
+    return res.status(400).json({
+      message: "Бренд, вкус, фасовка и количество обязательны",
+    });
+  }
+
+  const normalizedBrand = brand.trim();
+  const normalizedName = name.trim();
+  const normalizedWeight = weight.trim();
+
+  const parsedQuantity = Number(quantity);
+  const parsedMinStock = Number(minStock) || 1;
+
+  if (parsedQuantity <= 0) {
+    return res.status(400).json({
+      message: "Количество должно быть больше нуля",
+    });
+  }
+
+  const incomingTags = Array.isArray(tags)
+    ? tags.map((tag) => tag.trim()).filter(Boolean)
+    : [];
+
+  let flavor = flavors.find(
+    (item) =>
+      item.brand.toLowerCase() === normalizedBrand.toLowerCase() &&
+      item.name.toLowerCase() === normalizedName.toLowerCase()
+  );
+
+  if (!flavor) {
+    const newFlavor = {
+      id: Date.now(),
+      brand: normalizedBrand,
+      name: normalizedName,
+      packs: [
+        {
+          weight: normalizedWeight,
+          quantity: parsedQuantity,
+        },
+      ],
+      tags: incomingTags,
+      minStock: parsedMinStock,
+      archived: false,
+    };
+
+    flavors.push(newFlavor);
+
+    return res.status(201).json(newFlavor);
+  }
+
+  const existingPack = flavor.packs.find(
+    (pack) => pack.weight.toLowerCase() === normalizedWeight.toLowerCase()
+  );
+
+  if (existingPack) {
+    existingPack.quantity += parsedQuantity;
+  } else {
+    flavor.packs.push({
+      weight: normalizedWeight,
+      quantity: parsedQuantity,
+    });
+  }
+
+  const mergedTags = new Set([...flavor.tags, ...incomingTags]);
+  flavor.tags = Array.from(mergedTags);
+  flavor.minStock = parsedMinStock;
+  flavor.archived = false;
+
+  res.json(flavor);
+});
+
 app.patch("/api/flavors/:id/decrease", (req, res) => {
   const flavorId = Number(req.params.id);
 
