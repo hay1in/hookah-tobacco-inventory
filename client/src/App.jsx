@@ -323,6 +323,26 @@ function App() {
       });
   };
 
+  const startSupplyForFlavor = (flavor) => {
+    const firstPack = (flavor.packs || [])[0];
+
+    setSupplyForm({
+      brand: flavor.brand || "",
+      name: flavor.name || "",
+      weight: firstPack?.weight || "",
+      quantity: 1,
+      tags: (flavor.tags || []).join(", "),
+      minStock: flavor.minStock || 1,
+    });
+
+    setIsSupplyFormOpen(true);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   const filteredFlavors = flavors.filter((flavor) => {
     const normalizedSearch = searchText.trim().toLowerCase();
 
@@ -401,6 +421,16 @@ function App() {
       };
     });
   };
+
+  const purchaseFlavors = flavors.filter((flavor) => {
+    if (flavor.archived) {
+      return false;
+    }
+
+    const total = getTotalQuantity(flavor.packs || []);
+
+    return total <= Number(flavor.minStock || 1);
+  });
 
   return (
     <div className="app">
@@ -621,6 +651,48 @@ function App() {
                 Сохранить изменения
               </button>
             </form>
+          </section>
+        )}
+
+        {purchaseFlavors.length > 0 && (
+          <section className="purchase-panel">
+            <div className="purchase-panel-top">
+              <div>
+                <p className="eyebrow dark">Закупка</p>
+                <h2>Требуется к закупу</h2>
+              </div>
+
+              <span className="purchase-count">
+                {purchaseFlavors.length} поз.
+              </span>
+            </div>
+
+            <div className="purchase-list">
+              {purchaseFlavors.map((flavor) => {
+                const total = getTotalQuantity(flavor.packs || []);
+                const status = getStatus(flavor);
+
+                return (
+                  <div className="purchase-item" key={flavor.id}>
+                    <div>
+                      <p className="brand">{flavor.brand}</p>
+                      <h3>{flavor.name}</h3>
+                      <p className="purchase-meta">
+                        Остаток: {total} пач. · Минимум: {flavor.minStock}
+                      </p>
+                    </div>
+
+                    <div className="purchase-actions">
+                      <span className={status.className}>{status.text}</span>
+
+                      <button onClick={() => startSupplyForFlavor(flavor)}>
+                        Добавить поставку
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </section>
         )}
 
