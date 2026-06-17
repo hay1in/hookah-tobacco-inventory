@@ -21,6 +21,15 @@ function App() {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  const [editingFlavorId, setEditingFlavorId] = useState(null);
+  const [editForm, setEditForm] = useState({
+    brand: "",
+    name: "",
+    packsText: "",
+    tags: "",
+    minStock: 1,
+  });
+
   const refreshFlavors = () => {
     fetch(`${API_URL}/api/flavors`)
       .then((response) => {
@@ -204,6 +213,113 @@ function App() {
       .catch((error) => {
         console.error(error);
         setErrorText("Не удалось добавить поставку");
+      });
+  };
+
+  const openEditForm = (flavor) => {
+    setEditingFlavorId(flavor.id);
+
+    setEditForm({
+      brand: flavor.brand || "",
+      name: flavor.name || "",
+      packsText: (flavor.packs || [])
+        .map((pack) => `${pack.weight}: ${pack.quantity}`)
+        .join("\n"),
+      tags: (flavor.tags || []).join(", "),
+      minStock: flavor.minStock || 1,
+    });
+  };
+
+  const closeEditForm = () => {
+    setEditingFlavorId(null);
+
+    setEditForm({
+      brand: "",
+      name: "",
+      packsText: "",
+      tags: "",
+      minStock: 1,
+    });
+  };
+
+  const handleEditChange = (event) => {
+    const { name, value } = event.target;
+
+    setEditForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
+
+  const parsePacksText = (packsText) => {
+    return packsText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const separatorIndex = line.lastIndexOf(":");
+
+        if (separatorIndex === -1) {
+          return null;
+        }
+
+        const weight = line.slice(0, separatorIndex).trim();
+        const quantity = Number(line.slice(separatorIndex + 1).trim());
+
+        if (!weight || Number.isNaN(quantity) || quantity < 0) {
+          return null;
+        }
+
+        return {
+          weight,
+          quantity,
+        };
+      })
+      .filter(Boolean);
+  };
+
+  const submitEdit = (event) => {
+    event.preventDefault();
+
+    const packs = parsePacksText(editForm.packsText);
+
+    if (packs.length === 0) {
+      setErrorText("Добавьте хотя бы одну фасовку в формате 100 г: 2");
+      return;
+    }
+
+    const payload = {
+      brand: editForm.brand,
+      name: editForm.name,
+      packs,
+      tags: editForm.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      minStock: Number(editForm.minStock),
+    };
+
+    fetch(`${API_URL}/api/flavors/${editingFlavorId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Не удалось сохранить изменения");
+        }
+
+        return response.json();
+      })
+      .then(() => {
+        closeEditForm();
+        refreshFlavors();
+      })
+      .catch((error) => {
+        console.error(error);
+        setErrorText("Не удалось сохранить изменения");
       });
   };
 
@@ -431,6 +547,83 @@ function App() {
           </section>
         )}
 
+        {editingFlavorId && (
+          <section className="supply-panel edit-panel">
+            <div className="supply-panel-top">
+              <div>
+                <p className="eyebrow dark">Редактирование</p>
+                <h2>Редактировать вкус</h2>
+              </div>
+
+              <button className="close-button" onClick={closeEditForm}>
+                Закрыть
+              </button>
+            </div>
+
+            <form className="supply-form" onSubmit={submitEdit}>
+              <label>
+                Бренд
+                <input
+                  name="brand"
+                  value={editForm.brand}
+                  onChange={handleEditChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Вкус
+                <input
+                  name="name"
+                  value={editForm.name}
+                  onChange={handleEditChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Минимальный остаток
+                <input
+                  type="number"
+                  name="minStock"
+                  min="0"
+                  value={editForm.minStock}
+                  onChange={handleEditChange}
+                />
+              </label>
+
+              <label className="wide-field">
+                Фасовки и количество
+                <textarea
+                  name="packsText"
+                  value={editForm.packsText}
+                  onChange={handleEditChange}
+                  rows="4"
+                  placeholder={"100 г: 2\n25 г: 1"}
+                  required
+                />
+                <span className="form-hint">
+                  Каждая фасовка с новой строки в формате: 100 г: 2
+                </span>
+              </label>
+
+              <label>
+                Теги
+                <input
+                  name="tags"
+                  value={editForm.tags}
+                  onChange={handleEditChange}
+                  placeholder="десертный, сливочный"
+                />
+              </label>
+
+              <button className="submit-button" type="submit">
+                Сохранить изменения
+              </button>
+            </form>
+          </section>
+        )}
+
         <section className="toolbar">
           <input
             type="text"
@@ -500,7 +693,9 @@ function App() {
                     <button onClick={() => clearFlavor(flavor.id)}>
                       Выбить
                     </button>
-                    <button>Редактировать</button>
+                    <button onClick={() => openEditForm(flavor)}>
+                      Редактировать
+                    </button>
                     <button
                       className="danger"
                       onClick={() => deleteFlavor(flavor.id)}

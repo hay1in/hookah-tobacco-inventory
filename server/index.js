@@ -169,6 +169,51 @@ app.patch("/api/flavors/:id/clear", (req, res) => {
   res.json(flavor);
 });
 
+
+app.put("/api/flavors/:id", (req, res) => {
+  const flavorId = Number(req.params.id);
+
+  const flavor = flavors.find((item) => item.id === flavorId);
+
+  if (!flavor) {
+    return res.status(404).json({
+      message: "Вкус не найден",
+    });
+  }
+
+  const { brand, name, packs, tags, minStock } = req.body;
+
+  if (!brand || !name || !Array.isArray(packs) || packs.length === 0) {
+    return res.status(400).json({
+      message: "Бренд, вкус и хотя бы одна фасовка обязательны",
+    });
+  }
+
+  const normalizedPacks = packs
+    .map((pack) => ({
+      weight: String(pack.weight || "").trim(),
+      quantity: Number(pack.quantity),
+    }))
+    .filter((pack) => pack.weight && pack.quantity >= 0);
+
+  if (normalizedPacks.length === 0) {
+    return res.status(400).json({
+      message: "Добавьте хотя бы одну корректную фасовку",
+    });
+  }
+
+  flavor.brand = String(brand).trim();
+  flavor.name = String(name).trim();
+  flavor.packs = normalizedPacks;
+  flavor.tags = Array.isArray(tags)
+    ? tags.map((tag) => String(tag).trim()).filter(Boolean)
+    : [];
+  flavor.minStock = Number(minStock) || 1;
+  flavor.archived = false;
+
+  res.json(flavor);
+});
+
 app.delete("/api/flavors/:id", (req, res) => {
   const flavorId = Number(req.params.id);
 

@@ -281,3 +281,25 @@ h1 {
   font-weight: 800;
   cursor: pointer;
 }
+
+.supply-form textarea {
+  width: 100%;
+  border: 1px solid #dfd2c5;
+  border-radius: 16px;
+  padding: 13px 14px;
+  background: #fffaf5;
+  color: #211b18;
+  outline: none;
+  resize: vertical;
+  min-height: 110px;
+}
+
+.form-hint {
+  color: #9b6b39;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.edit-panel {
+  border-color: #d8a45f;
+}
