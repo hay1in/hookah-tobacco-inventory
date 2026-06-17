@@ -61,9 +61,9 @@ app.post("/api/flavors/supply", (req, res) => {
     });
   }
 
-  const normalizedBrand = brand.trim();
-  const normalizedName = name.trim();
-  const normalizedWeight = weight.trim();
+  const normalizedBrand = String(brand).trim();
+  const normalizedName = String(name).trim();
+  const normalizedWeight = String(weight).trim();
 
   const parsedQuantity = Number(quantity);
   const parsedMinStock = Number(minStock) || 1;
@@ -75,7 +75,7 @@ app.post("/api/flavors/supply", (req, res) => {
   }
 
   const incomingTags = Array.isArray(tags)
-    ? tags.map((tag) => tag.trim()).filter(Boolean)
+    ? tags.map((tag) => String(tag).trim()).filter(Boolean)
     : [];
 
   let flavor = flavors.find(
@@ -118,7 +118,7 @@ app.post("/api/flavors/supply", (req, res) => {
     });
   }
 
-  const mergedTags = new Set([...flavor.tags, ...incomingTags]);
+  const mergedTags = new Set([...(flavor.tags || []), ...incomingTags]);
   flavor.tags = Array.from(mergedTags);
   flavor.minStock = parsedMinStock;
   flavor.archived = false;
