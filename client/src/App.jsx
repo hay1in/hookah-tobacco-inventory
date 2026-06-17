@@ -1,6 +1,8 @@
 import { useState } from "react";
 import "./App.css";
 
+const API_URL = "";
+
 function App() {
   const [flavors, setFlavors] = useState([
     {
@@ -69,49 +71,91 @@ function App() {
     };
   };
 
-  const decreasePack = (flavorId) => {
-    setFlavors((currentFlavors) =>
-      currentFlavors.map((flavor) => {
-        if (flavor.id !== flavorId) return flavor;
+  const refreshFlavors = () => {
+  fetch(`${API_URL}/api/flavors`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Не удалось обновить вкусы");
+      }
 
-        const updatedPacks = flavor.packs.map((pack, index) => {
-          if (index !== 0) return pack;
+      return response.json();
+    })
+    .then((data) => {
+      setFlavors(data);
+    })
+    .catch((error) => {
+      console.error(error);
+      setErrorText("Не удалось обновить данные");
+    });
+};
 
-          return {
-            ...pack,
-            quantity: Math.max(0, pack.quantity - 1),
-          };
-        });
+const decreasePack = (flavorId) => {
+  fetch(`${API_URL}/api/flavors/${flavorId}/decrease`, {
+    method: "PATCH",
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Не удалось списать пачку");
+      }
 
-        return {
-          ...flavor,
-          packs: updatedPacks,
-        };
-      })
-    );
-  };
+      return response.json();
+    })
+    .then(() => {
+      refreshFlavors();
+    })
+    .catch((error) => {
+      console.error(error);
+      setErrorText("Не удалось списать пачку");
+    });
+};
 
   const clearFlavor = (flavorId) => {
-    setFlavors((currentFlavors) =>
-      currentFlavors.map((flavor) => {
-        if (flavor.id !== flavorId) return flavor;
+  fetch(`${API_URL}/api/flavors/${flavorId}/clear`, {
+    method: "PATCH",
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Не удалось выбить вкус");
+      }
 
-        return {
-          ...flavor,
-          packs: flavor.packs.map((pack) => ({
-            ...pack,
-            quantity: 0,
-          })),
-        };
-      })
-    );
-  };
+      return response.json();
+    })
+    .then(() => {
+      refreshFlavors();
+    })
+    .catch((error) => {
+      console.error(error);
+      setErrorText("Не удалось выбить вкус");
+    });
+};
 
   const deleteFlavor = (flavorId) => {
-    setFlavors((currentFlavors) =>
-      currentFlavors.filter((flavor) => flavor.id !== flavorId)
-    );
-  };
+  const isConfirmed = window.confirm(
+    "Удалить вкус из системы? Это действие нельзя отменить."
+  );
+
+  if (!isConfirmed) {
+    return;
+  }
+
+  fetch(`${API_URL}/api/flavors/${flavorId}`, {
+    method: "DELETE",
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Не удалось удалить вкус");
+      }
+
+      return response.json();
+    })
+    .then(() => {
+      refreshFlavors();
+    })
+    .catch((error) => {
+      console.error(error);
+      setErrorText("Не удалось удалить вкус");
+    });
+};
 
   return (
     <div className="app">

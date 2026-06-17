@@ -246,4 +246,21 @@ h1 {
   .primary-button {
     width: 100%;
   }
+
+  .info-message,
+  .error-message {
+    padding: 18px 20px;
+    border-radius: 18px;
+    font-weight: 800;
+  }
+
+  .info-message {
+    background: #f7efe6;
+    color: #6c4a2e;
+  }
+
+  .error-message {
+    background: #ffe0dd;
+    color: #9d2920
+  }
 }

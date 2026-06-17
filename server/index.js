@@ -9,7 +9,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-const flavors = [
+let flavors = [
   {
     id: 1,
     brand: "Musthave",
@@ -50,6 +50,68 @@ app.get("/", (req, res) => {
 
 app.get("/api/flavors", (req, res) => {
   res.json(flavors);
+});
+
+app.patch("/api/flavors/:id/decrease", (req, res) => {
+  const flavorId = Number(req.params.id);
+
+  const flavor = flavors.find((item) => item.id === flavorId);
+
+  if (!flavor) {
+    return res.status(404).json({
+      message: "Вкус не найден",
+    });
+  }
+
+  const firstPackWithQuantity = flavor.packs.find((pack) => pack.quantity > 0);
+
+  if (!firstPackWithQuantity) {
+    return res.status(400).json({
+      message: "У этого вкуса уже нет пачек",
+    });
+  }
+
+  firstPackWithQuantity.quantity -= 1;
+
+  res.json(flavor);
+});
+
+app.patch("/api/flavors/:id/clear", (req, res) => {
+  const flavorId = Number(req.params.id);
+
+  const flavor = flavors.find((item) => item.id === flavorId);
+
+  if (!flavor) {
+    return res.status(404).json({
+      message: "Вкус не найден",
+    });
+  }
+
+  flavor.packs = flavor.packs.map((pack) => ({
+    ...pack,
+    quantity: 0,
+  }));
+
+  res.json(flavor);
+});
+
+app.delete("/api/flavors/:id", (req, res) => {
+  const flavorId = Number(req.params.id);
+
+  const flavorExists = flavors.some((item) => item.id === flavorId);
+
+  if (!flavorExists) {
+    return res.status(404).json({
+      message: "Вкус не найден",
+    });
+  }
+
+  flavors = flavors.filter((item) => item.id !== flavorId);
+
+  res.json({
+    message: "Вкус удалён",
+    id: flavorId,
+  });
 });
 
 app.listen(PORT, () => {
