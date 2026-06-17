@@ -8,6 +8,16 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
+  const [isSupplyFormOpen, setIsSupplyFormOpen] = useState(false);
+  const [supplyForm, setSupplyForm] = useState({
+    brand: "",
+    name: "",
+    weight: "",
+    quantity: 1,
+    tags: "",
+    minStock: 1,
+  });
+
   const refreshFlavors = () => {
     fetch(`${API_URL}/api/flavors`)
       .then((response) => {
@@ -136,6 +146,64 @@ function App() {
       });
   };
 
+  const handleSupplyChange = (event) => {
+    const { name, value } = event.target;
+
+    setSupplyForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
+
+  const submitSupply = (event) => {
+    event.preventDefault();
+
+    const payload = {
+      brand: supplyForm.brand,
+      name: supplyForm.name,
+      weight: supplyForm.weight,
+      quantity: Number(supplyForm.quantity),
+      tags: supplyForm.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      minStock: Number(supplyForm.minStock),
+    };
+
+    fetch(`${API_URL}/api/flavors/supply`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Не удалось добавить поставку");
+        }
+
+        return response.json();
+      })
+      .then(() => {
+        refreshFlavors();
+
+        setSupplyForm({
+          brand: "",
+          name: "",
+          weight: "",
+          quantity: 1,
+          tags: "",
+          minStock: 1,
+        });
+
+        setIsSupplyFormOpen(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setErrorText("Не удалось добавить поставку");
+      });
+  };
+
   return (
     <div className="app">
       <header className="header">
@@ -149,13 +217,103 @@ function App() {
 
         <button
           className="primary-button"
-          onClick={() => alert("Форму поставки добавим следующим шагом")}
+          onClick={() => setIsSupplyFormOpen(true)}
         >
           + Поставка
         </button>
       </header>
 
       <main className="content">
+        {isSupplyFormOpen && (
+          <section className="supply-panel">
+            <div className="supply-panel-top">
+              <div>
+                <p className="eyebrow dark">Новая поставка</p>
+                <h2>Добавить табак</h2>
+              </div>
+
+              <button
+                className="close-button"
+                onClick={() => setIsSupplyFormOpen(false)}
+              >
+                Закрыть
+              </button>
+            </div>
+
+            <form className="supply-form" onSubmit={submitSupply}>
+              <label>
+                Бренд
+                <input
+                  name="brand"
+                  value={supplyForm.brand}
+                  onChange={handleSupplyChange}
+                  placeholder="Например, Musthave"
+                  required
+                />
+              </label>
+
+              <label>
+                Вкус
+                <input
+                  name="name"
+                  value={supplyForm.name}
+                  onChange={handleSupplyChange}
+                  placeholder="Например, Ванильный крем"
+                  required
+                />
+              </label>
+
+              <label>
+                Фасовка
+                <input
+                  name="weight"
+                  value={supplyForm.weight}
+                  onChange={handleSupplyChange}
+                  placeholder="Например, 100 г"
+                  required
+                />
+              </label>
+
+              <label>
+                Количество пачек
+                <input
+                  type="number"
+                  name="quantity"
+                  min="1"
+                  value={supplyForm.quantity}
+                  onChange={handleSupplyChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Минимальный остаток
+                <input
+                  type="number"
+                  name="minStock"
+                  min="0"
+                  value={supplyForm.minStock}
+                  onChange={handleSupplyChange}
+                />
+              </label>
+
+              <label className="wide-field">
+                Теги вкуса
+                <input
+                  name="tags"
+                  value={supplyForm.tags}
+                  onChange={handleSupplyChange}
+                  placeholder="десертный, сливочный, сладкий"
+                />
+              </label>
+
+              <button className="submit-button" type="submit">
+                Добавить поставку
+              </button>
+            </form>
+          </section>
+        )}
+
         <section className="toolbar">
           <input
             type="text"
@@ -234,4 +392,3 @@ function App() {
 }
 
 export default App;
-EOF
