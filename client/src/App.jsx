@@ -8,6 +8,14 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
+  const [adminPassword, setAdminPassword] = useState(() => {
+    return localStorage.getItem("hookahAdminPassword") || "";
+  });
+  const [passwordInput, setPasswordInput] = useState("");
+  const [isAuthorized, setIsAuthorized] = useState(() => {
+    return Boolean(localStorage.getItem("hookahAdminPassword"));
+  });
+
   const [isSupplyFormOpen, setIsSupplyFormOpen] = useState(false);
   const [supplyForm, setSupplyForm] = useState({
     brand: "",
@@ -30,8 +38,43 @@ function App() {
     minStock: 1,
   });
 
+  const apiFetch = (path, options = {}) => {
+    return fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        "x-admin-password": adminPassword,
+        ...(options.headers || {}),
+      },
+    });
+  };
+
+  const handleLogin = (event) => {
+    event.preventDefault();
+
+    const trimmedPassword = passwordInput.trim();
+
+    if (!trimmedPassword) {
+      return;
+    }
+
+    localStorage.setItem("hookahAdminPassword", trimmedPassword);
+    setAdminPassword(trimmedPassword);
+    setIsAuthorized(true);
+    setPasswordInput("");
+    setIsLoading(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("hookahAdminPassword");
+    setAdminPassword("");
+    setPasswordInput("");
+    setIsAuthorized(false);
+    setFlavors([]);
+    setErrorText("");
+  };
+
   const refreshFlavors = () => {
-    fetch(`${API_URL}/api/flavors`)
+    apiFetch("/api/flavors")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Не удалось загрузить вкусы");
@@ -53,8 +96,12 @@ function App() {
   };
 
   useEffect(() => {
-    refreshFlavors();
-  }, []);
+    if (isAuthorized) {
+      refreshFlavors();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isAuthorized]);
 
   const getTotalQuantity = (packs = []) => {
     return packs.reduce((sum, pack) => sum + Number(pack.quantity), 0);
@@ -91,7 +138,7 @@ function App() {
   };
 
   const decreasePack = (flavorId) => {
-    fetch(`${API_URL}/api/flavors/${flavorId}/decrease`, {
+    apiFetch(`/api/flavors/${flavorId}/decrease`, {
       method: "PATCH",
     })
       .then((response) => {
@@ -111,7 +158,7 @@ function App() {
   };
 
   const clearFlavor = (flavorId) => {
-    fetch(`${API_URL}/api/flavors/${flavorId}/clear`, {
+    apiFetch(`/api/flavors/${flavorId}/clear`, {
       method: "PATCH",
     })
       .then((response) => {
@@ -139,7 +186,7 @@ function App() {
       return;
     }
 
-    fetch(`${API_URL}/api/flavors/${flavorId}`, {
+    apiFetch(`/api/flavors/${flavorId}`, {
       method: "DELETE",
     })
       .then((response) => {
@@ -182,7 +229,7 @@ function App() {
       minStock: Number(supplyForm.minStock),
     };
 
-    fetch(`${API_URL}/api/flavors/supply`, {
+    apiFetch("/api/flavors/supply", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -299,7 +346,7 @@ function App() {
       minStock: Number(editForm.minStock),
     };
 
-    fetch(`${API_URL}/api/flavors/${editingFlavorId}`, {
+    apiFetch(`/api/flavors/${editingFlavorId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -432,6 +479,32 @@ function App() {
     return total <= Number(flavor.minStock || 1);
   });
 
+  if (!isAuthorized) {
+    return (
+      <div className="app auth-page">
+        <section className="auth-card">
+          <p className="eyebrow dark">Hookah Inventory</p>
+          <h1>Вход в склад</h1>
+          <p className="subtitle dark">
+            Введите пароль, чтобы открыть систему учёта табака
+          </p>
+
+          <form className="auth-form" onSubmit={handleLogin}>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(event) => setPasswordInput(event.target.value)}
+              placeholder="Пароль"
+              autoFocus
+            />
+
+            <button type="submit">Войти</button>
+          </form>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <header className="header">
@@ -443,12 +516,18 @@ function App() {
           </p>
         </div>
 
-        <button
-          className="primary-button"
-          onClick={() => setIsSupplyFormOpen(true)}
-        >
-          + Поставка
-        </button>
+        <div className="header-actions">
+          <button
+            className="primary-button"
+            onClick={() => setIsSupplyFormOpen(true)}
+          >
+            + Поставка
+          </button>
+
+          <button className="secondary-button" onClick={handleLogout}>
+            Выйти
+          </button>
+        </div>
       </header>
 
       <main className="content">

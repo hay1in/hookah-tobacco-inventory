@@ -8,6 +8,28 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+function requireAdminPassword(req, res, next) {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminPassword) {
+    return res.status(500).json({
+      message: "ADMIN_PASSWORD is not configured",
+    });
+  }
+
+  const providedPassword = req.headers["x-admin-password"];
+
+  if (providedPassword !== adminPassword) {
+    return res.status(401).json({
+      message: "Неверный пароль",
+    });
+  }
+
+  next();
+}
+
+app.use("/api", requireAdminPassword);
+
 const PORT = process.env.PORT || 3000;
 
 if (!process.env.DATABASE_URL) {
