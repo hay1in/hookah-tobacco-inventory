@@ -18,6 +18,9 @@ function App() {
     minStock: 1,
   });
 
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const refreshFlavors = () => {
     fetch(`${API_URL}/api/flavors`)
       .then((response) => {
@@ -204,6 +207,85 @@ function App() {
       });
   };
 
+  const filteredFlavors = flavors.filter((flavor) => {
+    const normalizedSearch = searchText.trim().toLowerCase();
+
+    const searchableText = [
+      flavor.brand,
+      flavor.name,
+      ...(flavor.tags || []),
+      ...(flavor.packs || []).map((pack) => pack.weight),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    const matchesSearch =
+      normalizedSearch === "" || searchableText.includes(normalizedSearch);
+
+    const status = getStatus(flavor).text;
+
+    const matchesStatus =
+      statusFilter === "all" || status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const brandSuggestions = Array.from(
+    new Set(flavors.map((flavor) => flavor.brand).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b, "ru"));
+
+  const selectedBrand = supplyForm.brand.trim().toLowerCase();
+
+  const flavorsForSelectedBrand = selectedBrand
+    ? flavors.filter((flavor) =>
+        flavor.brand.toLowerCase().includes(selectedBrand)
+      )
+    : flavors;
+
+  const flavorSuggestions = Array.from(
+    new Set(flavorsForSelectedBrand.map((flavor) => flavor.name).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b, "ru"));
+
+  const weightSuggestions = Array.from(
+    new Set(
+      flavorsForSelectedBrand
+        .flatMap((flavor) => flavor.packs || [])
+        .map((pack) => pack.weight)
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b, "ru"));
+
+  const tagSuggestions = Array.from(
+    new Set(
+      flavors
+        .flatMap((flavor) => flavor.tags || [])
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b, "ru"));
+
+  const addTagToSupplyForm = (tag) => {
+    setSupplyForm((currentForm) => {
+      const currentTags = currentForm.tags
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      const tagAlreadyExists = currentTags.some(
+        (item) => item.toLowerCase() === tag.toLowerCase()
+      );
+
+      if (tagAlreadyExists) {
+        return currentForm;
+      }
+
+      return {
+        ...currentForm,
+        tags: [...currentTags, tag].join(", "),
+      };
+    });
+  };
+
   return (
     <div className="app">
       <header className="header">
@@ -224,6 +306,24 @@ function App() {
       </header>
 
       <main className="content">
+        <datalist id="brand-options">
+          {brandSuggestions.map((brand) => (
+            <option value={brand} key={brand} />
+          ))}
+        </datalist>
+
+        <datalist id="flavor-options">
+          {flavorSuggestions.map((flavorName) => (
+            <option value={flavorName} key={flavorName} />
+          ))}
+        </datalist>
+
+        <datalist id="weight-options">
+          {weightSuggestions.map((weight) => (
+            <option value={weight} key={weight} />
+          ))}
+        </datalist>
+
         {isSupplyFormOpen && (
           <section className="supply-panel">
             <div className="supply-panel-top">
@@ -245,6 +345,7 @@ function App() {
                 Бренд
                 <input
                   name="brand"
+                  list="brand-options"
                   value={supplyForm.brand}
                   onChange={handleSupplyChange}
                   placeholder="Например, Musthave"
@@ -256,6 +357,7 @@ function App() {
                 Вкус
                 <input
                   name="name"
+                  list="flavor-options"
                   value={supplyForm.name}
                   onChange={handleSupplyChange}
                   placeholder="Например, Ванильный крем"
@@ -267,6 +369,7 @@ function App() {
                 Фасовка
                 <input
                   name="weight"
+                  list="weight-options"
                   value={supplyForm.weight}
                   onChange={handleSupplyChange}
                   placeholder="Например, 100 г"
@@ -305,6 +408,20 @@ function App() {
                   onChange={handleSupplyChange}
                   placeholder="десертный, сливочный, сладкий"
                 />
+
+                {tagSuggestions.length > 0 && (
+                  <div className="tag-suggestion-list">
+                    {tagSuggestions.slice(0, 12).map((tag) => (
+                      <button
+                        type="button"
+                        key={tag}
+                        onClick={() => addTagToSupplyForm(tag)}
+                      >
+                        #{tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </label>
 
               <button className="submit-button" type="submit">
@@ -319,13 +436,19 @@ function App() {
             type="text"
             placeholder="Поиск по бренду, вкусу или тегу"
             className="search-input"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
           />
 
-          <select className="filter-select">
-            <option>Все статусы</option>
-            <option>В наличии</option>
-            <option>Мало осталось</option>
-            <option>Требуется к закупу</option>
+          <select
+            className="filter-select"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="all">Все статусы</option>
+            <option value="В наличии">В наличии</option>
+            <option value="Мало осталось">Мало осталось</option>
+            <option value="Требуется к закупу">Требуется к закупу</option>
           </select>
         </section>
 
@@ -333,9 +456,13 @@ function App() {
 
         {errorText && <p className="error-message">{errorText}</p>}
 
-        {!isLoading && !errorText && (
+        {!isLoading && !errorText && filteredFlavors.length === 0 && (
+          <p className="info-message">Ничего не найдено</p>
+        )}
+
+        {!isLoading && !errorText && filteredFlavors.length > 0 && (
           <section className="cards-grid">
-            {flavors.map((flavor) => {
+            {filteredFlavors.map((flavor) => {
               const status = getStatus(flavor);
 
               return (

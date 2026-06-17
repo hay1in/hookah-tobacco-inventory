@@ -264,3 +264,20 @@ h1 {
     color: #9d2920
   }
 }
+.tag-suggestion-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.tag-suggestion-list button {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: #efe2d5;
+  color: #6c4a2e;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
