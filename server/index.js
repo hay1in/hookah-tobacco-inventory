@@ -284,6 +284,7 @@ app.post("/api/flavors/supply", async (req, res) => {
 });
 
 
+
 app.post("/api/flavors/import", async (req, res) => {
   const { rows } = req.body;
 
@@ -298,8 +299,8 @@ app.post("/api/flavors/import", async (req, res) => {
     const name = String(row.name || "").trim();
     const weight = String(row.weight || "").trim();
     const quantity = Number(row.quantity || 0);
-    const minStock = Number(row.minStock || 1);
     const archived = Boolean(row.archived);
+    const lowStock = Boolean(row.lowStock);
 
     if (!brand || !name || !weight || Number.isNaN(quantity) || quantity < 0) {
       continue;
@@ -313,8 +314,8 @@ app.post("/api/flavors/import", async (req, res) => {
         name,
         packsByWeight: new Map(),
         tags: new Set(),
-        minStock: Number.isNaN(minStock) ? 1 : minStock,
         archived,
+        lowStock,
       });
     }
 
@@ -340,6 +341,10 @@ app.post("/api/flavors/import", async (req, res) => {
 
     if (archived) {
       flavor.archived = true;
+    }
+
+    if (lowStock) {
+      flavor.lowStock = true;
     }
   }
 
@@ -377,32 +382,33 @@ app.post("/api/flavors/import", async (req, res) => {
             UPDATE flavors
             SET packs = $1,
                 tags = $2,
-                min_stock = $3,
-                archived = $4,
+                min_stock = 0,
+                archived = $3,
+                low_stock = $4,
                 updated_at = NOW()
             WHERE id = $5
           `,
           [
             JSON.stringify(packs),
             JSON.stringify(tags),
-            flavor.minStock,
             flavor.archived,
+            flavor.lowStock,
             existingFlavor.rows[0].id,
           ]
         );
       } else {
         await client.query(
           `
-            INSERT INTO flavors (brand, name, packs, tags, min_stock, archived)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO flavors (brand, name, packs, tags, min_stock, archived, low_stock)
+            VALUES ($1, $2, $3, $4, 0, $5, $6)
           `,
           [
             flavor.brand,
             flavor.name,
             JSON.stringify(packs),
             JSON.stringify(tags),
-            flavor.minStock,
             flavor.archived,
+            flavor.lowStock,
           ]
         );
       }
@@ -572,6 +578,32 @@ app.put("/api/flavors/:id", async (req, res) => {
   }
 });
 
+
+
+app.patch("/api/flavors/:id/low-stock", async (req, res) => {
+  const { lowStock } = req.body;
+
+  try {
+    const result = await pool.query(
+      `
+        UPDATE flavors
+        SET low_stock = $1, updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `,
+      [Boolean(lowStock), req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Вкус не найден" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Low stock toggle error:", error);
+    res.status(500).json({ message: "Не удалось изменить статус вкуса" });
+  }
+});
 
 app.patch("/api/flavors/:id/archive", async (req, res) => {
   try {

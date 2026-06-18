@@ -128,6 +128,7 @@ function App() {
 
   const getStatus = (flavor) => {
     const total = getTotalQuantity(flavor.packs || []);
+    const isLowStock = Boolean(flavor.lowStock || flavor.low_stock);
 
     if (flavor.archived) {
       return {
@@ -138,12 +139,12 @@ function App() {
 
     if (total === 0) {
       return {
-        text: "Требуется к закупу",
+        text: "Отсутствует",
         className: "status need-buy",
       };
     }
 
-    if (total <= Number(flavor.minStock || 1)) {
+    if (isLowStock) {
       return {
         text: "Мало осталось",
         className: "status low-stock",
@@ -229,6 +230,32 @@ function App() {
     } catch (error) {
       console.error(error);
       setErrorText(error.message || "Не удалось вернуть вкус из архива");
+    }
+  };
+
+
+  const toggleLowStock = async (flavor) => {
+    const currentValue = Boolean(flavor.lowStock || flavor.low_stock);
+
+    try {
+      const response = await apiFetch(`/api/flavors/${flavor.id}/low-stock`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lowStock: !currentValue,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Не удалось изменить статус вкуса");
+      }
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось изменить статус вкуса");
     }
   };
 
@@ -481,7 +508,7 @@ function App() {
         "Фасовка": pack.weight || "",
         "Количество": Number(pack.quantity || 0),
         "Теги": (flavor.tags || []).join(", "),
-        "Минимальный остаток": Number(flavor.minStock || 1),
+        "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock) ? "да" : "нет",
         "Архив": flavor.archived ? "да" : "нет",
       }));
     });
@@ -585,14 +612,13 @@ function App() {
             getExcelValue(row, ["Теги", "tags", "Tags"])
           ).trim();
 
-          const minStock = parseExcelNumber(
+          const lowStock = parseExcelBoolean(
             getExcelValue(row, [
-              "Минимальный остаток",
-              "Минимум",
-              "minStock",
-              "Min stock",
-            ]),
-            1
+              "Мало осталось",
+              "lowStock",
+              "Low stock",
+              "low_stock",
+            ])
           );
 
           const archived = parseExcelBoolean(
@@ -605,7 +631,7 @@ function App() {
             weight,
             quantity,
             tags,
-            minStock,
+            lowStock,
             archived,
           };
         })
@@ -678,8 +704,9 @@ function App() {
     }
 
     const total = getTotalQuantity(flavor.packs || []);
+    const isLowStock = Boolean(flavor.lowStock || flavor.low_stock);
 
-    return total <= Number(flavor.minStock || 1);
+    return total === 0 || isLowStock;
   });
 
   if (!isAuthorized) {
@@ -834,17 +861,6 @@ function App() {
                 />
               </label>
 
-              <label>
-                Минимальный остаток
-                <input
-                  type="number"
-                  name="minStock"
-                  min="0"
-                  value={supplyForm.minStock}
-                  onChange={handleSupplyChange}
-                />
-              </label>
-
               <label className="wide-field">
                 Теги вкуса
                 <input
@@ -910,17 +926,6 @@ function App() {
                 />
               </label>
 
-              <label>
-                Минимальный остаток
-                <input
-                  type="number"
-                  name="minStock"
-                  min="0"
-                  value={editForm.minStock}
-                  onChange={handleEditChange}
-                />
-              </label>
-
               <label className="wide-field">
                 Фасовки и количество
                 <textarea
@@ -975,7 +980,7 @@ function App() {
                       <p className="brand">{flavor.brand}</p>
                       <h3>{flavor.name}</h3>
                       <p className="purchase-meta">
-                        Остаток: {total} пач. · Минимум: {flavor.minStock}
+                        Остаток: {total} пач.
                       </p>
                     </div>
 
@@ -1010,7 +1015,8 @@ function App() {
             <option value="all">Все статусы</option>
             <option value="В наличии">В наличии</option>
             <option value="Мало осталось">Мало осталось</option>
-            <option value="Требуется к закупу">Требуется к закупу</option>
+            <option value="Отсутствует">Отсутствует</option>
+            <option value="Мало осталось">Мало осталось</option>
             <option value="Архив">Архив</option>
           </select>
         </section>
@@ -1066,6 +1072,15 @@ function App() {
                     <button onClick={() => openEditForm(flavor)}>
                       Редактировать
                     </button>
+
+                    {!flavor.archived && getTotalQuantity(flavor.packs || []) > 0 && (
+                      <button onClick={() => toggleLowStock(flavor)}>
+                        {Boolean(flavor.lowStock || flavor.low_stock)
+                          ? "Убрать мало"
+                          : "Мало осталось"}
+                      </button>
+                    )}
+
                     {flavor.archived ? (
                       <button onClick={() => restoreFlavor(flavor.id)}>
                         Вернуть
