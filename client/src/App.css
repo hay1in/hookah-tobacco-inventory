@@ -480,3 +480,33 @@ h1 {
 .file-button input {
   display: none;
 }
+
+.tag-filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 22px;
+}
+
+.tag-filter-button {
+  border: 1px solid rgba(255, 247, 237, 0.16);
+  background: rgba(255, 247, 237, 0.09);
+  color: #fff7ed;
+  border-radius: 999px;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.tag-filter-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 247, 237, 0.15);
+}
+
+.tag-filter-button.active {
+  background: #fff7ed;
+  color: #211b18;
+  border-color: #fff7ed;
+}

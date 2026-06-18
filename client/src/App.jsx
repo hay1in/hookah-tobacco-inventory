@@ -674,6 +674,22 @@ function App() {
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedTag, setSelectedTag] = useState("all");
+
+  const quickTags = [
+    "ягоды",
+    "фрукт",
+    "алкоголь",
+    "десерт",
+    "специи",
+    "цитрус",
+    "напиток",
+    "гастрономия",
+    "травы",
+    "цветы",
+    "чай",
+    "орехи",
+  ];
 
   const filteredFlavors = flavors.filter((flavor) => {
     const normalizedSearch = searchText.trim().toLowerCase();
@@ -695,7 +711,13 @@ function App() {
     const matchesStatus =
       statusFilter === "all" ? !flavor.archived : status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesTag =
+      selectedTag === "all" ||
+      (flavor.tags || []).some(
+        (tag) => tag.trim().toLowerCase() === selectedTag.toLowerCase()
+      );
+
+    return matchesSearch && matchesStatus && matchesTag;
   });
 
   const purchaseFlavors = flavors.filter((flavor) => {
@@ -775,6 +797,7 @@ function App() {
             className="secondary-button"
             onClick={() => {
               setSearchText("");
+              setSelectedTag("all");
               setStatusFilter(statusFilter === "Архив" ? "all" : "Архив");
             }}
           >
@@ -1028,6 +1051,33 @@ function App() {
             <option value="Отсутствует">Отсутствует</option>
             <option value="Архив">Архив</option>
           </select>
+        </section>
+
+        <section className="tag-filter-panel">
+          <button
+            className={
+              selectedTag === "all"
+                ? "tag-filter-button active"
+                : "tag-filter-button"
+            }
+            onClick={() => setSelectedTag("all")}
+          >
+            Все теги
+          </button>
+
+          {quickTags.map((tag) => (
+            <button
+              key={tag}
+              className={
+                selectedTag === tag
+                  ? "tag-filter-button active"
+                  : "tag-filter-button"
+              }
+              onClick={() => setSelectedTag(tag)}
+            >
+              #{tag}
+            </button>
+          ))}
         </section>
 
         {isLoading && <p className="info-message">Загрузка вкусов...</p>}
