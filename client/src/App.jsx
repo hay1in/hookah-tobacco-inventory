@@ -189,9 +189,9 @@ function App() {
     }
   };
 
-  const deleteFlavor = async (flavorId) => {
+  const archiveFlavor = async (flavorId) => {
     const isConfirmed = window.confirm(
-      "Удалить вкус из системы? Это действие нельзя отменить."
+      "Отправить вкус в архив? Его можно будет вернуть позже."
     );
 
     if (!isConfirmed) {
@@ -199,18 +199,35 @@ function App() {
     }
 
     try {
-      const response = await apiFetch(`/api/flavors/${flavorId}`, {
-        method: "DELETE",
+      const response = await apiFetch(`/api/flavors/${flavorId}/archive`, {
+        method: "PATCH",
       });
 
       if (!response.ok) {
-        throw new Error("Не удалось удалить вкус");
+        throw new Error("Не удалось отправить вкус в архив");
       }
 
       await refreshFlavors();
     } catch (error) {
       console.error(error);
-      setErrorText(error.message || "Не удалось удалить вкус");
+      setErrorText(error.message || "Не удалось отправить вкус в архив");
+    }
+  };
+
+  const restoreFlavor = async (flavorId) => {
+    try {
+      const response = await apiFetch(`/api/flavors/${flavorId}/restore`, {
+        method: "PATCH",
+      });
+
+      if (!response.ok) {
+        throw new Error("Не удалось вернуть вкус из архива");
+      }
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось вернуть вкус из архива");
     }
   };
 
@@ -469,7 +486,8 @@ function App() {
 
     const status = getStatus(flavor).text;
 
-    const matchesStatus = statusFilter === "all" || status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" ? !flavor.archived : status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -800,6 +818,7 @@ function App() {
             <option value="В наличии">В наличии</option>
             <option value="Мало осталось">Мало осталось</option>
             <option value="Требуется к закупу">Требуется к закупу</option>
+            <option value="Архив">Архив</option>
           </select>
         </section>
 
@@ -854,12 +873,18 @@ function App() {
                     <button onClick={() => openEditForm(flavor)}>
                       Редактировать
                     </button>
-                    <button
-                      className="danger"
-                      onClick={() => deleteFlavor(flavor.id)}
-                    >
-                      Удалить
-                    </button>
+                    {flavor.archived ? (
+                      <button onClick={() => restoreFlavor(flavor.id)}>
+                        Вернуть
+                      </button>
+                    ) : (
+                      <button
+                        className="danger"
+                        onClick={() => archiveFlavor(flavor.id)}
+                      >
+                        В архив
+                      </button>
+                    )}
                   </div>
                 </article>
               );

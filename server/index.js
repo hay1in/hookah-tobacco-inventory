@@ -430,6 +430,53 @@ app.put("/api/flavors/:id", async (req, res) => {
   }
 });
 
+
+app.patch("/api/flavors/:id/archive", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+        UPDATE flavors
+        SET archived = TRUE, updated_at = NOW()
+        WHERE id = $1
+        RETURNING *
+      `,
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Вкус не найден" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Archive flavor error:", error);
+    res.status(500).json({ message: "Не удалось отправить вкус в архив" });
+  }
+});
+
+app.patch("/api/flavors/:id/restore", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+        UPDATE flavors
+        SET archived = FALSE, updated_at = NOW()
+        WHERE id = $1
+        RETURNING *
+      `,
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Вкус не найден" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Restore flavor error:", error);
+    res.status(500).json({ message: "Не удалось вернуть вкус из архива" });
+  }
+});
+
 app.delete("/api/flavors/:id", async (req, res) => {
   try {
     const flavorId = Number(req.params.id);
