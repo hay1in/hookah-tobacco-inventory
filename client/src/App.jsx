@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "./App.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 function App() {
-  const [flavors, setFlavors] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorText, setErrorText] = useState("");
-
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  const [flavors, setFlavors] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorText, setErrorText] = useState("");
 
   const [isSupplyFormOpen, setIsSupplyFormOpen] = useState(false);
   const [supplyForm, setSupplyForm] = useState({
@@ -21,9 +22,6 @@ function App() {
     tags: "",
     minStock: 1,
   });
-
-  const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
 
   const [editingFlavorId, setEditingFlavorId] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -44,67 +42,91 @@ function App() {
     });
   };
 
-  const handleLogin = (event) => {
+  const loadFlavorsWithPassword = async (password) => {
+    const response = await fetch(`${API_URL}/api/flavors`, {
+      headers: {
+        "x-admin-password": password,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || "Не удалось войти");
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data)) {
+      throw new Error("Backend вернул некорректные данные");
+    }
+
+    return data;
+  };
+
+  const handleLogin = async (event) => {
     event.preventDefault();
 
     const trimmedPassword = passwordInput.trim();
 
     if (!trimmedPassword) {
+      setAuthError("Введите пароль");
       return;
     }
 
-    localStorage.setItem("hookahAdminPassword", trimmedPassword);
-    setAdminPassword(trimmedPassword);
-    setIsAuthorized(true);
-    setPasswordInput("");
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
+      setAuthError("");
+
+      const data = await loadFlavorsWithPassword(trimmedPassword);
+
+      setAdminPassword(trimmedPassword);
+      setFlavors(data);
+      setIsAuthorized(true);
+      setPasswordInput("");
+      setErrorText("");
+    } catch (error) {
+      console.error(error);
+      setAuthError(error.message || "Не удалось войти");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("hookahAdminPassword");
+    setIsAuthorized(false);
     setAdminPassword("");
     setPasswordInput("");
-    setIsAuthorized(false);
     setFlavors([]);
     setErrorText("");
+    setAuthError("");
   };
 
-  const refreshFlavors = () => {
-    apiFetch("/api/flavors")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Не удалось загрузить вкусы");
-        }
+  const refreshFlavors = async () => {
+    try {
+      const response = await apiFetch("/api/flavors");
 
-        return response.json();
-      })
-      .then((data) => {
-        setFlavors(Array.isArray(data) ? data : []);
-        setErrorText("");
-      })
-      .catch((error) => {
-        console.error(error);
-        setErrorText("Не удалось подключиться к серверу");
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  };
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Не удалось обновить вкусы");
+      }
 
-  useEffect(() => {
-    if (isAuthorized) {
-      refreshFlavors();
-    } else {
+      const data = await response.json();
+      setFlavors(Array.isArray(data) ? data : []);
+      setErrorText("");
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось подключиться к серверу");
+    } finally {
       setIsLoading(false);
     }
-  }, [isAuthorized]);
+  };
 
   const getTotalQuantity = (packs = []) => {
     return packs.reduce((sum, pack) => sum + Number(pack.quantity), 0);
   };
 
   const getStatus = (flavor) => {
-    const total = getTotalQuantity(flavor.packs);
+    const total = getTotalQuantity(flavor.packs || []);
 
     if (flavor.archived) {
       return {
@@ -120,7 +142,7 @@ function App() {
       };
     }
 
-    if (total <= flavor.minStock) {
+    if (total <= Number(flavor.minStock || 1)) {
       return {
         text: "Мало осталось",
         className: "status low-stock",
@@ -133,47 +155,41 @@ function App() {
     };
   };
 
-  const decreasePack = (flavorId) => {
-    apiFetch(`/api/flavors/${flavorId}/decrease`, {
-      method: "PATCH",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Не удалось списать пачку");
-        }
-
-        return response.json();
-      })
-      .then(() => {
-        refreshFlavors();
-      })
-      .catch((error) => {
-        console.error(error);
-        setErrorText("Не удалось списать пачку");
+  const decreasePack = async (flavorId) => {
+    try {
+      const response = await apiFetch(`/api/flavors/${flavorId}/decrease`, {
+        method: "PATCH",
       });
+
+      if (!response.ok) {
+        throw new Error("Не удалось списать пачку");
+      }
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось списать пачку");
+    }
   };
 
-  const clearFlavor = (flavorId) => {
-    apiFetch(`/api/flavors/${flavorId}/clear`, {
-      method: "PATCH",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Не удалось выбить вкус");
-        }
-
-        return response.json();
-      })
-      .then(() => {
-        refreshFlavors();
-      })
-      .catch((error) => {
-        console.error(error);
-        setErrorText("Не удалось выбить вкус");
+  const clearFlavor = async (flavorId) => {
+    try {
+      const response = await apiFetch(`/api/flavors/${flavorId}/clear`, {
+        method: "PATCH",
       });
+
+      if (!response.ok) {
+        throw new Error("Не удалось выбить вкус");
+      }
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось выбить вкус");
+    }
   };
 
-  const deleteFlavor = (flavorId) => {
+  const deleteFlavor = async (flavorId) => {
     const isConfirmed = window.confirm(
       "Удалить вкус из системы? Это действие нельзя отменить."
     );
@@ -182,23 +198,20 @@ function App() {
       return;
     }
 
-    apiFetch(`/api/flavors/${flavorId}`, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Не удалось удалить вкус");
-        }
-
-        return response.json();
-      })
-      .then(() => {
-        refreshFlavors();
-      })
-      .catch((error) => {
-        console.error(error);
-        setErrorText("Не удалось удалить вкус");
+    try {
+      const response = await apiFetch(`/api/flavors/${flavorId}`, {
+        method: "DELETE",
       });
+
+      if (!response.ok) {
+        throw new Error("Не удалось удалить вкус");
+      }
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось удалить вкус");
+    }
   };
 
   const handleSupplyChange = (event) => {
@@ -210,7 +223,7 @@ function App() {
     }));
   };
 
-  const submitSupply = (event) => {
+  const submitSupply = async (event) => {
     event.preventDefault();
 
     const payload = {
@@ -225,38 +238,35 @@ function App() {
       minStock: Number(supplyForm.minStock),
     };
 
-    apiFetch("/api/flavors/supply", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Не удалось добавить поставку");
-        }
-
-        return response.json();
-      })
-      .then(() => {
-        refreshFlavors();
-
-        setSupplyForm({
-          brand: "",
-          name: "",
-          weight: "",
-          quantity: 1,
-          tags: "",
-          minStock: 1,
-        });
-
-        setIsSupplyFormOpen(false);
-      })
-      .catch((error) => {
-        console.error(error);
-        setErrorText("Не удалось добавить поставку");
+    try {
+      const response = await apiFetch("/api/flavors/supply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        throw new Error("Не удалось добавить поставку");
+      }
+
+      await refreshFlavors();
+
+      setSupplyForm({
+        brand: "",
+        name: "",
+        weight: "",
+        quantity: 1,
+        tags: "",
+        minStock: 1,
+      });
+
+      setIsSupplyFormOpen(false);
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось добавить поставку");
+    }
   };
 
   const openEditForm = (flavor) => {
@@ -321,7 +331,7 @@ function App() {
       .filter(Boolean);
   };
 
-  const submitEdit = (event) => {
+  const submitEdit = async (event) => {
     event.preventDefault();
 
     const packs = parsePacksText(editForm.packsText);
@@ -342,28 +352,25 @@ function App() {
       minStock: Number(editForm.minStock),
     };
 
-    apiFetch(`/api/flavors/${editingFlavorId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Не удалось сохранить изменения");
-        }
-
-        return response.json();
-      })
-      .then(() => {
-        closeEditForm();
-        refreshFlavors();
-      })
-      .catch((error) => {
-        console.error(error);
-        setErrorText("Не удалось сохранить изменения");
+    try {
+      const response = await apiFetch(`/api/flavors/${editingFlavorId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        throw new Error("Не удалось сохранить изменения");
+      }
+
+      closeEditForm();
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось сохранить изменения");
+    }
   };
 
   const startSupplyForFlavor = (flavor) => {
@@ -385,29 +392,6 @@ function App() {
       behavior: "smooth",
     });
   };
-
-  const filteredFlavors = flavors.filter((flavor) => {
-    const normalizedSearch = searchText.trim().toLowerCase();
-
-    const searchableText = [
-      flavor.brand,
-      flavor.name,
-      ...(flavor.tags || []),
-      ...(flavor.packs || []).map((pack) => pack.weight),
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    const matchesSearch =
-      normalizedSearch === "" || searchableText.includes(normalizedSearch);
-
-    const status = getStatus(flavor).text;
-
-    const matchesStatus =
-      statusFilter === "all" || status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
 
   const brandSuggestions = Array.from(
     new Set(flavors.map((flavor) => flavor.brand).filter(Boolean))
@@ -465,6 +449,31 @@ function App() {
     });
   };
 
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const filteredFlavors = flavors.filter((flavor) => {
+    const normalizedSearch = searchText.trim().toLowerCase();
+
+    const searchableText = [
+      flavor.brand,
+      flavor.name,
+      ...(flavor.tags || []),
+      ...(flavor.packs || []).map((pack) => pack.weight),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    const matchesSearch =
+      normalizedSearch === "" || searchableText.includes(normalizedSearch);
+
+    const status = getStatus(flavor).text;
+
+    const matchesStatus = statusFilter === "all" || status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   const purchaseFlavors = flavors.filter((flavor) => {
     if (flavor.archived) {
       return false;
@@ -494,8 +503,12 @@ function App() {
               autoFocus
             />
 
-            <button type="submit">Войти</button>
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? "Проверяем..." : "Войти"}
+            </button>
           </form>
+
+          {authError && <p className="error-message">{authError}</p>}
         </section>
       </div>
     );
@@ -737,9 +750,7 @@ function App() {
                 <h2>Требуется к закупу</h2>
               </div>
 
-              <span className="purchase-count">
-                {purchaseFlavors.length} поз.
-              </span>
+              <span className="purchase-count">{purchaseFlavors.length} поз.</span>
             </div>
 
             <div className="purchase-list">
