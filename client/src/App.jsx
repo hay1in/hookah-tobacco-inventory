@@ -8,13 +8,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
-  const [adminPassword, setAdminPassword] = useState(() => {
-    return localStorage.getItem("hookahAdminPassword") || "";
-  });
+  const [adminPassword, setAdminPassword] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
-  const [isAuthorized, setIsAuthorized] = useState(() => {
-    return Boolean(localStorage.getItem("hookahAdminPassword"));
-  });
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   const [isSupplyFormOpen, setIsSupplyFormOpen] = useState(false);
   const [supplyForm, setSupplyForm] = useState({
