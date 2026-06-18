@@ -771,6 +771,16 @@ function App() {
             />
           </label>
 
+          <button
+            className="secondary-button"
+            onClick={() => {
+              setSearchText("");
+              setStatusFilter(statusFilter === "Архив" ? "all" : "Архив");
+            }}
+          >
+            {statusFilter === "Архив" ? "Склад" : "Архив"}
+          </button>
+
           <button className="secondary-button" onClick={handleLogout}>
             Выйти
           </button>
@@ -1016,7 +1026,6 @@ function App() {
             <option value="В наличии">В наличии</option>
             <option value="Мало осталось">Мало осталось</option>
             <option value="Отсутствует">Отсутствует</option>
-            <option value="Мало осталось">Мало осталось</option>
             <option value="Архив">Архив</option>
           </select>
         </section>
