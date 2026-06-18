@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as XLSX from "xlsx";
 import "./App.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -466,6 +467,185 @@ function App() {
     });
   };
 
+
+  const exportToExcel = () => {
+    const rows = flavors.flatMap((flavor) => {
+      const packs =
+        Array.isArray(flavor.packs) && flavor.packs.length > 0
+          ? flavor.packs
+          : [{ weight: "", quantity: 0 }];
+
+      return packs.map((pack) => ({
+        "Бренд": flavor.brand || "",
+        "Вкус": flavor.name || "",
+        "Фасовка": pack.weight || "",
+        "Количество": Number(pack.quantity || 0),
+        "Теги": (flavor.tags || []).join(", "),
+        "Минимальный остаток": Number(flavor.minStock || 1),
+        "Архив": flavor.archived ? "да" : "нет",
+      }));
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    worksheet["!cols"] = [
+      { wch: 22 },
+      { wch: 28 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 34 },
+      { wch: 20 },
+      { wch: 12 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Склад");
+
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(workbook, `sklad-tabaka-${today}.xlsx`);
+  };
+
+  const getExcelValue = (row, names) => {
+    for (const name of names) {
+      if (row[name] !== undefined && row[name] !== null && row[name] !== "") {
+        return row[name];
+      }
+    }
+
+    return "";
+  };
+
+  const parseExcelNumber = (value, fallback = 0) => {
+    const normalizedValue = String(value).replace(",", ".").trim();
+    const number = Number(normalizedValue);
+
+    return Number.isFinite(number) ? number : fallback;
+  };
+
+  const parseExcelBoolean = (value) => {
+    const normalizedValue = String(value).trim().toLowerCase();
+
+    return ["да", "true", "1", "yes", "архив"].includes(normalizedValue);
+  };
+
+  const importFromExcel = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorText("");
+
+      const fileBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(fileBuffer);
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+
+      const rawRows = XLSX.utils.sheet_to_json(worksheet, {
+        defval: "",
+      });
+
+      const rows = rawRows
+        .map((row) => {
+          const brand = String(
+            getExcelValue(row, ["Бренд", "brand", "Brand"])
+          ).trim();
+
+          const name = String(
+            getExcelValue(row, [
+              "Вкус",
+              "Название",
+              "Название товара",
+              "Товар",
+              "name",
+              "Name",
+            ])
+          ).trim();
+
+          const weight = String(
+            getExcelValue(row, ["Фасовка", "Вес", "weight", "Weight"])
+          ).trim();
+
+          const quantity = parseExcelNumber(
+            getExcelValue(row, [
+              "Количество",
+              "Кол-во",
+              "Кол-во.",
+              "Остаток",
+              "quantity",
+              "Quantity",
+            ]),
+            0
+          );
+
+          const tags = String(
+            getExcelValue(row, ["Теги", "tags", "Tags"])
+          ).trim();
+
+          const minStock = parseExcelNumber(
+            getExcelValue(row, [
+              "Минимальный остаток",
+              "Минимум",
+              "minStock",
+              "Min stock",
+            ]),
+            1
+          );
+
+          const archived = parseExcelBoolean(
+            getExcelValue(row, ["Архив", "archived", "Archived"])
+          );
+
+          return {
+            brand,
+            name,
+            weight,
+            quantity,
+            tags,
+            minStock,
+            archived,
+          };
+        })
+        .filter((row) => row.brand && row.name && row.weight);
+
+      if (rows.length === 0) {
+        throw new Error(
+          "В Excel не найдено строк с обязательными колонками: Бренд, Вкус, Фасовка"
+        );
+      }
+
+      const response = await apiFetch("/api/flavors/import", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rows }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Не удалось импортировать Excel");
+      }
+
+      const result = await response.json();
+
+      await refreshFlavors();
+
+      window.alert(
+        `Excel импортирован. Обновлено вкусов: ${result.importedCount}`
+      );
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось импортировать Excel");
+    } finally {
+      setIsLoading(false);
+      event.target.value = "";
+    }
+  };
+
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -550,6 +730,19 @@ function App() {
           >
             + Поставка
           </button>
+
+          <button className="secondary-button" onClick={exportToExcel}>
+            Экспорт Excel
+          </button>
+
+          <label className="secondary-button file-button">
+            Импорт Excel
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={importFromExcel}
+            />
+          </label>
 
           <button className="secondary-button" onClick={handleLogout}>
             Выйти

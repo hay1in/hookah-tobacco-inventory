@@ -283,6 +283,148 @@ app.post("/api/flavors/supply", async (req, res) => {
   }
 });
 
+
+app.post("/api/flavors/import", async (req, res) => {
+  const { rows } = req.body;
+
+  if (!Array.isArray(rows)) {
+    return res.status(400).json({ message: "Неверный формат Excel-данных" });
+  }
+
+  const groupedFlavors = new Map();
+
+  for (const row of rows) {
+    const brand = String(row.brand || "").trim();
+    const name = String(row.name || "").trim();
+    const weight = String(row.weight || "").trim();
+    const quantity = Number(row.quantity || 0);
+    const minStock = Number(row.minStock || 1);
+    const archived = Boolean(row.archived);
+
+    if (!brand || !name || !weight || Number.isNaN(quantity) || quantity < 0) {
+      continue;
+    }
+
+    const key = `${brand.toLowerCase()}||${name.toLowerCase()}`;
+
+    if (!groupedFlavors.has(key)) {
+      groupedFlavors.set(key, {
+        brand,
+        name,
+        packsByWeight: new Map(),
+        tags: new Set(),
+        minStock: Number.isNaN(minStock) ? 1 : minStock,
+        archived,
+      });
+    }
+
+    const flavor = groupedFlavors.get(key);
+    const previousQuantity = flavor.packsByWeight.get(weight) || 0;
+
+    flavor.packsByWeight.set(weight, previousQuantity + quantity);
+
+    if (Array.isArray(row.tags)) {
+      row.tags.forEach((tag) => {
+        const cleanTag = String(tag).trim();
+        if (cleanTag) {
+          flavor.tags.add(cleanTag);
+        }
+      });
+    } else if (row.tags) {
+      String(row.tags)
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+        .forEach((tag) => flavor.tags.add(tag));
+    }
+
+    if (archived) {
+      flavor.archived = true;
+    }
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    let importedCount = 0;
+
+    for (const flavor of groupedFlavors.values()) {
+      const packs = Array.from(flavor.packsByWeight.entries()).map(
+        ([weight, quantity]) => ({
+          weight,
+          quantity,
+        })
+      );
+
+      const tags = Array.from(flavor.tags);
+
+      const existingFlavor = await client.query(
+        `
+          SELECT id
+          FROM flavors
+          WHERE LOWER(brand) = LOWER($1)
+            AND LOWER(name) = LOWER($2)
+          LIMIT 1
+        `,
+        [flavor.brand, flavor.name]
+      );
+
+      if (existingFlavor.rows.length > 0) {
+        await client.query(
+          `
+            UPDATE flavors
+            SET packs = $1,
+                tags = $2,
+                min_stock = $3,
+                archived = $4,
+                updated_at = NOW()
+            WHERE id = $5
+          `,
+          [
+            JSON.stringify(packs),
+            JSON.stringify(tags),
+            flavor.minStock,
+            flavor.archived,
+            existingFlavor.rows[0].id,
+          ]
+        );
+      } else {
+        await client.query(
+          `
+            INSERT INTO flavors (brand, name, packs, tags, min_stock, archived)
+            VALUES ($1, $2, $3, $4, $5, $6)
+          `,
+          [
+            flavor.brand,
+            flavor.name,
+            JSON.stringify(packs),
+            JSON.stringify(tags),
+            flavor.minStock,
+            flavor.archived,
+          ]
+        );
+      }
+
+      importedCount += 1;
+    }
+
+    await client.query("COMMIT");
+
+    res.json({
+      message: "Excel импортирован",
+      importedCount,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Import flavors error:", error);
+    res.status(500).json({ message: "Не удалось импортировать Excel" });
+  } finally {
+    client.release();
+  }
+});
+
 app.patch("/api/flavors/:id/decrease", async (req, res) => {
   try {
     const flavorId = Number(req.params.id);

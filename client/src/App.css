@@ -470,3 +470,13 @@ h1 {
     width: 100%;
   }
 }
+
+.file-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-button input {
+  display: none;
+}
