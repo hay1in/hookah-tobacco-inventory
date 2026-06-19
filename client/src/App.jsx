@@ -926,16 +926,19 @@ function App() {
       totalPacks += row.quantity;
       totalStockGrams += row.stockGrams;
 
-      addToMap(brandStock, row.brand, row.quantity, row.stockGrams);
-
-      row.tags.forEach((tag) => {
-        addToMap(tagStock, tag, row.quantity, row.stockGrams);
-      });
+      // Топы брендов и тегов считаются ниже по общему закупленному объёму,
+      // а не только по текущему остатку.
     });
 
     usageRows.forEach((row) => {
       totalPurchasedGrams += row.purchasedGrams;
       totalUsedGrams += row.usedGrams;
+
+      addToMap(brandStock, row.brand, 0, row.purchasedGrams);
+
+      row.tags.forEach((tag) => {
+        addToMap(tagStock, tag, 0, row.purchasedGrams);
+      });
     });
 
     return {
@@ -1173,7 +1176,7 @@ function App() {
 
           <section className="analytics-sections">
             <article className="analytics-panel">
-              <h2>Топ брендов по остатку</h2>
+              <h2>Топ брендов по общему количеству</h2>
               {analyticsData.topBrandStock.map((item) => (
                 <div className="analytics-row" key={item.name}>
                   <span>{item.name}</span>
@@ -1183,7 +1186,7 @@ function App() {
             </article>
 
             <article className="analytics-panel">
-              <h2>Топ тегов по остатку</h2>
+              <h2>Топ тегов по общему количеству</h2>
               {analyticsData.topTagStock.map((item) => (
                 <div className="analytics-row" key={item.name}>
                   <span>#{item.name}</span>
