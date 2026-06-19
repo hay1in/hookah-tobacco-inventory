@@ -1048,6 +1048,94 @@ function App() {
     used: "Использовано за период",
   }[analyticsFilter];
 
+
+  const getSpecificTags = (flavor) => {
+    const mainTagSet = new Set(quickTags.map((tag) => tag.toLowerCase()));
+
+    return (flavor.tags || [])
+      .map((tag) => String(tag).trim())
+      .filter(Boolean)
+      .filter((tag) => !mainTagSet.has(tag.toLowerCase()));
+  };
+
+  const getAnalogFlavors = (targetFlavor) => {
+    const targetSpecificTags = getSpecificTags(targetFlavor).map((tag) =>
+      tag.toLowerCase()
+    );
+
+    if (targetSpecificTags.length === 0) {
+      return [];
+    }
+
+    return flavors
+      .filter((flavor) => {
+        if (flavor.id === targetFlavor.id || flavor.archived) {
+          return false;
+        }
+
+        const flavorSpecificTags = getSpecificTags(flavor).map((tag) =>
+          tag.toLowerCase()
+        );
+
+        return flavorSpecificTags.some((tag) =>
+          targetSpecificTags.includes(tag)
+        );
+      })
+      .map((flavor) => {
+        const flavorSpecificTags = getSpecificTags(flavor);
+
+        const matchedTags = flavorSpecificTags.filter((tag) =>
+          targetSpecificTags.includes(tag.toLowerCase())
+        );
+
+        return {
+          flavor,
+          matchedTags,
+          totalQuantity: getTotalQuantity(flavor.packs || []),
+        };
+      })
+      .sort((a, b) => {
+        if (b.matchedTags.length !== a.matchedTags.length) {
+          return b.matchedTags.length - a.matchedTags.length;
+        }
+
+        return b.totalQuantity - a.totalQuantity;
+      })
+      .slice(0, 5);
+  };
+
+  const togglePurchaseConfirmed = async (flavor) => {
+    const currentValue = Boolean(
+      flavor.purchaseConfirmed || flavor.purchase_confirmed
+    );
+
+    try {
+      const response = await apiFetch(
+        `/api/flavors/${flavor.id}/purchase-confirmed`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            purchaseConfirmed: !currentValue,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Не удалось изменить подтверждение закупки");
+      }
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(
+        error.message || "Не удалось изменить подтверждение закупки"
+      );
+    }
+  };
+
   if (!isAuthorized) {
     return (
       <div className="app auth-page">
@@ -1550,6 +1638,11 @@ function App() {
                 {purchaseFlavors.map((flavor) => {
                 const total = getTotalQuantity(flavor.packs || []);
                 const status = getStatus(flavor);
+                const specificTags = getSpecificTags(flavor);
+                const analogs = getAnalogFlavors(flavor);
+                const isPurchaseConfirmed = Boolean(
+                  flavor.purchaseConfirmed || flavor.purchase_confirmed
+                );
 
                 return (
                   <div className="purchase-item" key={flavor.id}>
@@ -1559,10 +1652,67 @@ function App() {
                       <p className="purchase-meta">
                         Остаток: {total} пач.
                       </p>
+
+                      {isPurchaseConfirmed && (
+                        <p className="purchase-confirmed-badge">
+                          Закупка подтверждена
+                        </p>
+                      )}
+
+                      {specificTags.length > 0 && (
+                        <div className="purchase-specific-tags">
+                          <span>Ищем аналоги по:</span>
+                          {specificTags.map((tag) => (
+                            <strong key={tag}>#{tag}</strong>
+                          ))}
+                        </div>
+                      )}
+
+                      {analogs.length > 0 && (
+                        <div className="purchase-analogs">
+                          <p>Аналоги:</p>
+
+                          {analogs.map(({ flavor: analog, matchedTags, totalQuantity }) => (
+                            <div className="purchase-analog-item" key={analog.id}>
+                              <span>
+                                {analog.brand} — {analog.name}
+                              </span>
+
+                              <small>
+                                Остаток: {totalQuantity} пач. ·{" "}
+                                {matchedTags.map((tag) => `#${tag}`).join(", ")}
+                              </small>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {specificTags.length > 0 && analogs.length === 0 && (
+                        <p className="purchase-no-analogs">
+                          Аналоги по специфичным тегам не найдены
+                        </p>
+                      )}
                     </div>
 
                     <div className="purchase-actions">
                       <span className={status.className}>{status.text}</span>
+
+                      {!isDemoMode && (
+                        <button onClick={() => togglePurchaseConfirmed(flavor)}>
+                          {isPurchaseConfirmed
+                            ? "Снять подтверждение"
+                            : "Подтвердить закупку"}
+                        </button>
+                      )}
+
+                      {!isDemoMode && (
+                        <button
+                          className="danger"
+                          onClick={() => archiveFlavor(flavor.id)}
+                        >
+                          В архив
+                        </button>
+                      )}
 
                       {!isDemoMode && (
                         <button onClick={() => startSupplyForFlavor(flavor)}>

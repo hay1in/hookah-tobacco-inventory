@@ -186,11 +186,17 @@ app.get("/", (req, res) => {
 });
 
 
+
 app.get("/api/flavors", async (req, res) => {
   try {
     await pool.query(`
       ALTER TABLE flavors
       ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
     `);
 
     const result = await pool.query(`
@@ -203,6 +209,7 @@ app.get("/api/flavors", async (req, res) => {
         min_stock AS "minStock",
         archived,
         low_stock AS "lowStock",
+        purchase_confirmed AS "purchaseConfirmed",
         created_at AS "createdAt",
         updated_at AS "updatedAt"
       FROM flavors
@@ -215,7 +222,6 @@ app.get("/api/flavors", async (req, res) => {
     res.status(500).json({ message: "Не удалось получить вкусы" });
   }
 });
-
 
 app.post("/api/flavors/supply", async (req, res) => {
   const { brand, name, weight, quantity, tags = [], minStock = 0 } = req.body;
@@ -711,6 +717,37 @@ app.put("/api/flavors/:id", async (req, res) => {
 });
 
 
+
+
+app.patch("/api/flavors/:id/purchase-confirmed", async (req, res) => {
+  const { purchaseConfirmed } = req.body;
+
+  try {
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    const result = await pool.query(
+      `
+        UPDATE flavors
+        SET purchase_confirmed = $1, updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `,
+      [Boolean(purchaseConfirmed), req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Вкус не найден" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Purchase confirm error:", error);
+    res.status(500).json({ message: "Не удалось изменить подтверждение закупки" });
+  }
+});
 
 app.patch("/api/flavors/:id/low-stock", async (req, res) => {
   const { lowStock } = req.body;

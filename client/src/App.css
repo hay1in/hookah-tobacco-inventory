@@ -1001,3 +1001,79 @@ h1 {
     width: 100%;
   }
 }
+
+.purchase-confirmed-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #ffd39d;
+  color: #211b18;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.purchase-specific-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  color: #7a563f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.purchase-specific-tags strong {
+  background: #ead4bd;
+  color: #2a1d16;
+  border: 1px solid #c49a72;
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+
+.purchase-analogs {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 247, 237, 0.72);
+  border: 1px solid rgba(196, 154, 114, 0.36);
+}
+
+.purchase-analogs p {
+  margin: 0 0 8px;
+  color: #5f422f;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.purchase-analog-item {
+  display: grid;
+  gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(122, 86, 63, 0.14);
+}
+
+.purchase-analog-item:last-child {
+  border-bottom: none;
+}
+
+.purchase-analog-item span {
+  color: #211b18;
+  font-weight: 900;
+}
+
+.purchase-analog-item small {
+  color: #7a563f;
+  font-weight: 800;
+}
+
+.purchase-no-analogs {
+  margin-top: 10px;
+  color: #8a6247;
+  font-size: 12px;
+  font-weight: 850;
+}
