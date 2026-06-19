@@ -531,8 +531,9 @@ app.patch("/api/flavors/:id/decrease", async (req, res) => {
       pack.purchasedQuantity ?? pack.purchased_quantity ?? currentQuantity
     );
 
-    pack.purchasedQuantity = currentPurchasedQuantity;
+    pack.purchasedQuantity = Math.max(currentPurchasedQuantity, currentQuantity);
     pack.quantity = Math.max(currentQuantity - 1, 0);
+
     delete pack.purchased_quantity;
 
     const result = await pool.query(
@@ -551,7 +552,6 @@ app.patch("/api/flavors/:id/decrease", async (req, res) => {
     res.status(500).json({ message: "Не удалось списать пачку" });
   }
 });
-
 
 app.patch("/api/flavors/:id/clear", async (req, res) => {
   try {
@@ -576,7 +576,7 @@ app.patch("/api/flavors/:id/clear", async (req, res) => {
       return {
         ...pack,
         quantity: 0,
-        purchasedQuantity: currentPurchasedQuantity,
+        purchasedQuantity: Math.max(currentPurchasedQuantity, currentQuantity),
       };
     });
 

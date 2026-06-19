@@ -907,8 +907,8 @@ function App() {
 
     const usageRows = flavors.map(buildFlavorAnalyticsRow);
 
-    const brandStock = new Map();
-    const tagStock = new Map();
+    const brandTotal = new Map();
+    const tagTotal = new Map();
 
     let totalPacks = 0;
     let totalStockGrams = 0;
@@ -932,19 +932,16 @@ function App() {
 
       totalPacks += row.quantity;
       totalStockGrams += row.stockGrams;
-
-      // Топы брендов и тегов считаются ниже по общему закупленному объёму,
-      // а не только по текущему остатку.
     });
 
     usageRows.forEach((row) => {
       totalPurchasedGrams += row.purchasedGrams;
       totalUsedGrams += row.usedGrams;
 
-      addToMap(brandStock, row.brand, row.purchasedPacks, row.purchasedPacks);
+      addToMap(brandTotal, row.brand, row.purchasedPacks, row.purchasedPacks);
 
       row.tags.forEach((tag) => {
-        addToMap(tagStock, tag, row.purchasedPacks, row.purchasedPacks);
+        addToMap(tagTotal, tag, row.purchasedPacks, row.purchasedPacks);
       });
     });
 
@@ -957,8 +954,8 @@ function App() {
       totalStockGrams,
       totalPurchasedGrams,
       totalUsedGrams,
-      topBrandStock: mapToTop(brandStock),
-      topTagStock: mapToTop(tagStock),
+      topBrandStock: mapToTop(brandTotal),
+      topTagStock: mapToTop(tagTotal),
       activeRows,
       usageRows,
     };
@@ -991,14 +988,14 @@ function App() {
 
     if (analyticsFilter === "purchased") {
       return analyticsData.usageRows
-        .filter((row) => row.purchasedGrams > 0)
-        .sort((a, b) => b.purchasedGrams - a.purchasedGrams);
+        .filter((row) => row.purchasedPacks > 0)
+        .sort((a, b) => b.purchasedPacks - a.purchasedPacks);
     }
 
     if (analyticsFilter === "used") {
       return analyticsData.usageRows
-        .filter((row) => row.usedGrams > 0)
-        .sort((a, b) => b.usedGrams - a.usedGrams);
+        .filter((row) => row.usedPacks > 0)
+        .sort((a, b) => b.usedPacks - a.usedPacks);
     }
 
     return analyticsData.activeRows.sort((a, b) =>
@@ -1018,8 +1015,6 @@ function App() {
     purchased: "Закуплено за период",
     used: "Использовано за период",
   }[analyticsFilter];
-
-
 
   if (!isAuthorized) {
     return (
@@ -1231,8 +1226,12 @@ function App() {
                   <div className="analytics-flavor-stats">
                     <span>Остаток: {row.quantity} пач.</span>
                     <span>На полке: {formatWeight(row.stockGrams)}</span>
-                    <span>Закуплено: {formatWeight(row.purchasedGrams)}</span>
-                    <span>Использовано: {formatWeight(row.usedGrams)}</span>
+                    <span>
+                      Закуплено: {row.purchasedPacks} пач. · {formatWeight(row.purchasedGrams)}
+                    </span>
+                    <span>
+                      Использовано: {row.usedPacks} пач. · {formatWeight(row.usedGrams)}
+                    </span>
                   </div>
                 </div>
               ))}
