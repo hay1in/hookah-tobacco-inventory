@@ -496,6 +496,38 @@ function App() {
   };
 
 
+
+  const clearDatabase = async () => {
+    const confirmation = window.prompt(
+      "Это полностью очистит базу вкусов. Для подтверждения напиши: ОЧИСТИТЬ"
+    );
+
+    if (confirmation !== "ОЧИСТИТЬ") {
+      return;
+    }
+
+    try {
+      const response = await apiFetch("/api/admin/clear-database", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Не удалось очистить базу");
+      }
+
+      setFlavors([]);
+      setSearchText("");
+      setSelectedTag("all");
+      setStatusFilter("all");
+
+      window.alert("База очищена. Теперь можно загружать историю закупа.");
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось очистить базу");
+    }
+  };
+
   const exportToExcel = () => {
     const rows = flavors.flatMap((flavor) => {
       const packs =
@@ -1093,6 +1125,10 @@ function App() {
             onClick={() => setCurrentView("analytics")}
           >
             Аналитика
+          </button>
+
+          <button className="danger-top-button" onClick={clearDatabase}>
+            Очистить базу
           </button>
 
           <button className="secondary-button" onClick={exportToExcel}>

@@ -151,6 +151,20 @@ async function getFlavorById(id) {
   return normalizeFlavor(result.rows[0]);
 }
 
+
+app.delete("/api/admin/clear-database", async (req, res) => {
+  try {
+    await pool.query("TRUNCATE TABLE flavors RESTART IDENTITY");
+
+    res.json({
+      message: "База данных очищена",
+    });
+  } catch (error) {
+    console.error("Clear database error:", error);
+    res.status(500).json({ message: "Не удалось очистить базу данных" });
+  }
+});
+
 app.get("/", (req, res) => {
   res.json({
     message: "Hookah Tobacco Inventory API is running",

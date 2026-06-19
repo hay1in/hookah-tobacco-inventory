@@ -667,3 +667,17 @@ h1 {
     text-align: left;
   }
 }
+
+.danger-top-button {
+  border: 1px solid rgba(255, 194, 194, 0.55);
+  background: rgba(150, 40, 40, 0.72);
+  color: #fff7ed;
+  border-radius: 999px;
+  padding: 12px 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.danger-top-button:hover {
+  background: rgba(180, 48, 48, 0.9);
+}
