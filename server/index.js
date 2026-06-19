@@ -171,15 +171,34 @@ app.get("/", (req, res) => {
   });
 });
 
+
 app.get("/api/flavors", async (req, res) => {
   try {
-    const flavors = await getAllFlavors();
-    res.json(flavors);
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    const result = await pool.query(`
+      SELECT
+        id,
+        brand,
+        name,
+        packs,
+        tags,
+        min_stock AS "minStock",
+        archived,
+        low_stock AS "lowStock",
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM flavors
+      ORDER BY brand ASC, name ASC
+    `);
+
+    res.json(result.rows);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Не удалось получить вкусы",
-    });
+    console.error("Get flavors error:", error);
+    res.status(500).json({ message: "Не удалось получить вкусы" });
   }
 });
 
@@ -626,6 +645,11 @@ app.patch("/api/flavors/:id/low-stock", async (req, res) => {
   const { lowStock } = req.body;
 
   try {
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
     const result = await pool.query(
       `
         UPDATE flavors
