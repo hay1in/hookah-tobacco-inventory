@@ -111,7 +111,7 @@ function App() {
 
   const refreshFlavors = async () => {
     try {
-      const response = await apiFetch("/api/flavors");
+      const response = await apiFetch(`/api/flavors?ts=${Date.now()}`);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -724,6 +724,11 @@ function App() {
 
       await refreshFlavors();
 
+      setSearchText("");
+      setSelectedTag("all");
+      setStatusFilter("all");
+      setCurrentView("inventory");
+
       window.alert(
         `Excel импортирован. Обновлено вкусов: ${result.importedCount}`
       );
@@ -938,10 +943,10 @@ function App() {
       totalPurchasedGrams += row.purchasedGrams;
       totalUsedGrams += row.usedGrams;
 
-      addToMap(brandTotal, row.brand, row.purchasedPacks, row.purchasedPacks);
+      addToMap(brandTotal, row.brand, row.purchasedPacks, row.purchasedGrams);
 
       row.tags.forEach((tag) => {
-        addToMap(tagTotal, tag, row.purchasedPacks, row.purchasedPacks);
+        addToMap(tagTotal, tag, row.purchasedPacks, row.purchasedGrams);
       });
     });
 
@@ -1178,21 +1183,21 @@ function App() {
 
           <section className="analytics-sections">
             <article className="analytics-panel">
-              <h2>Топ брендов по общему количеству</h2>
+              <h2>Топ брендов по общему весу</h2>
               {analyticsData.topBrandStock.map((item) => (
                 <div className="analytics-row" key={item.name}>
                   <span>{item.name}</span>
-                  <strong>{item.packs} пач.</strong>
+                  <strong>{formatWeight(item.grams)}</strong>
                 </div>
               ))}
             </article>
 
             <article className="analytics-panel">
-              <h2>Топ тегов по общему количеству</h2>
+              <h2>Топ тегов по общему весу</h2>
               {analyticsData.topTagStock.map((item) => (
                 <div className="analytics-row" key={item.name}>
                   <span>#{item.name}</span>
-                  <strong>{item.packs} пач.</strong>
+                  <strong>{formatWeight(item.grams)}</strong>
                 </div>
               ))}
             </article>
