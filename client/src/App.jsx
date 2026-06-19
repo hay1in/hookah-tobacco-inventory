@@ -875,9 +875,14 @@ function App() {
     packs.forEach((pack) => {
       const packWeight = parseWeightGrams(pack.weight);
       const quantity = Number(pack.quantity || 0);
-      const purchasedQuantity = Number(
+      const rawPurchasedQuantity = Number(
         pack.purchasedQuantity ?? pack.purchased_quantity ?? quantity
       );
+
+      const purchasedQuantity =
+        Number.isFinite(rawPurchasedQuantity) && rawPurchasedQuantity > 0
+          ? rawPurchasedQuantity
+          : quantity;
 
       const usedQuantity = Math.max(purchasedQuantity - quantity, 0);
 
@@ -993,8 +998,13 @@ function App() {
 
     if (analyticsFilter === "purchased") {
       return analyticsData.usageRows
-        .filter((row) => row.purchasedPacks > 0)
-        .sort((a, b) => b.purchasedPacks - a.purchasedPacks);
+        .filter((row) => row.purchasedPacks > 0 || row.quantity > 0)
+        .sort(
+          (a, b) =>
+            b.purchasedGrams - a.purchasedGrams ||
+            b.purchasedPacks - a.purchasedPacks ||
+            a.brand.localeCompare(b.brand, "ru")
+        );
     }
 
     if (analyticsFilter === "used") {
