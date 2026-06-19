@@ -681,3 +681,32 @@ h1 {
 .danger-top-button:hover {
   background: rgba(180, 48, 48, 0.9);
 }
+
+.purchase-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.collapse-button {
+  border: none;
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: #3a2a22;
+  color: #fff7ed;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.collapse-button:hover {
+  background: #4a362c;
+}
+
+@media (max-width: 700px) {
+  .purchase-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

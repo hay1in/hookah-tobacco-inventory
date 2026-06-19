@@ -733,6 +733,7 @@ function App() {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
+  const [isPurchasePanelOpen, setIsPurchasePanelOpen] = useState(false);
 
   const quickTags = [
     "ягоды",
@@ -1369,7 +1370,7 @@ function App() {
           </section>
         )}
 
-        {purchaseFlavors.length > 0 && (
+        {purchaseFlavors.length > 0 && statusFilter !== "Архив" && (
           <section className="purchase-panel">
             <div className="purchase-panel-top">
               <div>
@@ -1377,11 +1378,21 @@ function App() {
                 <h2>Требуется к закупу</h2>
               </div>
 
-              <span className="purchase-count">{purchaseFlavors.length} поз.</span>
+              <div className="purchase-header-actions">
+                <span className="purchase-count">{purchaseFlavors.length} поз.</span>
+
+                <button
+                  className="collapse-button"
+                  onClick={() => setIsPurchasePanelOpen(!isPurchasePanelOpen)}
+                >
+                  {isPurchasePanelOpen ? "Свернуть" : "Показать"}
+                </button>
+              </div>
             </div>
 
-            <div className="purchase-list">
-              {purchaseFlavors.map((flavor) => {
+            {isPurchasePanelOpen && (
+              <div className="purchase-list">
+                {purchaseFlavors.map((flavor) => {
                 const total = getTotalQuantity(flavor.packs || []);
                 const status = getStatus(flavor);
 
@@ -1404,8 +1415,9 @@ function App() {
                     </div>
                   </div>
                 );
-              })}
-            </div>
+                })}
+              </div>
+            )}
           </section>
         )}
 
