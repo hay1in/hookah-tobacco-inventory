@@ -202,33 +202,26 @@ app.get("/api/flavors", async (req, res) => {
   }
 });
 
+
 app.post("/api/flavors/supply", async (req, res) => {
+  const { brand, name, weight, quantity, tags = [], minStock = 0 } = req.body;
+
+  const cleanBrand = String(brand || "").trim();
+  const cleanName = String(name || "").trim();
+  const cleanWeight = String(weight || "").trim();
+  const cleanQuantity = Number(quantity || 0);
+
+  if (!cleanBrand || !cleanName || !cleanWeight || cleanQuantity <= 0) {
+    return res.status(400).json({ message: "Заполните бренд, вкус, фасовку и количество" });
+  }
+
   try {
-    const { brand, name, weight, quantity, tags, minStock } = req.body;
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
 
-    if (!brand || !name || !weight || !quantity) {
-      return res.status(400).json({
-        message: "Бренд, вкус, фасовка и количество обязательны",
-      });
-    }
-
-    const normalizedBrand = String(brand).trim();
-    const normalizedName = String(name).trim();
-    const normalizedWeight = String(weight).trim();
-    const parsedQuantity = Number(quantity);
-    const parsedMinStock = Number(minStock) || 1;
-
-    if (parsedQuantity <= 0) {
-      return res.status(400).json({
-        message: "Количество должно быть больше нуля",
-      });
-    }
-
-    const incomingTags = Array.isArray(tags)
-      ? tags.map((tag) => String(tag).trim()).filter(Boolean)
-      : [];
-
-    const existingResult = await pool.query(
+    const existingFlavor = await pool.query(
       `
         SELECT *
         FROM flavors
@@ -236,88 +229,95 @@ app.post("/api/flavors/supply", async (req, res) => {
           AND LOWER(name) = LOWER($2)
         LIMIT 1
       `,
-      [normalizedBrand, normalizedName]
+      [cleanBrand, cleanName]
     );
 
-    if (existingResult.rows.length === 0) {
-      const packs = [
-        {
-          weight: normalizedWeight,
-          quantity: parsedQuantity,
-        },
-      ];
+    const cleanTags = Array.isArray(tags)
+      ? tags.map((tag) => String(tag).trim()).filter(Boolean)
+      : String(tags)
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
 
-      const insertResult = await pool.query(
+    if (existingFlavor.rows.length > 0) {
+      const flavor = existingFlavor.rows[0];
+      const packs = Array.isArray(flavor.packs) ? flavor.packs : [];
+      const existingPack = packs.find(
+        (pack) => String(pack.weight).toLowerCase() === cleanWeight.toLowerCase()
+      );
+
+      if (existingPack) {
+        const currentQuantity = Number(existingPack.quantity || 0);
+        const currentPurchasedQuantity = Number(
+          existingPack.purchasedQuantity ??
+            existingPack.purchased_quantity ??
+            currentQuantity
+        );
+
+        existingPack.quantity = currentQuantity + cleanQuantity;
+        existingPack.purchasedQuantity = currentPurchasedQuantity + cleanQuantity;
+        delete existingPack.purchased_quantity;
+      } else {
+        packs.push({
+          weight: cleanWeight,
+          quantity: cleanQuantity,
+          purchasedQuantity: cleanQuantity,
+        });
+      }
+
+      const mergedTags = Array.from(
+        new Set([...(flavor.tags || []), ...cleanTags].map((tag) => String(tag).trim()).filter(Boolean))
+      );
+
+      const result = await pool.query(
         `
-          INSERT INTO flavors (brand, name, packs, tags, min_stock, archived)
-          VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, false)
+          UPDATE flavors
+          SET packs = $1,
+              tags = $2,
+              min_stock = $3,
+              archived = FALSE,
+              updated_at = NOW()
+          WHERE id = $4
           RETURNING *
         `,
         [
-          normalizedBrand,
-          normalizedName,
           JSON.stringify(packs),
-          JSON.stringify(incomingTags),
-          parsedMinStock,
+          JSON.stringify(mergedTags),
+          Number(minStock || 0),
+          flavor.id,
         ]
       );
 
-      return res.status(201).json(normalizeFlavor(insertResult.rows[0]));
+      return res.status(200).json(result.rows[0]);
     }
 
-    const existingFlavor = normalizeFlavor(existingResult.rows[0]);
-    const packs = [...existingFlavor.packs];
-
-    const existingPackIndex = packs.findIndex(
-      (pack) => pack.weight.toLowerCase() === normalizedWeight.toLowerCase()
-    );
-
-    if (existingPackIndex === -1) {
-      packs.push({
-        weight: normalizedWeight,
-        quantity: parsedQuantity,
-      });
-    } else {
-      packs[existingPackIndex] = {
-        ...packs[existingPackIndex],
-        quantity: Number(packs[existingPackIndex].quantity) + parsedQuantity,
-      };
-    }
-
-    const mergedTags = Array.from(
-      new Set([...existingFlavor.tags, ...incomingTags])
-    );
-
-    const updateResult = await pool.query(
+    const result = await pool.query(
       `
-        UPDATE flavors
-        SET packs = $1::jsonb,
-            tags = $2::jsonb,
-            min_stock = $3,
-            archived = false,
-            updated_at = NOW()
-        WHERE id = $4
+        INSERT INTO flavors (brand, name, packs, tags, min_stock, archived, low_stock)
+        VALUES ($1, $2, $3, $4, $5, FALSE, FALSE)
         RETURNING *
       `,
       [
-        JSON.stringify(packs),
-        JSON.stringify(mergedTags),
-        parsedMinStock,
-        existingFlavor.id,
+        cleanBrand,
+        cleanName,
+        JSON.stringify([
+          {
+            weight: cleanWeight,
+            quantity: cleanQuantity,
+            purchasedQuantity: cleanQuantity,
+          },
+        ]),
+        JSON.stringify(cleanTags),
+        Number(minStock || 0),
       ]
     );
 
-    res.json(normalizeFlavor(updateResult.rows[0]));
+    res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Не удалось добавить поставку",
-    });
+    console.error("Supply error:", error);
+    res.status(500).json({ message: "Не удалось добавить поставку" });
   }
 });
-
-
-
 
 app.post("/api/flavors/import", async (req, res) => {
   const { rows } = req.body;
@@ -492,84 +492,94 @@ app.post("/api/flavors/import", async (req, res) => {
   }
 });
 
+
 app.patch("/api/flavors/:id/decrease", async (req, res) => {
   try {
-    const flavorId = Number(req.params.id);
-    const flavor = await getFlavorById(flavorId);
+    const flavorResult = await pool.query(
+      "SELECT * FROM flavors WHERE id = $1",
+      [req.params.id]
+    );
 
-    if (!flavor) {
-      return res.status(404).json({
-        message: "Вкус не найден",
-      });
+    if (flavorResult.rows.length === 0) {
+      return res.status(404).json({ message: "Вкус не найден" });
     }
 
-    const packs = [...flavor.packs];
-    const packIndex = packs.findIndex((pack) => Number(pack.quantity) > 0);
+    const flavor = flavorResult.rows[0];
+    const packs = Array.isArray(flavor.packs) ? flavor.packs : [];
+    const pack = packs.find((item) => Number(item.quantity || 0) > 0);
 
-    if (packIndex === -1) {
-      return res.status(400).json({
-        message: "У этого вкуса уже нет пачек",
-      });
+    if (!pack) {
+      return res.status(400).json({ message: "Нечего списывать" });
     }
 
-    packs[packIndex] = {
-      ...packs[packIndex],
-      quantity: Number(packs[packIndex].quantity) - 1,
-    };
+    const currentQuantity = Number(pack.quantity || 0);
+    const currentPurchasedQuantity = Number(
+      pack.purchasedQuantity ?? pack.purchased_quantity ?? currentQuantity
+    );
+
+    pack.purchasedQuantity = currentPurchasedQuantity;
+    pack.quantity = Math.max(currentQuantity - 1, 0);
+    delete pack.purchased_quantity;
 
     const result = await pool.query(
       `
         UPDATE flavors
-        SET packs = $1::jsonb,
-            updated_at = NOW()
+        SET packs = $1, updated_at = NOW()
         WHERE id = $2
         RETURNING *
       `,
-      [JSON.stringify(packs), flavorId]
+      [JSON.stringify(packs), req.params.id]
     );
 
-    res.json(normalizeFlavor(result.rows[0]));
+    res.json(result.rows[0]);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Не удалось списать пачку",
-    });
+    console.error("Decrease flavor error:", error);
+    res.status(500).json({ message: "Не удалось списать пачку" });
   }
 });
 
+
 app.patch("/api/flavors/:id/clear", async (req, res) => {
   try {
-    const flavorId = Number(req.params.id);
-    const flavor = await getFlavorById(flavorId);
+    const flavorResult = await pool.query(
+      "SELECT * FROM flavors WHERE id = $1",
+      [req.params.id]
+    );
 
-    if (!flavor) {
-      return res.status(404).json({
-        message: "Вкус не найден",
-      });
+    if (flavorResult.rows.length === 0) {
+      return res.status(404).json({ message: "Вкус не найден" });
     }
 
-    const packs = flavor.packs.map((pack) => ({
-      ...pack,
-      quantity: 0,
-    }));
+    const flavor = flavorResult.rows[0];
+    const packs = Array.isArray(flavor.packs) ? flavor.packs : [];
+
+    const clearedPacks = packs.map((pack) => {
+      const currentQuantity = Number(pack.quantity || 0);
+      const currentPurchasedQuantity = Number(
+        pack.purchasedQuantity ?? pack.purchased_quantity ?? currentQuantity
+      );
+
+      return {
+        ...pack,
+        quantity: 0,
+        purchasedQuantity: currentPurchasedQuantity,
+      };
+    });
 
     const result = await pool.query(
       `
         UPDATE flavors
-        SET packs = $1::jsonb,
-            updated_at = NOW()
+        SET packs = $1, updated_at = NOW()
         WHERE id = $2
         RETURNING *
       `,
-      [JSON.stringify(packs), flavorId]
+      [JSON.stringify(clearedPacks), req.params.id]
     );
 
-    res.json(normalizeFlavor(result.rows[0]));
+    res.json(result.rows[0]);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Не удалось выбить вкус",
-    });
+    console.error("Clear flavor error:", error);
+    res.status(500).json({ message: "Не удалось выбить вкус" });
   }
 });
 

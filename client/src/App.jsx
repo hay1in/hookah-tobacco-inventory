@@ -850,12 +850,12 @@ function App() {
 
   const analyticsData = (() => {
     const activeFlavors = flavors.filter((flavor) => !flavor.archived);
+    const allFlavorsForUsage = flavors;
 
     const brandStock = new Map();
     const tagStock = new Map();
     const brandUsed = new Map();
     const tagUsed = new Map();
-    const brandPurchased = new Map();
     const tagPurchased = new Map();
 
     let totalPacks = 0;
@@ -886,27 +886,41 @@ function App() {
       packs.forEach((pack) => {
         const packWeight = parseWeightGrams(pack.weight);
         const quantity = Number(pack.quantity || 0);
+        const stockGrams = quantity * packWeight;
+
+        totalPacks += quantity;
+        totalStockGrams += stockGrams;
+
+        addToMap(brandStock, flavor.brand, quantity, stockGrams);
+
+        tags.forEach((tag) => {
+          addToMap(tagStock, tag, quantity, stockGrams);
+        });
+      });
+    });
+
+    allFlavorsForUsage.forEach((flavor) => {
+      const packs = flavor.packs || [];
+      const tags = flavor.tags || [];
+
+      packs.forEach((pack) => {
+        const packWeight = parseWeightGrams(pack.weight);
+        const quantity = Number(pack.quantity || 0);
         const purchasedQuantity = Number(
           pack.purchasedQuantity ?? pack.purchased_quantity ?? quantity
         );
 
         const usedQuantity = Math.max(purchasedQuantity - quantity, 0);
 
-        const stockGrams = quantity * packWeight;
         const purchasedGrams = purchasedQuantity * packWeight;
         const usedGrams = usedQuantity * packWeight;
 
-        totalPacks += quantity;
-        totalStockGrams += stockGrams;
         totalPurchasedGrams += purchasedGrams;
         totalUsedGrams += usedGrams;
 
-        addToMap(brandStock, flavor.brand, quantity, stockGrams);
-        addToMap(brandPurchased, flavor.brand, purchasedQuantity, purchasedGrams);
         addToMap(brandUsed, flavor.brand, usedQuantity, usedGrams);
 
         tags.forEach((tag) => {
-          addToMap(tagStock, tag, quantity, stockGrams);
           addToMap(tagPurchased, tag, purchasedQuantity, purchasedGrams);
           addToMap(tagUsed, tag, usedQuantity, usedGrams);
         });
@@ -930,6 +944,7 @@ function App() {
               : 0,
         };
       })
+      .filter((item) => item.purchasedGrams > 0)
       .sort((a, b) => b.percent - a.percent)
       .slice(0, 8);
 
