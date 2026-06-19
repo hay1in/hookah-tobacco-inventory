@@ -385,6 +385,11 @@ app.post("/api/flavors/import", async (req, res) => {
   const client = await pool.connect();
 
   try {
+    await client.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
     await client.query("BEGIN");
 
     let importedCount = 0;
@@ -460,7 +465,9 @@ app.post("/api/flavors/import", async (req, res) => {
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Import flavors error:", error);
-    res.status(500).json({ message: "Не удалось импортировать Excel" });
+    res.status(500).json({
+      message: `Не удалось импортировать Excel: ${error.message}`,
+    });
   } finally {
     client.release();
   }
