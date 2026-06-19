@@ -698,8 +698,20 @@ function App() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || "Не удалось импортировать Excel");
+        const errorText = await response.text().catch(() => "");
+        let errorData = null;
+
+        try {
+          errorData = errorText ? JSON.parse(errorText) : null;
+        } catch {
+          errorData = null;
+        }
+
+        throw new Error(
+          errorData?.message ||
+            errorText ||
+            "Не удалось импортировать Excel"
+        );
       }
 
       const result = await response.json();
