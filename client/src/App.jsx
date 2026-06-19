@@ -6,6 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 
 function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [currentView, setCurrentView] = useState("inventory");
   const [adminPassword, setAdminPassword] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
@@ -507,6 +508,7 @@ function App() {
         "Вкус": flavor.name || "",
         "Фасовка": pack.weight || "",
         "Количество": Number(pack.quantity || 0),
+        "Закуплено": Number(pack.purchasedQuantity ?? pack.purchased_quantity ?? pack.quantity ?? 0),
         "Теги": (flavor.tags || []).join(", "),
         "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock) ? "да" : "нет",
         "Архив": flavor.archived ? "да" : "нет",
@@ -608,6 +610,17 @@ function App() {
             0
           );
 
+          const purchasedQuantity = parseExcelNumber(
+            getExcelValue(row, [
+              "Закуплено",
+              "Закуп",
+              "Поступило",
+              "purchasedQuantity",
+              "Purchased",
+            ]),
+            quantity
+          );
+
           const tags = String(
             getExcelValue(row, ["Теги", "tags", "Tags"])
           ).trim();
@@ -630,6 +643,7 @@ function App() {
             name,
             weight,
             quantity,
+            purchasedQuantity,
             tags,
             lowStock,
             archived,
@@ -731,6 +745,167 @@ function App() {
     return total === 0 || isLowStock;
   });
 
+
+  const parseWeightGrams = (weight) => {
+    const normalizedWeight = String(weight || "")
+      .toLowerCase()
+      .replace(",", ".")
+      .trim();
+
+    const numberMatch = normalizedWeight.match(/\d+(\.\d+)?/);
+    const number = numberMatch ? Number(numberMatch[0]) : 0;
+
+    if (!number) {
+      return 0;
+    }
+
+    if (normalizedWeight.includes("кг") || normalizedWeight.includes("kg")) {
+      return number * 1000;
+    }
+
+    return number;
+  };
+
+  const formatWeight = (grams) => {
+    if (!grams) {
+      return "0 г";
+    }
+
+    if (grams >= 1000) {
+      return `${(grams / 1000).toFixed(1).replace(".", ",")} кг`;
+    }
+
+    return `${Math.round(grams)} г`;
+  };
+
+  const addToMap = (map, key, packs, grams) => {
+    if (!key) {
+      return;
+    }
+
+    const previous = map.get(key) || {
+      packs: 0,
+      grams: 0,
+    };
+
+    map.set(key, {
+      packs: previous.packs + packs,
+      grams: previous.grams + grams,
+    });
+  };
+
+  const mapToTop = (map, limit = 8) => {
+    return Array.from(map.entries())
+      .map(([name, value]) => ({
+        name,
+        ...value,
+      }))
+      .sort((a, b) => b.grams - a.grams)
+      .slice(0, limit);
+  };
+
+  const analyticsData = (() => {
+    const activeFlavors = flavors.filter((flavor) => !flavor.archived);
+
+    const brandStock = new Map();
+    const tagStock = new Map();
+    const brandUsed = new Map();
+    const tagUsed = new Map();
+    const brandPurchased = new Map();
+    const tagPurchased = new Map();
+
+    let totalPacks = 0;
+    let totalStockGrams = 0;
+    let totalPurchasedGrams = 0;
+    let totalUsedGrams = 0;
+
+    let inStockCount = 0;
+    let absentCount = 0;
+    let lowStockCount = 0;
+
+    activeFlavors.forEach((flavor) => {
+      const packs = flavor.packs || [];
+      const tags = flavor.tags || [];
+      const totalQuantity = getTotalQuantity(packs);
+      const isLowStock = Boolean(flavor.lowStock || flavor.low_stock);
+
+      if (totalQuantity > 0) {
+        inStockCount += 1;
+      } else {
+        absentCount += 1;
+      }
+
+      if (isLowStock) {
+        lowStockCount += 1;
+      }
+
+      packs.forEach((pack) => {
+        const packWeight = parseWeightGrams(pack.weight);
+        const quantity = Number(pack.quantity || 0);
+        const purchasedQuantity = Number(
+          pack.purchasedQuantity ?? pack.purchased_quantity ?? quantity
+        );
+
+        const usedQuantity = Math.max(purchasedQuantity - quantity, 0);
+
+        const stockGrams = quantity * packWeight;
+        const purchasedGrams = purchasedQuantity * packWeight;
+        const usedGrams = usedQuantity * packWeight;
+
+        totalPacks += quantity;
+        totalStockGrams += stockGrams;
+        totalPurchasedGrams += purchasedGrams;
+        totalUsedGrams += usedGrams;
+
+        addToMap(brandStock, flavor.brand, quantity, stockGrams);
+        addToMap(brandPurchased, flavor.brand, purchasedQuantity, purchasedGrams);
+        addToMap(brandUsed, flavor.brand, usedQuantity, usedGrams);
+
+        tags.forEach((tag) => {
+          addToMap(tagStock, tag, quantity, stockGrams);
+          addToMap(tagPurchased, tag, purchasedQuantity, purchasedGrams);
+          addToMap(tagUsed, tag, usedQuantity, usedGrams);
+        });
+      });
+    });
+
+    const tagEfficiency = Array.from(tagPurchased.entries())
+      .map(([name, purchased]) => {
+        const used = tagUsed.get(name) || {
+          packs: 0,
+          grams: 0,
+        };
+
+        return {
+          name,
+          purchasedGrams: purchased.grams,
+          usedGrams: used.grams,
+          percent:
+            purchased.grams > 0
+              ? Math.round((used.grams / purchased.grams) * 100)
+              : 0,
+        };
+      })
+      .sort((a, b) => b.percent - a.percent)
+      .slice(0, 8);
+
+    return {
+      activeFlavorsCount: activeFlavors.length,
+      inStockCount,
+      absentCount,
+      lowStockCount,
+      totalPacks,
+      totalStockGrams,
+      totalPurchasedGrams,
+      totalUsedGrams,
+      topBrandStock: mapToTop(brandStock),
+      topTagStock: mapToTop(tagStock),
+      topBrandUsed: mapToTop(brandUsed),
+      topTagUsed: mapToTop(tagUsed),
+      tagEfficiency,
+    };
+  })();
+
   if (!isAuthorized) {
     return (
       <div className="app auth-page">
@@ -761,6 +936,139 @@ function App() {
     );
   }
 
+
+  if (currentView === "analytics") {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <p className="eyebrow">Hookah Inventory</p>
+            <h1>Аналитика</h1>
+            <p className="subtitle">
+              Остатки, закупка и использование табака по брендам и тегам
+            </p>
+          </div>
+
+          <div className="header-actions">
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("inventory")}
+            >
+              Склад
+            </button>
+
+            <button className="secondary-button" onClick={handleLogout}>
+              Выйти
+            </button>
+          </div>
+        </header>
+
+        <main className="content analytics-page">
+          <section className="analytics-grid">
+            <article className="analytics-card">
+              <span>Вкусов в базе</span>
+              <strong>{analyticsData.activeFlavorsCount}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>В наличии</span>
+              <strong>{analyticsData.inStockCount}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Отсутствует</span>
+              <strong>{analyticsData.absentCount}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Мало осталось</span>
+              <strong>{analyticsData.lowStockCount}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Пачек на полке</span>
+              <strong>{analyticsData.totalPacks}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Вес на полке</span>
+              <strong>{formatWeight(analyticsData.totalStockGrams)}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Закуплено</span>
+              <strong>{formatWeight(analyticsData.totalPurchasedGrams)}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Использовано</span>
+              <strong>{formatWeight(analyticsData.totalUsedGrams)}</strong>
+            </article>
+          </section>
+
+          <section className="analytics-sections">
+            <article className="analytics-panel">
+              <h2>Топ брендов по остатку</h2>
+              {analyticsData.topBrandStock.map((item) => (
+                <div className="analytics-row" key={item.name}>
+                  <span>{item.name}</span>
+                  <strong>{formatWeight(item.grams)}</strong>
+                </div>
+              ))}
+            </article>
+
+            <article className="analytics-panel">
+              <h2>Топ тегов по остатку</h2>
+              {analyticsData.topTagStock.map((item) => (
+                <div className="analytics-row" key={item.name}>
+                  <span>#{item.name}</span>
+                  <strong>{formatWeight(item.grams)}</strong>
+                </div>
+              ))}
+            </article>
+
+            <article className="analytics-panel">
+              <h2>Топ брендов по использованию</h2>
+              {analyticsData.topBrandUsed.map((item) => (
+                <div className="analytics-row" key={item.name}>
+                  <span>{item.name}</span>
+                  <strong>{formatWeight(item.grams)}</strong>
+                </div>
+              ))}
+            </article>
+
+            <article className="analytics-panel">
+              <h2>Топ тегов по использованию</h2>
+              {analyticsData.topTagUsed.map((item) => (
+                <div className="analytics-row" key={item.name}>
+                  <span>#{item.name}</span>
+                  <strong>{formatWeight(item.grams)}</strong>
+                </div>
+              ))}
+            </article>
+
+            <article className="analytics-panel wide">
+              <h2>Эффективность тегов</h2>
+              <p className="analytics-note">
+                Показывает, какая часть закупленного веса уже использована.
+              </p>
+
+              {analyticsData.tagEfficiency.map((item) => (
+                <div className="analytics-row" key={item.name}>
+                  <span>#{item.name}</span>
+                  <strong>
+                    {item.percent}% · {formatWeight(item.usedGrams)} из{" "}
+                    {formatWeight(item.purchasedGrams)}
+                  </strong>
+                </div>
+              ))}
+            </article>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <header className="header">
@@ -778,6 +1086,13 @@ function App() {
             onClick={() => setIsSupplyFormOpen(true)}
           >
             + Поставка
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={() => setCurrentView("analytics")}
+          >
+            Аналитика
           </button>
 
           <button className="secondary-button" onClick={exportToExcel}>

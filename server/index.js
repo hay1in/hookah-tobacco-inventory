@@ -285,6 +285,7 @@ app.post("/api/flavors/supply", async (req, res) => {
 
 
 
+
 app.post("/api/flavors/import", async (req, res) => {
   const { rows } = req.body;
 
@@ -299,10 +300,23 @@ app.post("/api/flavors/import", async (req, res) => {
     const name = String(row.name || "").trim();
     const weight = String(row.weight || "").trim();
     const quantity = Number(row.quantity || 0);
+    const purchasedQuantity = Number(
+      row.purchasedQuantity === undefined || row.purchasedQuantity === ""
+        ? quantity
+        : row.purchasedQuantity
+    );
     const archived = Boolean(row.archived);
     const lowStock = Boolean(row.lowStock);
 
-    if (!brand || !name || !weight || Number.isNaN(quantity) || quantity < 0) {
+    if (
+      !brand ||
+      !name ||
+      !weight ||
+      Number.isNaN(quantity) ||
+      quantity < 0 ||
+      Number.isNaN(purchasedQuantity) ||
+      purchasedQuantity < 0
+    ) {
       continue;
     }
 
@@ -320,9 +334,15 @@ app.post("/api/flavors/import", async (req, res) => {
     }
 
     const flavor = groupedFlavors.get(key);
-    const previousQuantity = flavor.packsByWeight.get(weight) || 0;
+    const previousPack = flavor.packsByWeight.get(weight) || {
+      quantity: 0,
+      purchasedQuantity: 0,
+    };
 
-    flavor.packsByWeight.set(weight, previousQuantity + quantity);
+    flavor.packsByWeight.set(weight, {
+      quantity: previousPack.quantity + quantity,
+      purchasedQuantity: previousPack.purchasedQuantity + purchasedQuantity,
+    });
 
     if (Array.isArray(row.tags)) {
       row.tags.forEach((tag) => {
@@ -357,9 +377,10 @@ app.post("/api/flavors/import", async (req, res) => {
 
     for (const flavor of groupedFlavors.values()) {
       const packs = Array.from(flavor.packsByWeight.entries()).map(
-        ([weight, quantity]) => ({
+        ([weight, pack]) => ({
           weight,
-          quantity,
+          quantity: pack.quantity,
+          purchasedQuantity: pack.purchasedQuantity,
         })
       );
 

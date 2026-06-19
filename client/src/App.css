@@ -510,3 +510,160 @@ h1 {
   color: #211b18;
   border-color: #fff7ed;
 }
+
+/* Contrast fixes for desktop visibility */
+.header h1 {
+  color: #fff7ed !important;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.22);
+}
+
+.header .subtitle {
+  color: #f4dcc4 !important;
+}
+
+.header .eyebrow {
+  color: #ffd39d !important;
+}
+
+.tag-filter-panel {
+  background: rgba(24, 18, 15, 0.22);
+  border: 1px solid rgba(255, 247, 237, 0.12);
+  border-radius: 22px;
+  padding: 12px;
+}
+
+.tag-filter-button {
+  background: #3a2a22 !important;
+  color: #fff7ed !important;
+  border: 1px solid #8b674c !important;
+  box-shadow: 0 8px 20px rgba(20, 14, 10, 0.16);
+}
+
+.tag-filter-button:hover {
+  background: #4a362c !important;
+  color: #fff7ed !important;
+}
+
+.tag-filter-button.active {
+  background: #ffd39d !important;
+  color: #211b18 !important;
+  border-color: #ffd39d !important;
+}
+
+.flavor-card .tags span {
+  background: #ead4bd !important;
+  color: #2a1d16 !important;
+  border: 1px solid #c49a72 !important;
+}
+
+.supply-panel .tag-suggestion-list button {
+  background: #3a2a22 !important;
+  color: #fff7ed !important;
+  border: 1px solid #8b674c !important;
+}
+
+.analytics-page {
+  display: grid;
+  gap: 22px;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.analytics-card {
+  background: rgba(255, 247, 237, 0.92);
+  border: 1px solid #e1c6a9;
+  border-radius: 22px;
+  padding: 18px;
+  color: #211b18;
+  box-shadow: 0 14px 34px rgba(20, 14, 10, 0.12);
+}
+
+.analytics-card span {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #7a563f;
+  margin-bottom: 8px;
+}
+
+.analytics-card strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.analytics-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.analytics-panel {
+  background: rgba(255, 247, 237, 0.92);
+  border: 1px solid #e1c6a9;
+  border-radius: 24px;
+  padding: 20px;
+  color: #211b18;
+}
+
+.analytics-panel.wide {
+  grid-column: 1 / -1;
+}
+
+.analytics-panel h2 {
+  margin: 0 0 14px;
+  font-size: 20px;
+}
+
+.analytics-note {
+  margin: -4px 0 14px;
+  color: #7a563f;
+  font-weight: 700;
+}
+
+.analytics-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(122, 86, 63, 0.18);
+}
+
+.analytics-row:last-child {
+  border-bottom: none;
+}
+
+.analytics-row span {
+  font-weight: 800;
+}
+
+.analytics-row strong {
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analytics-sections {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-row {
+    flex-direction: column;
+  }
+
+  .analytics-row strong {
+    text-align: left;
+  }
+}
