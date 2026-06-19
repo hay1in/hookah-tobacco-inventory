@@ -10,6 +10,7 @@ app.use(express.json({ limit: "25mb" }));
 
 function requireAdminPassword(req, res, next) {
   const adminPassword = process.env.ADMIN_PASSWORD;
+  const testPassword = process.env.TEST_PASSWORD || "test";
 
   if (!adminPassword) {
     return res.status(500).json({
@@ -19,13 +20,26 @@ function requireAdminPassword(req, res, next) {
 
   const providedPassword = req.headers["x-admin-password"];
 
-  if (providedPassword !== adminPassword) {
-    return res.status(401).json({
-      message: "Неверный пароль",
+  if (providedPassword === adminPassword) {
+    req.accessRole = "admin";
+    return next();
+  }
+
+  if (providedPassword === testPassword) {
+    req.accessRole = "test";
+
+    if (req.method === "GET") {
+      return next();
+    }
+
+    return res.status(403).json({
+      message: "Ознакомительный режим: изменения запрещены",
     });
   }
 
-  next();
+  return res.status(401).json({
+    message: "Неверный пароль",
+  });
 }
 
 app.use("/api", requireAdminPassword);

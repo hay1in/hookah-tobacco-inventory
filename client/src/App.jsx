@@ -9,8 +9,11 @@ function App() {
   const [currentView, setCurrentView] = useState("inventory");
   const [analyticsFilter, setAnalyticsFilter] = useState("all");
   const [adminPassword, setAdminPassword] = useState("");
+  const [accessRole, setAccessRole] = useState("admin");
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
+
+  const isDemoMode = accessRole === "test";
 
   const [flavors, setFlavors] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,6 +86,7 @@ function App() {
       const data = await loadFlavorsWithPassword(trimmedPassword);
 
       setAdminPassword(trimmedPassword);
+      setAccessRole(trimmedPassword === "test" ? "test" : "admin");
       setFlavors(data);
       setIsAuthorized(true);
       setPasswordInput("");
@@ -98,6 +102,7 @@ function App() {
   const handleLogout = () => {
     setIsAuthorized(false);
     setAdminPassword("");
+    setAccessRole("admin");
     setPasswordInput("");
     setFlavors([]);
     setErrorText("");
@@ -1013,7 +1018,7 @@ function App() {
           <p className="eyebrow dark">Hookah Inventory</p>
           <h1>Вход в склад</h1>
           <p className="subtitle dark">
-            Введите пароль, чтобы открыть систему учёта табака
+            Введите пароль, чтобы открыть систему учёта табака. Пароль test откроет ознакомительный режим
           </p>
 
           <form className="auth-form" onSubmit={handleLogin}>
@@ -1047,6 +1052,10 @@ function App() {
             <p className="subtitle">
               Сводка по складу, остаткам и закупленному весу
             </p>
+
+            {isDemoMode && (
+              <p className="demo-badge">Ознакомительный режим</p>
+            )}
           </div>
 
           <div className="header-actions">
@@ -1233,15 +1242,21 @@ function App() {
           <p className="subtitle">
             Отслеживание вкусов, фасовок, остатков и закупки
           </p>
+
+          {isDemoMode && (
+            <p className="demo-badge">Ознакомительный режим</p>
+          )}
         </div>
 
         <div className="header-actions">
-          <button
-            className="primary-button"
-            onClick={() => setIsSupplyFormOpen(true)}
-          >
-            + Поставка
-          </button>
+          {!isDemoMode && (
+            <button
+              className="primary-button"
+              onClick={() => setIsSupplyFormOpen(true)}
+            >
+              + Поставка
+            </button>
+          )}
 
           <button
             className="secondary-button"
@@ -1250,22 +1265,26 @@ function App() {
             Аналитика
           </button>
 
-          <button className="danger-top-button" onClick={clearDatabase}>
-            Очистить базу
-          </button>
+          {!isDemoMode && (
+            <button className="danger-top-button" onClick={clearDatabase}>
+              Очистить базу
+            </button>
+          )}
 
           <button className="secondary-button" onClick={exportToExcel}>
             Экспорт Excel
           </button>
 
-          <label className="secondary-button file-button">
-            Импорт Excel
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={importFromExcel}
-            />
-          </label>
+          {!isDemoMode && (
+            <label className="secondary-button file-button">
+              Импорт Excel
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={importFromExcel}
+              />
+            </label>
+          )}
 
           <button
             className="secondary-button"
@@ -1504,9 +1523,11 @@ function App() {
                     <div className="purchase-actions">
                       <span className={status.className}>{status.text}</span>
 
-                      <button onClick={() => startSupplyForFlavor(flavor)}>
-                        Добавить поставку
-                      </button>
+                      {!isDemoMode && (
+                        <button onClick={() => startSupplyForFlavor(flavor)}>
+                          Добавить поставку
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -1606,7 +1627,8 @@ function App() {
                     ))}
                   </div>
 
-                  <div className="actions">
+                  {!isDemoMode && (
+                    <div className="actions">
                     <button onClick={() => decreasePack(flavor.id)}>
                       −1 пачка
                     </button>
@@ -1637,7 +1659,14 @@ function App() {
                         В архив
                       </button>
                     )}
-                  </div>
+                    </div>
+                  )}
+
+                  {isDemoMode && (
+                    <p className="readonly-note">
+                      Ознакомительный режим: редактирование недоступно
+                    </p>
+                  )}
                 </article>
               );
             })}

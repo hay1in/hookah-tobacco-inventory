@@ -780,3 +780,25 @@ h1 {
     text-align: left;
   }
 }
+
+.demo-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 10px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #ffd39d;
+  color: #211b18;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.readonly-note {
+  margin-top: 14px;
+  color: #7a563f;
+  font-weight: 800;
+  background: #f5e6d5;
+  border: 1px solid #d9b995;
+  border-radius: 14px;
+  padding: 10px 12px;
+}
