@@ -164,6 +164,23 @@ function App() {
     };
   };
 
+  const increasePack = async (flavorId) => {
+    try {
+      const response = await apiFetch(`/api/flavors/${flavorId}/increase`, {
+        method: "PATCH",
+      });
+
+      if (!response.ok) {
+        throw new Error("Не удалось добавить пачку");
+      }
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось добавить пачку");
+    }
+  };
+
   const decreasePack = async (flavorId) => {
     try {
       const response = await apiFetch(`/api/flavors/${flavorId}/decrease`, {
@@ -1653,6 +1670,10 @@ function App() {
 
                   {!isDemoMode && (
                     <div className="actions">
+                    <button onClick={() => increasePack(flavor.id)}>
+                      +1 пачка
+                    </button>
+
                     <button onClick={() => decreasePack(flavor.id)}>
                       −1 пачка
                     </button>

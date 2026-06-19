@@ -507,6 +507,53 @@ app.post("/api/flavors/import", async (req, res) => {
 });
 
 
+app.patch("/api/flavors/:id/increase", async (req, res) => {
+  try {
+    const flavorResult = await pool.query(
+      "SELECT * FROM flavors WHERE id = $1",
+      [req.params.id]
+    );
+
+    if (flavorResult.rows.length === 0) {
+      return res.status(404).json({ message: "Вкус не найден" });
+    }
+
+    const flavor = flavorResult.rows[0];
+    const packs = Array.isArray(flavor.packs) ? flavor.packs : [];
+
+    if (packs.length === 0) {
+      return res.status(400).json({ message: "У вкуса нет фасовок" });
+    }
+
+    const pack = packs[0];
+
+    const currentQuantity = Number(pack.quantity || 0);
+    const currentPurchasedQuantity = Number(
+      pack.purchasedQuantity ?? pack.purchased_quantity ?? currentQuantity
+    );
+
+    pack.quantity = currentQuantity + 1;
+    pack.purchasedQuantity = currentPurchasedQuantity + 1;
+
+    delete pack.purchased_quantity;
+
+    const result = await pool.query(
+      `
+        UPDATE flavors
+        SET packs = $1, archived = FALSE, updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `,
+      [JSON.stringify(packs), req.params.id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Increase flavor error:", error);
+    res.status(500).json({ message: "Не удалось добавить пачку" });
+  }
+});
+
 app.patch("/api/flavors/:id/decrease", async (req, res) => {
   try {
     const flavorResult = await pool.query(
