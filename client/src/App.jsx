@@ -864,6 +864,8 @@ function App() {
     let stockGrams = 0;
     let purchasedGrams = 0;
     let usedGrams = 0;
+    let purchasedPacks = 0;
+    let usedPacks = 0;
 
     packs.forEach((pack) => {
       const packWeight = parseWeightGrams(pack.weight);
@@ -873,6 +875,9 @@ function App() {
       );
 
       const usedQuantity = Math.max(purchasedQuantity - quantity, 0);
+
+      purchasedPacks += purchasedQuantity;
+      usedPacks += usedQuantity;
 
       stockGrams += quantity * packWeight;
       purchasedGrams += purchasedQuantity * packWeight;
@@ -890,6 +895,8 @@ function App() {
       stockGrams,
       purchasedGrams,
       usedGrams,
+      purchasedPacks,
+      usedPacks,
     };
   };
 
@@ -934,10 +941,10 @@ function App() {
       totalPurchasedGrams += row.purchasedGrams;
       totalUsedGrams += row.usedGrams;
 
-      addToMap(brandStock, row.brand, 0, row.purchasedGrams);
+      addToMap(brandStock, row.brand, row.purchasedPacks, row.purchasedPacks);
 
       row.tags.forEach((tag) => {
-        addToMap(tagStock, tag, 0, row.purchasedGrams);
+        addToMap(tagStock, tag, row.purchasedPacks, row.purchasedPacks);
       });
     });
 
@@ -1180,7 +1187,7 @@ function App() {
               {analyticsData.topBrandStock.map((item) => (
                 <div className="analytics-row" key={item.name}>
                   <span>{item.name}</span>
-                  <strong>{formatWeight(item.grams)}</strong>
+                  <strong>{item.packs} пач.</strong>
                 </div>
               ))}
             </article>
@@ -1190,7 +1197,7 @@ function App() {
               {analyticsData.topTagStock.map((item) => (
                 <div className="analytics-row" key={item.name}>
                   <span>#{item.name}</span>
-                  <strong>{formatWeight(item.grams)}</strong>
+                  <strong>{item.packs} пач.</strong>
                 </div>
               ))}
             </article>
