@@ -762,6 +762,7 @@ function App() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
   const [isPurchasePanelOpen, setIsPurchasePanelOpen] = useState(false);
+  const [openBrandName, setOpenBrandName] = useState("");
 
   const quickTags = [
     "ягоды",
@@ -806,6 +807,35 @@ function App() {
 
     return matchesSearch && matchesStatus && matchesTag;
   });
+
+
+  const groupedFlavorsByBrand = Array.from(
+    filteredFlavors.reduce((groups, flavor) => {
+      const brand = flavor.brand || "Без бренда";
+
+      if (!groups.has(brand)) {
+        groups.set(brand, []);
+      }
+
+      groups.get(brand).push(flavor);
+
+      return groups;
+    }, new Map())
+  )
+    .map(([brand, items]) => ({
+      brand,
+      items: items.sort((a, b) => a.name.localeCompare(b.name, "ru")),
+      totalPacks: items.reduce(
+        (sum, flavor) => sum + getTotalQuantity(flavor.packs || []),
+        0
+      ),
+      absentCount: items.filter((flavor) => getTotalQuantity(flavor.packs || []) === 0)
+        .length,
+      lowStockCount: items.filter((flavor) =>
+        Boolean(flavor.lowStock || flavor.low_stock)
+      ).length,
+    }))
+    .sort((a, b) => a.brand.localeCompare(b.brand, "ru"));
 
   const purchaseFlavors = flavors.filter((flavor) => {
     if (flavor.archived) {
@@ -1786,87 +1816,135 @@ function App() {
         )}
 
         {!isLoading && !errorText && filteredFlavors.length > 0 && (
-          <section className="cards-grid">
-            {filteredFlavors.map((flavor) => {
-              const status = getStatus(flavor);
+          <section className="brand-accordion">
+            {groupedFlavorsByBrand.map((group) => {
+              const isOpen = openBrandName === group.brand;
 
               return (
-                <article className="flavor-card" key={flavor.id}>
-                  <div className="card-top">
+                <article className="brand-group" key={group.brand}>
+                  <button
+                    className={isOpen ? "brand-row open" : "brand-row"}
+                    onClick={() =>
+                      setOpenBrandName(isOpen ? "" : group.brand)
+                    }
+                  >
                     <div>
-                      <p className="brand">{flavor.brand}</p>
-                      <h2>{flavor.name}</h2>
+                      <strong>{group.brand}</strong>
+                      <span>
+                        {group.items.length} вкусов · {group.totalPacks} пач.
+                      </span>
                     </div>
 
-                    <span className={status.className}>{status.text}</span>
-                  </div>
+                    <div className="brand-row-meta">
+                      {group.absentCount > 0 && (
+                        <span className="brand-alert">
+                          отсутствует: {group.absentCount}
+                        </span>
+                      )}
 
-                  <div className="packs">
-                    <p className="section-label">Фасовки</p>
+                      {group.lowStockCount > 0 && (
+                        <span className="brand-warning">
+                          мало: {group.lowStockCount}
+                        </span>
+                      )}
 
-                    {(flavor.packs || []).map((pack) => (
-                      <div className="pack-row" key={pack.weight}>
-                        <span>{pack.weight}</span>
-                        <strong>{pack.quantity} пач.</strong>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="tags">
-                    {(flavor.tags || []).map((tag) => (
-                      <span key={tag}>#{tag}</span>
-                    ))}
-                  </div>
-
-                  {!isDemoMode && (
-                    <div className="actions">
-                    <button onClick={() => increasePack(flavor.id)}>
-                      +1 пачка
-                    </button>
-
-                    <button onClick={() => decreasePack(flavor.id)}>
-                      −1 пачка
-                    </button>
-                    <button onClick={() => clearFlavor(flavor.id)}>
-                      Выбить
-                    </button>
-                    <button onClick={() => openEditForm(flavor)}>
-                      Редактировать
-                    </button>
-
-                    {!flavor.archived && getTotalQuantity(flavor.packs || []) > 0 && (
-                      <button onClick={() => toggleLowStock(flavor)}>
-                        {Boolean(flavor.lowStock || flavor.low_stock)
-                          ? "Убрать мало"
-                          : "Мало осталось"}
-                      </button>
-                    )}
-
-                    {flavor.archived ? (
-                      <button onClick={() => restoreFlavor(flavor.id)}>
-                        Вернуть
-                      </button>
-                    ) : (
-                      <button
-                        className="danger"
-                        onClick={() => archiveFlavor(flavor.id)}
-                      >
-                        В архив
-                      </button>
-                    )}
+                      <span className="brand-arrow">{isOpen ? "↑" : "↓"}</span>
                     </div>
-                  )}
+                  </button>
 
-                  {isDemoMode && (
-                    <p className="readonly-note">
-                      Ознакомительный режим: редактирование недоступно
-                    </p>
+                  {isOpen && (
+                    <div className="brand-flavor-list">
+                      {group.items.map((flavor) => {
+                        const status = getStatus(flavor);
+
+                        return (
+                          <article className="flavor-card compact" key={flavor.id}>
+                            <div className="card-top">
+                              <div>
+                                <p className="brand">{flavor.brand}</p>
+                                <h2>{flavor.name}</h2>
+                              </div>
+
+                              <span className={status.className}>
+                                {status.text}
+                              </span>
+                            </div>
+
+                            <div className="packs">
+                              <p className="section-label">Фасовки</p>
+
+                              {(flavor.packs || []).map((pack) => (
+                                <div className="pack-row" key={pack.weight}>
+                                  <span>{pack.weight}</span>
+                                  <strong>{pack.quantity} пач.</strong>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="tags">
+                              {(flavor.tags || []).map((tag) => (
+                                <span key={tag}>#{tag}</span>
+                              ))}
+                            </div>
+
+                            {!isDemoMode && (
+                              <div className="actions">
+                                <button onClick={() => increasePack(flavor.id)}>
+                                  +1 пачка
+                                </button>
+
+                                <button onClick={() => decreasePack(flavor.id)}>
+                                  −1 пачка
+                                </button>
+
+                                <button onClick={() => clearFlavor(flavor.id)}>
+                                  Выбить
+                                </button>
+
+                                <button onClick={() => openEditForm(flavor)}>
+                                  Редактировать
+                                </button>
+
+                                {!flavor.archived &&
+                                  getTotalQuantity(flavor.packs || []) > 0 && (
+                                    <button onClick={() => toggleLowStock(flavor)}>
+                                      {Boolean(flavor.lowStock || flavor.low_stock)
+                                        ? "Убрать мало"
+                                        : "Мало осталось"}
+                                    </button>
+                                  )}
+
+                                {flavor.archived ? (
+                                  <button onClick={() => restoreFlavor(flavor.id)}>
+                                    Вернуть
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="danger"
+                                    onClick={() => archiveFlavor(flavor.id)}
+                                  >
+                                    В архив
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {isDemoMode && (
+                              <p className="readonly-note">
+                                Ознакомительный режим: редактирование недоступно
+                              </p>
+                            )}
+                          </article>
+                        );
+                      })}
+                    </div>
                   )}
                 </article>
               );
             })}
           </section>
         )}
+
       </main>
     </div>
   );
