@@ -1672,6 +1672,190 @@ function App() {
     return "";
   };
 
+  const renderAppHeader = ({ title, subtitle, isInventory = false }) => {
+    const closeMenu = () => setIsHeaderMenuOpen(false);
+
+    const goToView = (view) => {
+      setCurrentView(view);
+      closeMenu();
+    };
+
+    return (
+      <header className="header">
+        <div>
+          <p className="eyebrow">Hookah Inventory</p>
+          <h1>{title}</h1>
+          <p className="subtitle">{subtitle}</p>
+
+          {isDemoMode && (
+            <p className="demo-badge">Ознакомительный режим</p>
+          )}
+        </div>
+
+        <div className="header-actions compact-header-actions">
+          {isInventory ? (
+            !isDemoMode && (
+              <button
+                className="primary-button"
+                onClick={() => setIsSupplyFormOpen(true)}
+              >
+                + Поставка
+              </button>
+            )
+          ) : (
+            <button
+              className="secondary-button"
+              onClick={() => goToView("inventory")}
+            >
+              Склад
+            </button>
+          )}
+
+          <button
+            className="secondary-button menu-toggle-button"
+            onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
+          >
+            Меню {isHeaderMenuOpen ? "↑" : "↓"}
+          </button>
+
+          <button className="secondary-button" onClick={handleLogout}>
+            Выйти
+          </button>
+
+          {isHeaderMenuOpen && (
+            <div className="header-dropdown">
+              <div className="dropdown-section">
+                <p>Разделы</p>
+
+                <button onClick={() => goToView("inventory")}>
+                  Склад
+                </button>
+
+                <button onClick={() => goToView("purchase")}>
+                  Закупка
+                </button>
+
+                <button onClick={() => goToView("analytics")}>
+                  Аналитика
+                </button>
+
+                <button onClick={() => goToView("deadstock")}>
+                  Залежи
+                </button>
+
+                <button
+                  onClick={() => {
+                    openHistory();
+                    closeMenu();
+                  }}
+                >
+                  История
+                </button>
+
+                <button onClick={() => goToView("duplicates")}>
+                  Дубли
+                </button>
+
+                <button onClick={() => goToView("tags")}>
+                  Теги
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSearchText("");
+                    setSelectedTag("all");
+                    setStatusFilter(
+                      statusFilter === "Архив" ? "all" : "Архив"
+                    );
+                    setOpenBrandName("");
+                    setOpenFlavorId(null);
+                    setCurrentView("inventory");
+                    closeMenu();
+                  }}
+                >
+                  {statusFilter === "Архив" ? "Склад" : "Архив"}
+                </button>
+              </div>
+
+              <div className="dropdown-section">
+                <p>Вид</p>
+
+                <button
+                  onClick={() => {
+                    toggleCompactMode();
+                    closeMenu();
+                  }}
+                >
+                  {isCompactMode ? "Обычный режим" : "Компактный режим"}
+                </button>
+              </div>
+
+              <div className="dropdown-section">
+                <p>Данные</p>
+
+                {!isDemoMode && (
+                  <button
+                    onClick={() => {
+                      setCurrentView("inventory");
+                      setIsSupplyFormOpen(true);
+                      closeMenu();
+                    }}
+                  >
+                    + Поставка
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    exportToExcel();
+                    closeMenu();
+                  }}
+                >
+                  Экспорт склада
+                </button>
+
+                <button
+                  onClick={() => {
+                    exportPurchaseToExcel();
+                    closeMenu();
+                  }}
+                >
+                  Экспорт закупки
+                </button>
+
+                {!isDemoMode && (
+                  <label className="dropdown-file-button">
+                    Импорт Excel
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={(event) => {
+                        importFromExcel(event);
+                        closeMenu();
+                      }}
+                    />
+                  </label>
+                )}
+
+                {!isDemoMode && (
+                  <button
+                    className="dropdown-danger"
+                    onClick={() => {
+                      clearDatabase();
+                      closeMenu();
+                    }}
+                  >
+                    Очистить базу
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+    );
+  };
+
   if (!isAuthorized) {
     return (
       <div className="app auth-page">
@@ -1747,46 +1931,10 @@ function App() {
 
     return (
       <div className={isCompactMode ? "app compact-mode" : "app"}>
-        <header className="header">
-          <div>
-            <p className="eyebrow">Hookah Inventory</p>
-            <h1>Залежи</h1>
-            <p className="subtitle">
-              Вкусы, которые лежат на полке и почти не используются
-            </p>
-
-            {isDemoMode && (
-              <p className="demo-badge">Ознакомительный режим</p>
-            )}
-          </div>
-
-          <div className="header-actions">
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("inventory")}
-            >
-              Склад
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("analytics")}
-            >
-              Аналитика
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("purchase")}
-            >
-              Закупка
-            </button>
-
-            <button className="secondary-button" onClick={handleLogout}>
-              Выйти
-            </button>
-          </div>
-        </header>
+        {renderAppHeader({
+          title: "Залежи",
+          subtitle: "Вкусы, которые лежат на полке и почти не используются",
+        })}
 
         <main className="content deadstock-page">
           <section className="analytics-grid">
@@ -1998,43 +2146,11 @@ function App() {
 
     return (
       <div className={isCompactMode ? "app compact-mode" : "app"}>
-        <header className="header">
-          <div>
-            <p className="eyebrow">Hookah Inventory</p>
-            <h1>Закупка</h1>
-            <p className="subtitle">
-              Умная сортировка позиций: подтверждённые, срочные и с аналогами
-            </p>
-
-            {isDemoMode && (
-              <p className="demo-badge">Ознакомительный режим</p>
-            )}
-          </div>
-
-          <div className="header-actions">
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("inventory")}
-            >
-              Склад
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("analytics")}
-            >
-              Аналитика
-            </button>
-
-            <button className="secondary-button" onClick={exportPurchaseToExcel}>
-              Экспорт закупки
-            </button>
-
-            <button className="secondary-button" onClick={handleLogout}>
-              Выйти
-            </button>
-          </div>
-        </header>
+        {renderAppHeader({
+          title: "Закупка",
+          subtitle:
+            "Умная сортировка позиций: подтверждённые, срочные и с аналогами",
+        })}
 
         <main className="content purchase-page">
           <section className="analytics-grid">
@@ -2173,50 +2289,10 @@ function App() {
   if (currentView === "tags") {
     return (
       <div className={isCompactMode ? "app compact-mode" : "app"}>
-        <header className="header">
-          <div>
-            <p className="eyebrow">Hookah Inventory</p>
-            <h1>Теги</h1>
-            <p className="subtitle">
-              Карта вкусовых тегов и поиск дублей
-            </p>
-
-            {isDemoMode && (
-              <p className="demo-badge">Ознакомительный режим</p>
-            )}
-          </div>
-
-          <div className="header-actions">
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("inventory")}
-            >
-              Склад
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("analytics")}
-            >
-              Аналитика
-            </button>
-
-            <button className="secondary-button" onClick={openHistory}>
-              История
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("duplicates")}
-            >
-              Дубли
-            </button>
-
-            <button className="secondary-button" onClick={handleLogout}>
-              Выйти
-            </button>
-          </div>
-        </header>
+        {renderAppHeader({
+          title: "Теги",
+          subtitle: "Карта вкусовых тегов и поиск дублей",
+        })}
 
         <main className="content tags-page">
           <section className="analytics-grid">
@@ -2308,50 +2384,10 @@ function App() {
   if (currentView === "duplicates") {
     return (
       <div className={isCompactMode ? "app compact-mode" : "app"}>
-        <header className="header">
-          <div>
-            <p className="eyebrow">Hookah Inventory</p>
-            <h1>Дубли вкусов</h1>
-            <p className="subtitle">
-              Поиск одинаковых записей по бренду и названию
-            </p>
-
-            {isDemoMode && (
-              <p className="demo-badge">Ознакомительный режим</p>
-            )}
-          </div>
-
-          <div className="header-actions">
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("inventory")}
-            >
-              Склад
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("analytics")}
-            >
-              Аналитика
-            </button>
-
-            <button className="secondary-button" onClick={openHistory}>
-              История
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("duplicates")}
-            >
-              Дубли
-            </button>
-
-            <button className="secondary-button" onClick={handleLogout}>
-              Выйти
-            </button>
-          </div>
-        </header>
+        {renderAppHeader({
+          title: "Дубли вкусов",
+          subtitle: "Поиск одинаковых записей по бренду и названию",
+        })}
 
         <main className="content">
           <section className="duplicates-panel">
@@ -2419,43 +2455,10 @@ function App() {
   if (currentView === "history") {
     return (
       <div className={isCompactMode ? "app compact-mode" : "app"}>
-        <header className="header">
-          <div>
-            <p className="eyebrow">Hookah Inventory</p>
-            <h1>История действий</h1>
-            <p className="subtitle">
-              Последние изменения склада, закупки и архива
-            </p>
-
-            {isDemoMode && (
-              <p className="demo-badge">Ознакомительный режим</p>
-            )}
-          </div>
-
-          <div className="header-actions">
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("inventory")}
-            >
-              Склад
-            </button>
-
-            <button className="secondary-button" onClick={openHistory}>
-              История
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("analytics")}
-            >
-              Аналитика
-            </button>
-
-            <button className="secondary-button" onClick={handleLogout}>
-              Выйти
-            </button>
-          </div>
-        </header>
+        {renderAppHeader({
+          title: "История действий",
+          subtitle: "Последние изменения склада, закупки и архива",
+        })}
 
         <main className="content">
           <section className="history-panel">
@@ -2507,36 +2510,10 @@ function App() {
   if (currentView === "analytics") {
     return (
       <div className={isCompactMode ? "app compact-mode" : "app"}>
-        <header className="header">
-          <div>
-            <p className="eyebrow">Hookah Inventory</p>
-            <h1>Аналитика</h1>
-            <p className="subtitle">
-              Сводка по складу, остаткам и закупленному весу
-            </p>
-
-            {isDemoMode && (
-              <p className="demo-badge">Ознакомительный режим</p>
-            )}
-          </div>
-
-          <div className="header-actions">
-            <button
-              className="secondary-button"
-              onClick={() => setCurrentView("inventory")}
-            >
-              Склад
-            </button>
-
-            <button className="secondary-button" onClick={openHistory}>
-              История
-            </button>
-
-            <button className="secondary-button" onClick={handleLogout}>
-              Выйти
-            </button>
-          </div>
-        </header>
+        {renderAppHeader({
+          title: "Аналитика",
+          subtitle: "Сводка по складу, остаткам и закупленному весу",
+        })}
 
         <main className="content analytics-page">
           <section className="analytics-grid">
@@ -2794,177 +2771,11 @@ function App() {
 
   return (
     <div className={isCompactMode ? "app compact-mode" : "app"}>
-      <header className="header">
-        <div>
-          <p className="eyebrow">Hookah Inventory</p>
-          <h1>Склад табака</h1>
-          <p className="subtitle">
-            Отслеживание вкусов, фасовок, остатков и закупки
-          </p>
-
-          {isDemoMode && (
-            <p className="demo-badge">Ознакомительный режим</p>
-          )}
-        </div>
-
-        <div className="header-actions compact-header-actions">
-          {!isDemoMode && (
-            <button
-              className="primary-button"
-              onClick={() => setIsSupplyFormOpen(true)}
-            >
-              + Поставка
-            </button>
-          )}
-
-          <button
-            className="secondary-button menu-toggle-button"
-            onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
-          >
-            Меню {isHeaderMenuOpen ? "↑" : "↓"}
-          </button>
-
-          <button className="secondary-button" onClick={handleLogout}>
-            Выйти
-          </button>
-
-          {isHeaderMenuOpen && (
-            <div className="header-dropdown">
-              <div className="dropdown-section">
-                <p>Разделы</p>
-
-                <button
-                  onClick={() => {
-                    setCurrentView("purchase");
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  Закупка
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentView("analytics");
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  Аналитика
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentView("deadstock");
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  Залежи
-                </button>
-
-                <button
-                  onClick={() => {
-                    openHistory();
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  История
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentView("duplicates");
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  Дубли
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentView("tags");
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  Теги
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSearchText("");
-                    setSelectedTag("all");
-                    setStatusFilter(statusFilter === "Архив" ? "all" : "Архив");
-                    setOpenBrandName("");
-                    setOpenFlavorId(null);
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  {statusFilter === "Архив" ? "Склад" : "Архив"}
-                </button>
-              </div>
-
-              <div className="dropdown-section">
-                <p>Вид</p>
-
-                <button
-                  onClick={() => {
-                    toggleCompactMode();
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  {isCompactMode ? "Обычный режим" : "Компактный режим"}
-                </button>
-              </div>
-
-              <div className="dropdown-section">
-                <p>Данные</p>
-
-                <button
-                  onClick={() => {
-                    exportToExcel();
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  Экспорт склада
-                </button>
-
-                <button
-                  onClick={() => {
-                    exportPurchaseToExcel();
-                    setIsHeaderMenuOpen(false);
-                  }}
-                >
-                  Экспорт закупки
-                </button>
-
-                {!isDemoMode && (
-                  <label className="dropdown-file-button">
-                    Импорт Excel
-                    <input
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={(event) => {
-                        importFromExcel(event);
-                        setIsHeaderMenuOpen(false);
-                      }}
-                    />
-                  </label>
-                )}
-
-                {!isDemoMode && (
-                  <button
-                    className="dropdown-danger"
-                    onClick={() => {
-                      clearDatabase();
-                      setIsHeaderMenuOpen(false);
-                    }}
-                  >
-                    Очистить базу
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </header>
+      {renderAppHeader({
+        title: "Склад табака",
+        subtitle: "Отслеживание вкусов, фасовок, остатков и закупки",
+        isInventory: true,
+      })}
 
       <main className="content">
         <datalist id="brand-options">
