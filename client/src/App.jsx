@@ -1162,20 +1162,72 @@ function App() {
     "орехи",
   ];
 
-  const filteredFlavors = flavors.filter((flavor) => {
-    const normalizedSearch = searchText.trim().toLowerCase();
+  const normalizeSearchValue = (value) => {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .replace(/[^a-zа-я0-9]+/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
 
-    const searchableText = [
-      flavor.brand,
-      flavor.name,
-      ...(flavor.tags || []),
-      ...(flavor.packs || []).map((pack) => pack.weight),
-    ]
-      .join(" ")
-      .toLowerCase();
+  const getSearchVariants = (value, type) => {
+    const cleanValue = String(value || "").trim();
+
+    if (!cleanValue) {
+      return [];
+    }
+
+    const variants = new Set([
+      cleanValue,
+      normalizeSearchValue(cleanValue),
+    ]);
+
+    aliases
+      .filter((alias) => alias.type === type)
+      .forEach((alias) => {
+        const aliasValue = normalizeSearchValue(alias.alias);
+        const canonicalValue = normalizeSearchValue(alias.canonical);
+        const currentValue = normalizeSearchValue(cleanValue);
+
+        if (currentValue === aliasValue || currentValue === canonicalValue) {
+          variants.add(alias.alias);
+          variants.add(alias.canonical);
+          variants.add(aliasValue);
+          variants.add(canonicalValue);
+        }
+      });
+
+    return Array.from(variants)
+      .map(normalizeSearchValue)
+      .filter(Boolean);
+  };
+
+  const filteredFlavors = flavors.filter((flavor) => {
+    const normalizedSearch = normalizeSearchValue(searchText);
+
+    const searchParts = normalizedSearch
+      .split(" ")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    const brandVariants = getSearchVariants(flavor.brand, "brand");
+    const flavorVariants = getSearchVariants(flavor.name, "flavor");
+
+    const searchableText = normalizeSearchValue(
+      [
+        flavor.brand,
+        flavor.name,
+        ...brandVariants,
+        ...flavorVariants,
+        ...(flavor.tags || []),
+        ...(flavor.packs || []).map((pack) => pack.weight),
+      ].join(" ")
+    );
 
     const matchesSearch =
-      normalizedSearch === "" || searchableText.includes(normalizedSearch);
+      searchParts.length === 0 ||
+      searchParts.every((part) => searchableText.includes(part));
 
     const status = getStatus(flavor).text;
 
@@ -1185,7 +1237,8 @@ function App() {
     const matchesTag =
       selectedTag === "all" ||
       (flavor.tags || []).some(
-        (tag) => tag.trim().toLowerCase() === selectedTag.toLowerCase()
+        (tag) =>
+          normalizeSearchValue(tag) === normalizeSearchValue(selectedTag)
       );
 
     return matchesSearch && matchesStatus && matchesTag;
@@ -3439,13 +3492,34 @@ function App() {
         )}
 
         <section className="toolbar">
-          <input
-            type="text"
-            placeholder="Поиск по бренду, вкусу или тегу"
-            className="search-input"
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
-          />
+          <div className="search-field-wrap">
+            <input
+              type="text"
+              placeholder="Поиск по бренду, вкусу, тегу или алиасу"
+              className="search-input"
+              value={searchText}
+              onChange={(event) => {
+                setSearchText(event.target.value);
+                setOpenBrandName("");
+                setOpenFlavorId(null);
+                clearSelectedFlavors();
+              }}
+            />
+
+            {searchText.trim() && (
+              <button
+                className="search-clear-button"
+                onClick={() => {
+                  setSearchText("");
+                  setOpenBrandName("");
+                  setOpenFlavorId(null);
+                  clearSelectedFlavors();
+                }}
+              >
+                ×
+              </button>
+            )}
+          </div>
 
           <select
             className="filter-select"

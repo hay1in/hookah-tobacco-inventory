@@ -2409,3 +2409,35 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+.search-field-wrap {
+  position: relative;
+  min-width: min(100%, 360px);
+  flex: 1;
+}
+
+.search-field-wrap .search-input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.search-clear-button {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 999px;
+  background: #211b18;
+  color: #fff7ed;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.search-clear-button:hover {
+  background: #3b2a20;
+}
