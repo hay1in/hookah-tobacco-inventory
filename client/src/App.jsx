@@ -613,6 +613,65 @@ function App() {
     XLSX.writeFile(workbook, `sklad-tabaka-${today}.xlsx`);
   };
 
+  const exportPurchaseToExcel = () => {
+    if (purchaseFlavors.length === 0) {
+      window.alert("Сейчас нет позиций, которые требуется закупить.");
+      return;
+    }
+
+    const rows = purchaseFlavors.map((flavor) => {
+      const total = getTotalQuantity(flavor.packs || []);
+      const status = getStatus(flavor).text;
+      const specificTags = getSpecificTags(flavor);
+      const analogs = getAnalogFlavors(flavor);
+      const isPurchaseConfirmed = Boolean(
+        flavor.purchaseConfirmed || flavor.purchase_confirmed
+      );
+
+      return {
+        "Бренд": flavor.brand || "",
+        "Вкус": flavor.name || "",
+        "Фасовки": (flavor.packs || [])
+          .map((pack) => `${pack.weight}: ${pack.quantity} пач.`)
+          .join("\n"),
+        "Остаток": total,
+        "Статус": status,
+        "Подтверждено": isPurchaseConfirmed ? "да" : "нет",
+        "Специфичные теги": specificTags.map((tag) => `#${tag}`).join(", "),
+        "Аналоги": analogs.length
+          ? analogs
+              .map(({ flavor: analog, matchedTags, totalQuantity }) => {
+                return `${analog.brand} — ${analog.name} (${totalQuantity} пач.; ${matchedTags
+                  .map((tag) => `#${tag}`)
+                  .join(", ")})`;
+              })
+              .join("\n")
+          : "нет",
+        "Все теги": (flavor.tags || []).map((tag) => `#${tag}`).join(", "),
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    worksheet["!cols"] = [
+      { wch: 22 },
+      { wch: 30 },
+      { wch: 24 },
+      { wch: 12 },
+      { wch: 18 },
+      { wch: 16 },
+      { wch: 30 },
+      { wch: 55 },
+      { wch: 45 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Закупка");
+
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(workbook, `zakupka-tabaka-${today}.xlsx`);
+  };
+
   const getExcelValue = (row, names) => {
     for (const name of names) {
       if (row[name] !== undefined && row[name] !== null && row[name] !== "") {
@@ -1579,6 +1638,10 @@ function App() {
             Экспорт Excel
           </button>
 
+          <button className="secondary-button" onClick={exportPurchaseToExcel}>
+            Экспорт закупки
+          </button>
+
           {!isDemoMode && (
             <label className="secondary-button file-button">
               Импорт Excel
@@ -1800,6 +1863,13 @@ function App() {
 
               <div className="purchase-header-actions">
                 <span className="purchase-count">{purchaseFlavors.length} поз.</span>
+
+                <button
+                  className="collapse-button"
+                  onClick={exportPurchaseToExcel}
+                >
+                  Excel закупки
+                </button>
 
                 <button
                   className="collapse-button"
