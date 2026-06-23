@@ -1741,3 +1741,114 @@ h1 {
     flex-direction: column;
   }
 }
+
+.purchase-page {
+  display: grid;
+  gap: 18px;
+}
+
+.purchase-smart-sections {
+  display: grid;
+  gap: 18px;
+}
+
+.purchase-smart-section {
+  border-radius: 28px;
+  padding: 18px;
+  background: rgba(255, 247, 237, 0.12);
+  border: 1px solid rgba(255, 247, 237, 0.16);
+  box-shadow: 0 20px 42px rgba(20, 14, 10, 0.18);
+}
+
+.purchase-smart-section-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.purchase-smart-section-top h2 {
+  margin: 0;
+  color: #fff7ed;
+}
+
+.purchase-smart-section-top p {
+  margin: 5px 0 0;
+  color: rgba(255, 247, 237, 0.72);
+  font-weight: 800;
+}
+
+.purchase-smart-section-top > span {
+  display: inline-flex;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #211b18;
+  font-weight: 950;
+}
+
+.purchase-smart-list {
+  display: grid;
+  gap: 12px;
+}
+
+.purchase-smart-card {
+  border-radius: 22px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(234, 212, 189, 0.9));
+  color: #211b18;
+  border: 1px solid rgba(234, 212, 189, 0.86);
+}
+
+.purchase-smart-card-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.purchase-smart-card-main h3 {
+  margin: 3px 0 8px;
+  font-size: 20px;
+}
+
+.purchase-smart-card-main > strong {
+  min-width: 70px;
+  text-align: right;
+  font-size: 18px;
+}
+
+.purchase-smart-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.purchase-smart-actions button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 12px;
+  background: #211b18;
+  color: #fff7ed;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.purchase-smart-actions button.danger {
+  background: #7f2a1d;
+}
+
+@media (max-width: 720px) {
+  .purchase-smart-section-top,
+  .purchase-smart-card-main {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .purchase-smart-card-main > strong {
+    text-align: left;
+  }
+}

@@ -1691,6 +1691,230 @@ function App() {
   }
 
 
+  if (currentView === "purchase") {
+    const purchaseRows = purchaseFlavors.map((flavor) => {
+      const total = getTotalQuantity(flavor.packs || []);
+      const status = getStatus(flavor);
+      const specificTags = getSpecificTags(flavor);
+      const analogs = getAnalogFlavors(flavor);
+      const isPurchaseConfirmed = Boolean(
+        flavor.purchaseConfirmed || flavor.purchase_confirmed
+      );
+
+      return {
+        flavor,
+        total,
+        status,
+        specificTags,
+        analogs,
+        isPurchaseConfirmed,
+      };
+    });
+
+    const confirmedRows = purchaseRows.filter(
+      (row) => row.isPurchaseConfirmed
+    );
+
+    const urgentRows = purchaseRows.filter(
+      (row) => !row.isPurchaseConfirmed && row.analogs.length === 0
+    );
+
+    const analogRows = purchaseRows.filter(
+      (row) => !row.isPurchaseConfirmed && row.analogs.length > 0
+    );
+
+    const purchaseSections = [
+      {
+        title: "Подтверждённые позиции",
+        subtitle: "То, что точно нужно докупить",
+        rows: confirmedRows,
+      },
+      {
+        title: "Важно докупить",
+        subtitle: "Нет аналогов по специфичным тегам",
+        rows: urgentRows,
+      },
+      {
+        title: "Проверить аналоги",
+        subtitle: "Есть похожие вкусы на полке",
+        rows: analogRows,
+      },
+    ].filter((section) => section.rows.length > 0);
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <p className="eyebrow">Hookah Inventory</p>
+            <h1>Закупка</h1>
+            <p className="subtitle">
+              Умная сортировка позиций: подтверждённые, срочные и с аналогами
+            </p>
+
+            {isDemoMode && (
+              <p className="demo-badge">Ознакомительный режим</p>
+            )}
+          </div>
+
+          <div className="header-actions">
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("inventory")}
+            >
+              Склад
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("analytics")}
+            >
+              Аналитика
+            </button>
+
+            <button className="secondary-button" onClick={exportPurchaseToExcel}>
+              Экспорт закупки
+            </button>
+
+            <button className="secondary-button" onClick={handleLogout}>
+              Выйти
+            </button>
+          </div>
+        </header>
+
+        <main className="content purchase-page">
+          <section className="analytics-grid">
+            <article className="analytics-card">
+              <span>Всего к закупке</span>
+              <strong>{purchaseRows.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Подтверждено</span>
+              <strong>{confirmedRows.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Без аналогов</span>
+              <strong>{urgentRows.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Есть аналоги</span>
+              <strong>{analogRows.length}</strong>
+            </article>
+          </section>
+
+          {purchaseRows.length === 0 && (
+            <p className="info-message">
+              Сейчас нет позиций, которые требуется закупить.
+            </p>
+          )}
+
+          <section className="purchase-smart-sections">
+            {purchaseSections.map((section) => (
+              <article className="purchase-smart-section" key={section.title}>
+                <div className="purchase-smart-section-top">
+                  <div>
+                    <h2>{section.title}</h2>
+                    <p>{section.subtitle}</p>
+                  </div>
+
+                  <span>{section.rows.length} поз.</span>
+                </div>
+
+                <div className="purchase-smart-list">
+                  {section.rows.map(
+                    ({
+                      flavor,
+                      total,
+                      status,
+                      specificTags,
+                      analogs,
+                      isPurchaseConfirmed,
+                    }) => (
+                      <article className="purchase-smart-card" key={flavor.id}>
+                        <div className="purchase-smart-card-main">
+                          <div>
+                            <p className="brand">{flavor.brand}</p>
+                            <h3>{flavor.name}</h3>
+
+                            <span className={status.className}>
+                              {status.text}
+                            </span>
+                          </div>
+
+                          <strong>{total} пач.</strong>
+                        </div>
+
+                        {specificTags.length > 0 && (
+                          <div className="purchase-specific-tags">
+                            <span>Ключевые теги:</span>
+                            {specificTags.map((tag) => (
+                              <strong key={tag}>#{tag}</strong>
+                            ))}
+                          </div>
+                        )}
+
+                        {analogs.length > 0 && (
+                          <div className="purchase-analogs">
+                            <p>Аналоги:</p>
+
+                            {analogs.map(
+                              ({ flavor: analog, matchedTags, totalQuantity }) => (
+                                <div
+                                  className="purchase-analog-item"
+                                  key={analog.id}
+                                >
+                                  <span>
+                                    {analog.brand} — {analog.name}
+                                  </span>
+
+                                  <small>
+                                    Остаток: {totalQuantity} пач. ·{" "}
+                                    {matchedTags
+                                      .map((tag) => `#${tag}`)
+                                      .join(", ")}
+                                  </small>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {!isDemoMode && (
+                          <div className="purchase-smart-actions">
+                            <button
+                              onClick={() => togglePurchaseConfirmed(flavor)}
+                            >
+                              {isPurchaseConfirmed
+                                ? "Снять подтверждение"
+                                : "Подтвердить закупку"}
+                            </button>
+
+                            <button
+                              className="danger"
+                              onClick={() => archiveFlavor(flavor.id)}
+                            >
+                              В архив
+                            </button>
+
+                            <button onClick={() => startSupplyForFlavor(flavor)}>
+                              Добавить поставку
+                            </button>
+                          </div>
+                        )}
+                      </article>
+                    )
+                  )}
+                </div>
+              </article>
+            ))}
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   if (currentView === "tags") {
     return (
       <div className="app">
@@ -2337,6 +2561,13 @@ function App() {
               + Поставка
             </button>
           )}
+
+          <button
+            className="secondary-button"
+            onClick={() => setCurrentView("purchase")}
+          >
+            Закупка
+          </button>
 
           <button
             className="secondary-button"
