@@ -1,8 +1,53 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import "./App.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+
+const AUTH_STORAGE_KEY = "hookahInventoryAuth";
+const AUTH_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+
+const readSavedAuth = () => {
+  try {
+    const rawValue = localStorage.getItem(AUTH_STORAGE_KEY);
+
+    if (!rawValue) {
+      return null;
+    }
+
+    const savedAuth = JSON.parse(rawValue);
+
+    if (!savedAuth?.password || !savedAuth?.expiresAt) {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      return null;
+    }
+
+    if (Date.now() > savedAuth.expiresAt) {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      return null;
+    }
+
+    return savedAuth;
+  } catch {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    return null;
+  }
+};
+
+const saveAuth = (password, role) => {
+  localStorage.setItem(
+    AUTH_STORAGE_KEY,
+    JSON.stringify({
+      password,
+      role,
+      expiresAt: Date.now() + AUTH_TTL_MS,
+    })
+  );
+};
+
+const clearSavedAuth = () => {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+};
 
 function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -73,6 +118,37 @@ function App() {
     return data;
   };
 
+  useEffect(() => {
+    const savedAuth = readSavedAuth();
+
+    if (!savedAuth) {
+      return;
+    }
+
+    const loginWithSavedPassword = async () => {
+      try {
+        setIsLoading(true);
+        setAuthError("");
+
+        const data = await loadFlavorsWithPassword(savedAuth.password);
+
+        setAdminPassword(savedAuth.password);
+        setAccessRole(savedAuth.role || (savedAuth.password === "test" ? "test" : "admin"));
+        setFlavors(data);
+        setIsAuthorized(true);
+        setErrorText("");
+      } catch (error) {
+        console.error(error);
+        clearSavedAuth();
+        setAuthError("Сохранённый вход истёк. Введите пароль заново.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loginWithSavedPassword();
+  }, []);
+
   const handleLogin = async (event) => {
     event.preventDefault();
 
@@ -89,8 +165,12 @@ function App() {
 
       const data = await loadFlavorsWithPassword(trimmedPassword);
 
+      const role = trimmedPassword === "test" ? "test" : "admin";
+
+      saveAuth(trimmedPassword, role);
+
       setAdminPassword(trimmedPassword);
-      setAccessRole(trimmedPassword === "test" ? "test" : "admin");
+      setAccessRole(role);
       setFlavors(data);
       setIsAuthorized(true);
       setPasswordInput("");
@@ -157,6 +237,7 @@ function App() {
   };
 
   const handleLogout = () => {
+    clearSavedAuth();
     setIsAuthorized(false);
     setAdminPassword("");
     setAccessRole("admin");
