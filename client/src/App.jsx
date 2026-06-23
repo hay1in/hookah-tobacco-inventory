@@ -764,6 +764,8 @@ function App() {
   const [isPurchasePanelOpen, setIsPurchasePanelOpen] = useState(false);
   const [openBrandName, setOpenBrandName] = useState("");
   const [openFlavorId, setOpenFlavorId] = useState(null);
+  const [openAnalyticsBrandName, setOpenAnalyticsBrandName] = useState("");
+  const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
 
   const quickTags = [
     "ягоды",
@@ -1068,6 +1070,35 @@ function App() {
 
   const analyticsRows = getAnalyticsRows();
 
+
+  const groupedAnalyticsRowsByBrand = Array.from(
+    analyticsRows.reduce((groups, row) => {
+      const brand = row.brand || "Без бренда";
+
+      if (!groups.has(brand)) {
+        groups.set(brand, []);
+      }
+
+      groups.get(brand).push(row);
+
+      return groups;
+    }, new Map())
+  )
+    .map(([brand, rows]) => ({
+      brand,
+      rows: rows.sort((a, b) => a.name.localeCompare(b.name, "ru")),
+      totalQuantity: rows.reduce((sum, row) => sum + row.quantity, 0),
+      totalStockGrams: rows.reduce((sum, row) => sum + row.stockGrams, 0),
+      totalPurchasedGrams: rows.reduce(
+        (sum, row) => sum + row.purchasedGrams,
+        0
+      ),
+      totalUsedGrams: rows.reduce((sum, row) => sum + row.usedGrams, 0),
+      absentCount: rows.filter((row) => row.quantity === 0).length,
+      lowStockCount: rows.filter((row) => row.lowStock).length,
+    }))
+    .sort((a, b) => a.brand.localeCompare(b.brand, "ru"));
+
   const analyticsFilterTitle = {
     all: "Все активные вкусы",
     inStock: "Вкусы в наличии",
@@ -1358,34 +1389,123 @@ function App() {
                 <p className="info-message dark">Нет данных для отображения</p>
               )}
 
-              {analyticsRows.map((row) => (
-                <div className="analytics-flavor-row" key={row.id}>
-                  <div>
-                    <strong>
-                      {row.brand} — {row.name}
-                    </strong>
+              {groupedAnalyticsRowsByBrand.map((group) => {
+                const isBrandOpen = openAnalyticsBrandName === group.brand;
 
-                    <div className="analytics-flavor-tags">
-                      {row.archived && <span>архив</span>}
-                      {row.lowStock && <span>мало осталось</span>}
-                      {row.tags.map((tag) => (
-                        <span key={tag}>#{tag}</span>
-                      ))}
-                    </div>
-                  </div>
+                return (
+                  <div className="analytics-brand-group" key={group.brand}>
+                    <button
+                      className={
+                        isBrandOpen
+                          ? "analytics-brand-row open"
+                          : "analytics-brand-row"
+                      }
+                      onClick={() => {
+                        setOpenAnalyticsBrandName(
+                          isBrandOpen ? "" : group.brand
+                        );
+                        setOpenAnalyticsFlavorId(null);
+                      }}
+                    >
+                      <div>
+                        <strong>{group.brand}</strong>
+                        <span>
+                          {group.rows.length} вкусов · остаток:{" "}
+                          {group.totalQuantity} пач.
+                        </span>
+                      </div>
 
-                  <div className="analytics-flavor-stats">
-                    <span>Остаток: {row.quantity} пач.</span>
-                    <span>На полке: {formatWeight(row.stockGrams)}</span>
-                    <span>
-                      Закуплено: {row.purchasedPacks} пач. · {formatWeight(row.purchasedGrams)}
-                    </span>
-                    <span>
-                      Использовано: {row.usedPacks} пач. · {formatWeight(row.usedGrams)}
-                    </span>
+                      <div className="analytics-brand-meta">
+                        {group.absentCount > 0 && (
+                          <span className="brand-alert">
+                            отсутствует: {group.absentCount}
+                          </span>
+                        )}
+
+                        {group.lowStockCount > 0 && (
+                          <span className="brand-warning">
+                            мало: {group.lowStockCount}
+                          </span>
+                        )}
+
+                        <span>{formatWeight(group.totalPurchasedGrams)}</span>
+                        <em>{isBrandOpen ? "↑" : "↓"}</em>
+                      </div>
+                    </button>
+
+                    {isBrandOpen && (
+                      <div className="analytics-flavor-list">
+                        {group.rows.map((row) => {
+                          const isFlavorOpen =
+                            openAnalyticsFlavorId === row.id;
+
+                          return (
+                            <div
+                              className={
+                                isFlavorOpen
+                                  ? "analytics-flavor-accordion-row open"
+                                  : "analytics-flavor-accordion-row"
+                              }
+                              key={row.id}
+                            >
+                              <button
+                                className="analytics-flavor-button"
+                                onClick={() =>
+                                  setOpenAnalyticsFlavorId(
+                                    isFlavorOpen ? null : row.id
+                                  )
+                                }
+                              >
+                                <div>
+                                  <strong>{row.name}</strong>
+                                  <span>
+                                    Остаток: {row.quantity} пач. · На полке:{" "}
+                                    {formatWeight(row.stockGrams)}
+                                  </span>
+                                </div>
+
+                                <div className="analytics-flavor-button-meta">
+                                  {row.archived && <span>архив</span>}
+                                  {row.lowStock && <span>мало</span>}
+                                  <em>{isFlavorOpen ? "↑" : "↓"}</em>
+                                </div>
+                              </button>
+
+                              {isFlavorOpen && (
+                                <div className="analytics-flavor-details">
+                                  <div className="analytics-flavor-tags">
+                                    {row.archived && <span>архив</span>}
+                                    {row.lowStock && <span>мало осталось</span>}
+                                    {row.tags.map((tag) => (
+                                      <span key={tag}>#{tag}</span>
+                                    ))}
+                                  </div>
+
+                                  <div className="analytics-flavor-stats">
+                                    <span>Остаток: {row.quantity} пач.</span>
+                                    <span>
+                                      На полке: {formatWeight(row.stockGrams)}
+                                    </span>
+                                    <span>
+                                      Закуплено: {row.purchasedPacks} пач. ·{" "}
+                                      {formatWeight(row.purchasedGrams)}
+                                    </span>
+                                    <span>
+                                      Использовано: {row.usedPacks} пач. ·{" "}
+                                      {formatWeight(row.usedGrams)}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
+
             </article>
           </section>
         </main>
@@ -1452,6 +1572,8 @@ function App() {
               setSearchText("");
               setSelectedTag("all");
               setStatusFilter(statusFilter === "Архив" ? "all" : "Архив");
+              setOpenBrandName("");
+              setOpenFlavorId(null);
             }}
           >
             {statusFilter === "Архив" ? "Склад" : "Архив"}
@@ -1771,7 +1893,11 @@ function App() {
           <select
             className="filter-select"
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
+            onChange={(event) => {
+              setStatusFilter(event.target.value);
+              setOpenBrandName("");
+              setOpenFlavorId(null);
+            }}
           >
             <option value="all">Все статусы</option>
             <option value="В наличии">В наличии</option>

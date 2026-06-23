@@ -1326,3 +1326,169 @@ h1 {
     justify-content: space-between;
   }
 }
+
+.analytics-brand-group {
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(255, 247, 237, 0.08);
+  border: 1px solid rgba(255, 247, 237, 0.13);
+  margin-top: 10px;
+}
+
+.analytics-brand-row {
+  width: 100%;
+  border: none;
+  padding: 14px 15px;
+  background:
+    linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(234, 212, 189, 0.9));
+  color: #211b18;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.analytics-brand-row.open,
+.analytics-brand-row:hover {
+  background:
+    linear-gradient(135deg, #fff8ef, #ffd9ad);
+}
+
+.analytics-brand-row strong {
+  display: block;
+  font-size: 17px;
+}
+
+.analytics-brand-row span {
+  display: block;
+  margin-top: 4px;
+  color: #6d4c38;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.analytics-brand-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.analytics-brand-meta > span:not(.brand-alert):not(.brand-warning) {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #211b18;
+  color: #fff7ed;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.analytics-brand-meta em {
+  min-width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #211b18;
+  color: #fff7ed;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.analytics-flavor-list {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(20, 14, 10, 0.2);
+}
+
+.analytics-flavor-accordion-row {
+  overflow: hidden;
+  border-radius: 15px;
+  background: rgba(255, 247, 237, 0.94);
+  border: 1px solid rgba(234, 212, 189, 0.8);
+}
+
+.analytics-flavor-button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #211b18;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.analytics-flavor-button strong {
+  display: block;
+  font-size: 15px;
+}
+
+.analytics-flavor-button span {
+  display: block;
+  margin-top: 4px;
+  color: #6d4c38;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.analytics-flavor-button-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.analytics-flavor-button-meta span {
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: #ead4bd;
+  color: #2a1d16;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.analytics-flavor-button-meta em {
+  min-width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #211b18;
+  color: #fff7ed;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.analytics-flavor-details {
+  display: grid;
+  gap: 10px;
+  padding: 0 12px 12px;
+}
+
+.analytics-flavor-details .analytics-flavor-stats {
+  background: rgba(255, 255, 255, 0.58);
+  border-radius: 14px;
+  padding: 10px;
+}
+
+@media (max-width: 720px) {
+  .analytics-brand-row,
+  .analytics-flavor-button {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .analytics-brand-meta,
+  .analytics-flavor-button-meta {
+    justify-content: flex-start;
+  }
+}
