@@ -1852,3 +1852,107 @@ h1 {
     text-align: left;
   }
 }
+
+.deadstock-page {
+  display: grid;
+  gap: 18px;
+}
+
+.deadstock-sections {
+  display: grid;
+  gap: 18px;
+}
+
+.deadstock-panel {
+  border-radius: 28px;
+  padding: 18px;
+  background: rgba(255, 247, 237, 0.12);
+  border: 1px solid rgba(255, 247, 237, 0.16);
+  box-shadow: 0 20px 42px rgba(20, 14, 10, 0.18);
+}
+
+.deadstock-panel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.deadstock-panel-top h2 {
+  margin: 0;
+  color: #fff7ed;
+}
+
+.deadstock-panel-top p {
+  margin: 5px 0 0;
+  color: rgba(255, 247, 237, 0.72);
+  font-weight: 800;
+}
+
+.deadstock-panel-top > span {
+  display: inline-flex;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #211b18;
+  font-weight: 950;
+}
+
+.deadstock-list {
+  display: grid;
+  gap: 12px;
+}
+
+.deadstock-card {
+  display: grid;
+  gap: 14px;
+  border-radius: 22px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(234, 212, 189, 0.9));
+  color: #211b18;
+  border: 1px solid rgba(234, 212, 189, 0.86);
+}
+
+.deadstock-card h3 {
+  margin: 3px 0 8px;
+  font-size: 20px;
+}
+
+.deadstock-stats {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.58);
+  color: #4e3628;
+  font-weight: 850;
+}
+
+.deadstock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.deadstock-actions button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 12px;
+  background: #211b18;
+  color: #fff7ed;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.deadstock-actions button.danger {
+  background: #7f2a1d;
+}
+
+@media (max-width: 720px) {
+  .deadstock-panel-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

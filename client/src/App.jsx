@@ -1691,6 +1691,249 @@ function App() {
   }
 
 
+  if (currentView === "deadstock") {
+    const deadStockRows = analyticsData.usageRows
+      .filter(
+        (row) =>
+          !row.archived &&
+          row.quantity > 0 &&
+          row.purchasedPacks > 0 &&
+          row.usedPacks === 0
+      )
+      .sort((a, b) => b.stockGrams - a.stockGrams);
+
+    const slowStockRows = analyticsData.usageRows
+      .filter((row) => {
+        if (
+          row.archived ||
+          row.quantity <= 0 ||
+          row.purchasedPacks <= 0 ||
+          row.usedPacks <= 0
+        ) {
+          return false;
+        }
+
+        const usageRate = row.usedPacks / row.purchasedPacks;
+
+        return usageRate <= 0.25;
+      })
+      .sort((a, b) => {
+        const aRate = a.usedPacks / a.purchasedPacks;
+        const bRate = b.usedPacks / b.purchasedPacks;
+
+        return aRate - bRate;
+      });
+
+    const openFlavorInInventory = (row) => {
+      setSearchText(row.name);
+      setSelectedTag("all");
+      setStatusFilter("all");
+      setOpenBrandName(row.brand);
+      setOpenFlavorId(row.id);
+      setCurrentView("inventory");
+    };
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <p className="eyebrow">Hookah Inventory</p>
+            <h1>Залежи</h1>
+            <p className="subtitle">
+              Вкусы, которые лежат на полке и почти не используются
+            </p>
+
+            {isDemoMode && (
+              <p className="demo-badge">Ознакомительный режим</p>
+            )}
+          </div>
+
+          <div className="header-actions">
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("inventory")}
+            >
+              Склад
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("analytics")}
+            >
+              Аналитика
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("purchase")}
+            >
+              Закупка
+            </button>
+
+            <button className="secondary-button" onClick={handleLogout}>
+              Выйти
+            </button>
+          </div>
+        </header>
+
+        <main className="content deadstock-page">
+          <section className="analytics-grid">
+            <article className="analytics-card">
+              <span>Не списывались</span>
+              <strong>{deadStockRows.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Слабо используются</span>
+              <strong>{slowStockRows.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Пачек в залежах</span>
+              <strong>
+                {deadStockRows.reduce((sum, row) => sum + row.quantity, 0)}
+              </strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Вес в залежах</span>
+              <strong>
+                {formatWeight(
+                  deadStockRows.reduce((sum, row) => sum + row.stockGrams, 0)
+                )}
+              </strong>
+            </article>
+          </section>
+
+          <section className="deadstock-sections">
+            <article className="deadstock-panel">
+              <div className="deadstock-panel-top">
+                <div>
+                  <h2>Не списывались вообще</h2>
+                  <p>Есть на полке, но использовано 0 пачек</p>
+                </div>
+
+                <span>{deadStockRows.length} поз.</span>
+              </div>
+
+              {deadStockRows.length === 0 && (
+                <p className="info-message">Таких позиций нет</p>
+              )}
+
+              <div className="deadstock-list">
+                {deadStockRows.map((row) => (
+                  <article className="deadstock-card" key={row.id}>
+                    <div>
+                      <p className="brand">{row.brand}</p>
+                      <h3>{row.name}</h3>
+
+                      <div className="analytics-flavor-tags">
+                        {row.tags.map((tag) => (
+                          <span key={tag}>#{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="deadstock-stats">
+                      <span>Остаток: {row.quantity} пач.</span>
+                      <span>На полке: {formatWeight(row.stockGrams)}</span>
+                      <span>
+                        Закуплено: {row.purchasedPacks} пач. ·{" "}
+                        {formatWeight(row.purchasedGrams)}
+                      </span>
+                      <span>Использовано: 0 пач.</span>
+                    </div>
+
+                    <div className="deadstock-actions">
+                      <button onClick={() => openFlavorInInventory(row)}>
+                        Открыть
+                      </button>
+
+                      {!isDemoMode && (
+                        <button
+                          className="danger"
+                          onClick={() => archiveFlavor(row.id)}
+                        >
+                          В архив
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </article>
+
+            <article className="deadstock-panel">
+              <div className="deadstock-panel-top">
+                <div>
+                  <h2>Слабо используются</h2>
+                  <p>Использовано 25% или меньше от закупленного</p>
+                </div>
+
+                <span>{slowStockRows.length} поз.</span>
+              </div>
+
+              {slowStockRows.length === 0 && (
+                <p className="info-message">Таких позиций нет</p>
+              )}
+
+              <div className="deadstock-list">
+                {slowStockRows.map((row) => {
+                  const usageRate = Math.round(
+                    (row.usedPacks / row.purchasedPacks) * 100
+                  );
+
+                  return (
+                    <article className="deadstock-card" key={row.id}>
+                      <div>
+                        <p className="brand">{row.brand}</p>
+                        <h3>{row.name}</h3>
+
+                        <div className="analytics-flavor-tags">
+                          {row.tags.map((tag) => (
+                            <span key={tag}>#{tag}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="deadstock-stats">
+                        <span>Остаток: {row.quantity} пач.</span>
+                        <span>Использовано: {usageRate}%</span>
+                        <span>
+                          Закуплено: {row.purchasedPacks} пач. ·{" "}
+                          {formatWeight(row.purchasedGrams)}
+                        </span>
+                        <span>
+                          Использовано: {row.usedPacks} пач. ·{" "}
+                          {formatWeight(row.usedGrams)}
+                        </span>
+                      </div>
+
+                      <div className="deadstock-actions">
+                        <button onClick={() => openFlavorInInventory(row)}>
+                          Открыть
+                        </button>
+
+                        {!isDemoMode && (
+                          <button
+                            className="danger"
+                            onClick={() => archiveFlavor(row.id)}
+                          >
+                            В архив
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </article>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   if (currentView === "purchase") {
     const purchaseRows = purchaseFlavors.map((flavor) => {
       const total = getTotalQuantity(flavor.packs || []);
@@ -2567,6 +2810,13 @@ function App() {
             onClick={() => setCurrentView("purchase")}
           >
             Закупка
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={() => setCurrentView("deadstock")}
+          >
+            Залежи
           </button>
 
           <button
