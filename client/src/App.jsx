@@ -998,6 +998,47 @@ function App() {
   });
 
 
+
+  const normalizeDuplicateKey = (value) => {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  const duplicateGroups = Array.from(
+    flavors.reduce((groups, flavor) => {
+      const brand = normalizeDuplicateKey(flavor.brand);
+      const name = normalizeDuplicateKey(flavor.name);
+
+      if (!brand || !name) {
+        return groups;
+      }
+
+      const key = `${brand}::${name}`;
+
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+
+      groups.get(key).push(flavor);
+
+      return groups;
+    }, new Map())
+  )
+    .map(([key, items]) => ({
+      key,
+      items: items.sort((a, b) => a.id - b.id),
+    }))
+    .filter((group) => group.items.length > 1)
+    .sort((a, b) =>
+      `${a.items[0].brand} ${a.items[0].name}`.localeCompare(
+        `${b.items[0].brand} ${b.items[0].name}`,
+        "ru"
+      )
+    );
+
   const groupedFlavorsByBrand = Array.from(
     filteredFlavors.reduce((groups, flavor) => {
       const brand = flavor.brand || "Без бренда";
@@ -1391,6 +1432,54 @@ function App() {
     }
   };
 
+  const mergeDuplicateGroup = async (group) => {
+    if (!group?.items || group.items.length < 2) {
+      return;
+    }
+
+    const primaryFlavor = group.items[0];
+    const duplicateIds = group.items.slice(1).map((flavor) => flavor.id);
+
+    const isConfirmed = window.confirm(
+      `Объединить ${group.items.length} записей в одну? Основной останется: ${primaryFlavor.brand} — ${primaryFlavor.name}`
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await apiFetch("/api/flavors/merge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          primaryId: primaryFlavor.id,
+          duplicateIds,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Не удалось объединить дубли");
+      }
+
+      await addActionLog({
+        action: "merge_duplicates",
+        flavor: primaryFlavor,
+        details: {
+          mergedCount: group.items.length,
+        },
+      });
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось объединить дубли");
+    }
+  };
+
   const actionLabels = {
     pack_plus: "+1 фасовка",
     pack_minus: "−1 фасовка",
@@ -1403,6 +1492,7 @@ function App() {
     purchase_confirmed_off: "Подтверждение закупки снято",
     supply: "Поставка",
     import_excel: "Импорт Excel",
+    merge_duplicates: "Объединение дублей",
   };
 
   const formatActionTime = (value) => {
@@ -1432,6 +1522,10 @@ function App() {
 
     if (log.action === "import_excel") {
       return `Обновлено вкусов: ${details.importedCount || 0}`;
+    }
+
+    if (log.action === "merge_duplicates") {
+      return `Объединено записей: ${details.mergedCount || 0}`;
     }
 
     return "";
@@ -1467,6 +1561,117 @@ function App() {
     );
   }
 
+
+  if (currentView === "duplicates") {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <p className="eyebrow">Hookah Inventory</p>
+            <h1>Дубли вкусов</h1>
+            <p className="subtitle">
+              Поиск одинаковых записей по бренду и названию
+            </p>
+
+            {isDemoMode && (
+              <p className="demo-badge">Ознакомительный режим</p>
+            )}
+          </div>
+
+          <div className="header-actions">
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("inventory")}
+            >
+              Склад
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("analytics")}
+            >
+              Аналитика
+            </button>
+
+            <button className="secondary-button" onClick={openHistory}>
+              История
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("duplicates")}
+            >
+              Дубли
+            </button>
+
+            <button className="secondary-button" onClick={handleLogout}>
+              Выйти
+            </button>
+          </div>
+        </header>
+
+        <main className="content">
+          <section className="duplicates-panel">
+            <div className="history-panel-top">
+              <h2>Найдено групп дублей: {duplicateGroups.length}</h2>
+            </div>
+
+            {duplicateGroups.length === 0 && (
+              <p className="info-message">
+                Точные дубли не найдены. Всё чисто.
+              </p>
+            )}
+
+            <div className="duplicate-list">
+              {duplicateGroups.map((group) => (
+                <article className="duplicate-group" key={group.key}>
+                  <div className="duplicate-group-top">
+                    <div>
+                      <h3>
+                        {group.items[0].brand} — {group.items[0].name}
+                      </h3>
+
+                      <p>{group.items.length} записей</p>
+                    </div>
+
+                    {!isDemoMode && (
+                      <button
+                        className="submit-button small"
+                        onClick={() => mergeDuplicateGroup(group)}
+                      >
+                        Объединить
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="duplicate-items">
+                    {group.items.map((flavor, index) => (
+                      <div className="duplicate-item" key={flavor.id}>
+                        <strong>
+                          {index === 0 ? "Основная: " : "Дубль: "}
+                          {flavor.brand} — {flavor.name}
+                        </strong>
+
+                        <span>
+                          {(flavor.packs || [])
+                            .map((pack) => `${pack.weight}: ${pack.quantity} пач.`)
+                            .join(" · ")}
+                        </span>
+
+                        <small>
+                          {(flavor.tags || []).map((tag) => `#${tag}`).join(", ")}
+                        </small>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (currentView === "history") {
     return (
@@ -1878,6 +2083,13 @@ function App() {
 
           <button className="secondary-button" onClick={openHistory}>
             История
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={() => setCurrentView("duplicates")}
+          >
+            Дубли
           </button>
 
           {!isDemoMode && (

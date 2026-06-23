@@ -266,6 +266,141 @@ app.post("/api/action-logs", async (req, res) => {
   }
 });
 
+
+app.post("/api/flavors/merge", async (req, res) => {
+  const { primaryId, duplicateIds } = req.body;
+
+  const ids = [primaryId, ...(duplicateIds || [])]
+    .map((id) => Number(id))
+    .filter((id) => Number.isInteger(id));
+
+  if (!primaryId || ids.length < 2) {
+    return res.status(400).json({ message: "Недостаточно вкусов для объединения" });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    await client.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    await client.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    const result = await client.query(
+      "SELECT * FROM flavors WHERE id = ANY($1::int[])",
+      [ids]
+    );
+
+    if (result.rows.length !== ids.length) {
+      throw new Error("Один или несколько дублей не найдены");
+    }
+
+    const primaryFlavor = result.rows.find((row) => row.id === Number(primaryId));
+
+    if (!primaryFlavor) {
+      throw new Error("Основной вкус не найден");
+    }
+
+    const packMap = new Map();
+    const tagSet = new Set();
+
+    result.rows.forEach((flavor) => {
+      const packs = Array.isArray(flavor.packs) ? flavor.packs : [];
+
+      packs.forEach((pack) => {
+        const weight = String(pack.weight || "Без фасовки").trim();
+        const quantity = Number(pack.quantity || 0);
+        const purchasedQuantity = Number(
+          pack.purchasedQuantity ?? pack.purchased_quantity ?? quantity
+        );
+
+        const previous = packMap.get(weight) || {
+          weight,
+          quantity: 0,
+          purchasedQuantity: 0,
+        };
+
+        packMap.set(weight, {
+          weight,
+          quantity: previous.quantity + quantity,
+          purchasedQuantity: previous.purchasedQuantity + purchasedQuantity,
+        });
+      });
+
+      const tags = Array.isArray(flavor.tags) ? flavor.tags : [];
+
+      tags.forEach((tag) => {
+        const cleanTag = String(tag).trim();
+
+        if (cleanTag) {
+          tagSet.add(cleanTag);
+        }
+      });
+    });
+
+    const mergedPacks = Array.from(packMap.values());
+    const mergedTags = Array.from(tagSet.values()).sort((a, b) =>
+      a.localeCompare(b, "ru")
+    );
+
+    const mergedArchived = result.rows.every((row) => row.archived);
+    const mergedLowStock = result.rows.some((row) => row.low_stock);
+    const mergedPurchaseConfirmed = result.rows.some(
+      (row) => row.purchase_confirmed
+    );
+
+    const updateResult = await client.query(
+      `
+        UPDATE flavors
+        SET
+          packs = $1,
+          tags = $2,
+          archived = $3,
+          low_stock = $4,
+          purchase_confirmed = $5,
+          updated_at = NOW()
+        WHERE id = $6
+        RETURNING *
+      `,
+      [
+        JSON.stringify(mergedPacks),
+        JSON.stringify(mergedTags),
+        mergedArchived,
+        mergedLowStock,
+        mergedPurchaseConfirmed,
+        primaryFlavor.id,
+      ]
+    );
+
+    const idsToDelete = ids.filter((id) => id !== Number(primaryId));
+
+    await client.query("DELETE FROM flavors WHERE id = ANY($1::int[])", [
+      idsToDelete,
+    ]);
+
+    await client.query("COMMIT");
+
+    res.json({
+      mergedFlavor: updateResult.rows[0],
+      deletedCount: idsToDelete.length,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error("Merge flavors error:", error);
+    res.status(500).json({ message: error.message || "Не удалось объединить дубли" });
+  } finally {
+    client.release();
+  }
+});
+
 app.get("/api/flavors", async (req, res) => {
   try {
     await pool.query(`
