@@ -1067,6 +1067,77 @@ function App() {
     }))
     .sort((a, b) => a.brand.localeCompare(b.brand, "ru"));
 
+
+  const normalizeTagKey = (value) => {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  const tagRows = Array.from(
+    flavors.reduce((map, flavor) => {
+      const tags = flavor.tags || [];
+      const quantity = getTotalQuantity(flavor.packs || []);
+      const isArchived = Boolean(flavor.archived);
+
+      tags.forEach((tag) => {
+        const cleanTag = String(tag).trim();
+
+        if (!cleanTag) {
+          return;
+        }
+
+        const previous = map.get(cleanTag) || {
+          tag: cleanTag,
+          flavorCount: 0,
+          activeFlavorCount: 0,
+          archivedFlavorCount: 0,
+          totalPacks: 0,
+        };
+
+        map.set(cleanTag, {
+          ...previous,
+          flavorCount: previous.flavorCount + 1,
+          activeFlavorCount:
+            previous.activeFlavorCount + (isArchived ? 0 : 1),
+          archivedFlavorCount:
+            previous.archivedFlavorCount + (isArchived ? 1 : 0),
+          totalPacks: previous.totalPacks + quantity,
+        });
+      });
+
+      return map;
+    }, new Map())
+  )
+    .map(([, value]) => value)
+    .sort((a, b) => b.flavorCount - a.flavorCount || a.tag.localeCompare(b.tag, "ru"));
+
+  const tagDuplicateGroups = Array.from(
+    tagRows.reduce((groups, row) => {
+      const key = normalizeTagKey(row.tag);
+
+      if (!key) {
+        return groups;
+      }
+
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+
+      groups.get(key).push(row);
+
+      return groups;
+    }, new Map())
+  )
+    .map(([key, items]) => ({
+      key,
+      items: items.sort((a, b) => b.flavorCount - a.flavorCount),
+    }))
+    .filter((group) => group.items.length > 1)
+    .sort((a, b) => b.items.length - a.items.length);
+
   const purchaseFlavors = flavors.filter((flavor) => {
     if (flavor.archived) {
       return false;
@@ -1432,6 +1503,57 @@ function App() {
     }
   };
 
+  const mergeTagGroup = async (group) => {
+    if (!group?.items || group.items.length < 2) {
+      return;
+    }
+
+    const targetTag = group.items[0].tag;
+    const fromTags = group.items.map((item) => item.tag);
+
+    const isConfirmed = window.confirm(
+      `Объединить теги ${fromTags.map((tag) => `#${tag}`).join(", ")} в #${targetTag}?`
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await apiFetch("/api/tags/merge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fromTags,
+          toTag: targetTag,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Не удалось объединить теги");
+      }
+
+      const result = await response.json();
+
+      await addActionLog({
+        action: "merge_tags",
+        details: {
+          toTag: targetTag,
+          fromTags,
+          updatedCount: result.updatedCount,
+        },
+      });
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось объединить теги");
+    }
+  };
+
   const mergeDuplicateGroup = async (group) => {
     if (!group?.items || group.items.length < 2) {
       return;
@@ -1493,6 +1615,7 @@ function App() {
     supply: "Поставка",
     import_excel: "Импорт Excel",
     merge_duplicates: "Объединение дублей",
+    merge_tags: "Объединение тегов",
   };
 
   const formatActionTime = (value) => {
@@ -1528,6 +1651,12 @@ function App() {
       return `Объединено записей: ${details.mergedCount || 0}`;
     }
 
+    if (log.action === "merge_tags") {
+      return `В #${details.toTag || ""} · обновлено вкусов: ${
+        details.updatedCount || 0
+      }`;
+    }
+
     return "";
   };
 
@@ -1561,6 +1690,141 @@ function App() {
     );
   }
 
+
+  if (currentView === "tags") {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <p className="eyebrow">Hookah Inventory</p>
+            <h1>Теги</h1>
+            <p className="subtitle">
+              Карта вкусовых тегов и поиск дублей
+            </p>
+
+            {isDemoMode && (
+              <p className="demo-badge">Ознакомительный режим</p>
+            )}
+          </div>
+
+          <div className="header-actions">
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("inventory")}
+            >
+              Склад
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("analytics")}
+            >
+              Аналитика
+            </button>
+
+            <button className="secondary-button" onClick={openHistory}>
+              История
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("duplicates")}
+            >
+              Дубли
+            </button>
+
+            <button className="secondary-button" onClick={handleLogout}>
+              Выйти
+            </button>
+          </div>
+        </header>
+
+        <main className="content tags-page">
+          <section className="analytics-grid">
+            <article className="analytics-card">
+              <span>Всего тегов</span>
+              <strong>{tagRows.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Возможных дублей</span>
+              <strong>{tagDuplicateGroups.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Самый частый тег</span>
+              <strong>{tagRows[0]?.tag || "—"}</strong>
+            </article>
+          </section>
+
+          {tagDuplicateGroups.length > 0 && (
+            <section className="tag-duplicates-panel">
+              <h2>Возможные дубли тегов</h2>
+
+              <div className="tag-duplicate-list">
+                {tagDuplicateGroups.map((group) => (
+                  <article className="tag-duplicate-group" key={group.key}>
+                    <div>
+                      <strong>
+                        {group.items.map((item) => `#${item.tag}`).join(", ")}
+                      </strong>
+
+                      <p>
+                        Будет объединено в #{group.items[0].tag}
+                      </p>
+                    </div>
+
+                    {!isDemoMode && (
+                      <button
+                        className="submit-button small"
+                        onClick={() => mergeTagGroup(group)}
+                      >
+                        Объединить
+                      </button>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="tags-table-panel">
+            <h2>Все теги</h2>
+
+            <div className="tags-table">
+              {tagRows.map((row) => (
+                <article className="tag-row-card" key={row.tag}>
+                  <div>
+                    <strong>#{row.tag}</strong>
+
+                    <span>
+                      {row.flavorCount} вкусов · активных:{" "}
+                      {row.activeFlavorCount} · архив:{" "}
+                      {row.archivedFlavorCount} · остаток: {row.totalPacks} пач.
+                    </span>
+                  </div>
+
+                  <button
+                    className="secondary-button dark"
+                    onClick={() => {
+                      setSearchText("");
+                      setStatusFilter("all");
+                      setSelectedTag(row.tag);
+                      setOpenBrandName("");
+                      setOpenFlavorId(null);
+                      setCurrentView("inventory");
+                    }}
+                  >
+                    Показать
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (currentView === "duplicates") {
     return (
@@ -2090,6 +2354,13 @@ function App() {
             onClick={() => setCurrentView("duplicates")}
           >
             Дубли
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={() => setCurrentView("tags")}
+          >
+            Теги
           </button>
 
           {!isDemoMode && (

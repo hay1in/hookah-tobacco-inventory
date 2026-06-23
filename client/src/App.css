@@ -1673,3 +1673,71 @@ h1 {
     flex-direction: column;
   }
 }
+
+.tags-page {
+  display: grid;
+  gap: 18px;
+}
+
+.tag-duplicates-panel,
+.tags-table-panel {
+  border-radius: 28px;
+  padding: 18px;
+  background: rgba(255, 247, 237, 0.12);
+  border: 1px solid rgba(255, 247, 237, 0.16);
+  box-shadow: 0 20px 42px rgba(20, 14, 10, 0.18);
+}
+
+.tag-duplicates-panel h2,
+.tags-table-panel h2 {
+  margin: 0 0 14px;
+  color: #fff7ed;
+}
+
+.tag-duplicate-list,
+.tags-table {
+  display: grid;
+  gap: 10px;
+}
+
+.tag-duplicate-group,
+.tag-row-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-radius: 18px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(234, 212, 189, 0.9));
+  color: #211b18;
+  border: 1px solid rgba(234, 212, 189, 0.86);
+}
+
+.tag-duplicate-group strong,
+.tag-row-card strong {
+  display: block;
+  font-size: 16px;
+}
+
+.tag-duplicate-group p,
+.tag-row-card span {
+  display: block;
+  margin-top: 5px;
+  color: #6d4c38;
+  font-weight: 850;
+  font-size: 13px;
+}
+
+.secondary-button.dark {
+  background: #211b18;
+  color: #fff7ed;
+}
+
+@media (max-width: 720px) {
+  .tag-duplicate-group,
+  .tag-row-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

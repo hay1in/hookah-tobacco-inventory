@@ -401,6 +401,96 @@ app.post("/api/flavors/merge", async (req, res) => {
   }
 });
 
+
+app.post("/api/tags/merge", async (req, res) => {
+  const { fromTags, toTag } = req.body;
+
+  const cleanToTag = String(toTag || "").trim();
+  const cleanFromTags = Array.isArray(fromTags)
+    ? fromTags.map((tag) => String(tag).trim()).filter(Boolean)
+    : [];
+
+  if (!cleanToTag || cleanFromTags.length === 0) {
+    return res.status(400).json({ message: "Не указаны теги для объединения" });
+  }
+
+  const normalizedFromTags = new Set(
+    cleanFromTags.map((tag) => tag.toLowerCase().replace(/ё/g, "е"))
+  );
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query("SELECT id, tags FROM flavors");
+
+    let updatedCount = 0;
+
+    for (const flavor of result.rows) {
+      const tags = Array.isArray(flavor.tags) ? flavor.tags : [];
+
+      const shouldUpdate = tags.some((tag) =>
+        normalizedFromTags.has(String(tag).toLowerCase().replace(/ё/g, "е"))
+      );
+
+      if (!shouldUpdate) {
+        continue;
+      }
+
+      const nextTags = [];
+
+      tags.forEach((tag) => {
+        const normalizedTag = String(tag).toLowerCase().replace(/ё/g, "е");
+
+        if (normalizedFromTags.has(normalizedTag)) {
+          if (
+            !nextTags.some(
+              (item) =>
+                item.toLowerCase().replace(/ё/g, "е") ===
+                cleanToTag.toLowerCase().replace(/ё/g, "е")
+            )
+          ) {
+            nextTags.push(cleanToTag);
+          }
+
+          return;
+        }
+
+        if (
+          !nextTags.some(
+            (item) =>
+              item.toLowerCase().replace(/ё/g, "е") === normalizedTag
+          )
+        ) {
+          nextTags.push(tag);
+        }
+      });
+
+      await client.query(
+        "UPDATE flavors SET tags = $1, updated_at = NOW() WHERE id = $2",
+        [JSON.stringify(nextTags), flavor.id]
+      );
+
+      updatedCount += 1;
+    }
+
+    await client.query("COMMIT");
+
+    res.json({
+      mergedTo: cleanToTag,
+      updatedCount,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error("Merge tags error:", error);
+    res.status(500).json({ message: "Не удалось объединить теги" });
+  } finally {
+    client.release();
+  }
+});
+
 app.get("/api/flavors", async (req, res) => {
   try {
     await pool.query(`
