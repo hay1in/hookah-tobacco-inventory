@@ -952,6 +952,7 @@ function App() {
   const [openFlavorId, setOpenFlavorId] = useState(null);
   const [openAnalyticsBrandName, setOpenAnalyticsBrandName] = useState("");
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
+  const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
 
   const quickTags = [
     "ягоды",
@@ -2795,7 +2796,7 @@ function App() {
           )}
         </div>
 
-        <div className="header-actions">
+        <div className="header-actions compact-header-actions">
           {!isDemoMode && (
             <button
               className="primary-button"
@@ -2806,85 +2807,138 @@ function App() {
           )}
 
           <button
-            className="secondary-button"
-            onClick={() => setCurrentView("purchase")}
+            className="secondary-button menu-toggle-button"
+            onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
           >
-            Закупка
-          </button>
-
-          <button
-            className="secondary-button"
-            onClick={() => setCurrentView("deadstock")}
-          >
-            Залежи
-          </button>
-
-          <button
-            className="secondary-button"
-            onClick={() => setCurrentView("analytics")}
-          >
-            Аналитика
-          </button>
-
-          <button className="secondary-button" onClick={openHistory}>
-            История
-          </button>
-
-          <button
-            className="secondary-button"
-            onClick={() => setCurrentView("duplicates")}
-          >
-            Дубли
-          </button>
-
-          <button
-            className="secondary-button"
-            onClick={() => setCurrentView("tags")}
-          >
-            Теги
-          </button>
-
-          {!isDemoMode && (
-            <button className="danger-top-button" onClick={clearDatabase}>
-              Очистить базу
-            </button>
-          )}
-
-          <button className="secondary-button" onClick={exportToExcel}>
-            Экспорт Excel
-          </button>
-
-          <button className="secondary-button" onClick={exportPurchaseToExcel}>
-            Экспорт закупки
-          </button>
-
-          {!isDemoMode && (
-            <label className="secondary-button file-button">
-              Импорт Excel
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={importFromExcel}
-              />
-            </label>
-          )}
-
-          <button
-            className="secondary-button"
-            onClick={() => {
-              setSearchText("");
-              setSelectedTag("all");
-              setStatusFilter(statusFilter === "Архив" ? "all" : "Архив");
-              setOpenBrandName("");
-              setOpenFlavorId(null);
-            }}
-          >
-            {statusFilter === "Архив" ? "Склад" : "Архив"}
+            Меню {isHeaderMenuOpen ? "↑" : "↓"}
           </button>
 
           <button className="secondary-button" onClick={handleLogout}>
             Выйти
           </button>
+
+          {isHeaderMenuOpen && (
+            <div className="header-dropdown">
+              <div className="dropdown-section">
+                <p>Разделы</p>
+
+                <button
+                  onClick={() => {
+                    setCurrentView("purchase");
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  Закупка
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentView("analytics");
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  Аналитика
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentView("deadstock");
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  Залежи
+                </button>
+
+                <button
+                  onClick={() => {
+                    openHistory();
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  История
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentView("duplicates");
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  Дубли
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentView("tags");
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  Теги
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSearchText("");
+                    setSelectedTag("all");
+                    setStatusFilter(statusFilter === "Архив" ? "all" : "Архив");
+                    setOpenBrandName("");
+                    setOpenFlavorId(null);
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  {statusFilter === "Архив" ? "Склад" : "Архив"}
+                </button>
+              </div>
+
+              <div className="dropdown-section">
+                <p>Данные</p>
+
+                <button
+                  onClick={() => {
+                    exportToExcel();
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  Экспорт склада
+                </button>
+
+                <button
+                  onClick={() => {
+                    exportPurchaseToExcel();
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  Экспорт закупки
+                </button>
+
+                {!isDemoMode && (
+                  <label className="dropdown-file-button">
+                    Импорт Excel
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={(event) => {
+                        importFromExcel(event);
+                        setIsHeaderMenuOpen(false);
+                      }}
+                    />
+                  </label>
+                )}
+
+                {!isDemoMode && (
+                  <button
+                    className="dropdown-danger"
+                    onClick={() => {
+                      clearDatabase();
+                      setIsHeaderMenuOpen(false);
+                    }}
+                  >
+                    Очистить базу
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
