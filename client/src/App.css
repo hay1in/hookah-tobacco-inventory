@@ -2046,3 +2046,119 @@ h1 {
     width: 100%;
   }
 }
+
+.compact-mode .header {
+  padding: 20px;
+  gap: 14px;
+}
+
+.compact-mode .header h1 {
+  font-size: clamp(30px, 5vw, 48px);
+}
+
+.compact-mode .subtitle {
+  margin-top: 6px;
+}
+
+.compact-mode .content {
+  gap: 14px;
+}
+
+.compact-mode .toolbar,
+.compact-mode .tag-filter-panel,
+.compact-mode .purchase-panel,
+.compact-mode .supply-panel {
+  border-radius: 22px;
+  padding: 14px;
+}
+
+.compact-mode .brand-row {
+  padding: 12px 14px;
+}
+
+.compact-mode .brand-row strong {
+  font-size: 17px;
+}
+
+.compact-mode .brand-row span {
+  font-size: 12px;
+}
+
+.compact-mode .brand-flavor-list.flavor-list-mode {
+  padding: 10px;
+  gap: 8px;
+}
+
+.compact-mode .flavor-row-button {
+  padding: 10px 12px;
+}
+
+.compact-mode .flavor-row-main strong {
+  font-size: 15px;
+}
+
+.compact-mode .flavor-row-main span {
+  font-size: 12px;
+}
+
+.compact-mode .flavor-row-tags-preview {
+  display: none;
+}
+
+.compact-mode .flavor-details-card {
+  padding: 0 10px 10px;
+  gap: 10px;
+}
+
+.compact-mode .flavor-details-card .tags {
+  display: none;
+}
+
+.compact-mode .pack-row {
+  padding: 8px 0;
+}
+
+.compact-mode .pack-counter button {
+  width: 30px;
+  height: 30px;
+}
+
+.compact-mode .actions,
+.compact-mode .purchase-smart-actions,
+.compact-mode .deadstock-actions {
+  gap: 6px;
+}
+
+.compact-mode .actions button,
+.compact-mode .purchase-smart-actions button,
+.compact-mode .deadstock-actions button {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.compact-mode .analytics-card {
+  padding: 14px;
+}
+
+.compact-mode .analytics-card strong {
+  font-size: 24px;
+}
+
+.compact-mode .purchase-smart-card,
+.compact-mode .deadstock-card,
+.compact-mode .history-item,
+.compact-mode .duplicate-group,
+.compact-mode .tag-row-card {
+  border-radius: 18px;
+  padding: 12px;
+}
+
+.compact-mode .header-dropdown {
+  padding: 12px;
+  gap: 10px;
+}
+
+.compact-mode .dropdown-section button,
+.compact-mode .dropdown-file-button {
+  padding: 10px 11px;
+}

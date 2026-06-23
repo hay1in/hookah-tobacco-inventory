@@ -13,6 +13,9 @@ function App() {
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
   const [actionLogs, setActionLogs] = useState([]);
+  const [isCompactMode, setIsCompactMode] = useState(
+    () => localStorage.getItem("compactMode") === "true"
+  );
 
   const isDemoMode = accessRole === "test";
 
@@ -98,6 +101,14 @@ function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleCompactMode = () => {
+    setIsCompactMode((currentValue) => {
+      const nextValue = !currentValue;
+      localStorage.setItem("compactMode", String(nextValue));
+      return nextValue;
+    });
   };
 
   const addActionLog = async ({ action, flavor, details = {} }) => {
@@ -1735,7 +1746,7 @@ function App() {
     };
 
     return (
-      <div className="app">
+      <div className={isCompactMode ? "app compact-mode" : "app"}>
         <header className="header">
           <div>
             <p className="eyebrow">Hookah Inventory</p>
@@ -1986,7 +1997,7 @@ function App() {
     ].filter((section) => section.rows.length > 0);
 
     return (
-      <div className="app">
+      <div className={isCompactMode ? "app compact-mode" : "app"}>
         <header className="header">
           <div>
             <p className="eyebrow">Hookah Inventory</p>
@@ -2161,7 +2172,7 @@ function App() {
 
   if (currentView === "tags") {
     return (
-      <div className="app">
+      <div className={isCompactMode ? "app compact-mode" : "app"}>
         <header className="header">
           <div>
             <p className="eyebrow">Hookah Inventory</p>
@@ -2296,7 +2307,7 @@ function App() {
 
   if (currentView === "duplicates") {
     return (
-      <div className="app">
+      <div className={isCompactMode ? "app compact-mode" : "app"}>
         <header className="header">
           <div>
             <p className="eyebrow">Hookah Inventory</p>
@@ -2407,7 +2418,7 @@ function App() {
 
   if (currentView === "history") {
     return (
-      <div className="app">
+      <div className={isCompactMode ? "app compact-mode" : "app"}>
         <header className="header">
           <div>
             <p className="eyebrow">Hookah Inventory</p>
@@ -2495,7 +2506,7 @@ function App() {
 
   if (currentView === "analytics") {
     return (
-      <div className="app">
+      <div className={isCompactMode ? "app compact-mode" : "app"}>
         <header className="header">
           <div>
             <p className="eyebrow">Hookah Inventory</p>
@@ -2782,7 +2793,7 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className={isCompactMode ? "app compact-mode" : "app"}>
       <header className="header">
         <div>
           <p className="eyebrow">Hookah Inventory</p>
@@ -2887,6 +2898,19 @@ function App() {
                   }}
                 >
                   {statusFilter === "Архив" ? "Склад" : "Архив"}
+                </button>
+              </div>
+
+              <div className="dropdown-section">
+                <p>Вид</p>
+
+                <button
+                  onClick={() => {
+                    toggleCompactMode();
+                    setIsHeaderMenuOpen(false);
+                  }}
+                >
+                  {isCompactMode ? "Обычный режим" : "Компактный режим"}
                 </button>
               </div>
 
