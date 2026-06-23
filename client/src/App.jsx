@@ -346,7 +346,7 @@ function App() {
       name: flavor.name || "",
       packsText: (flavor.packs || [])
         .map((pack) => `${pack.weight}: ${pack.quantity}`)
-        .join("\n"),
+        .join("\\n"),
       tags: (flavor.tags || []).join(", "),
       minStock: flavor.minStock || 1,
     });
@@ -375,7 +375,7 @@ function App() {
 
   const parsePacksText = (packsText) => {
     return packsText
-      .split("\n")
+      .split("\\n")
       .map((line) => line.trim())
       .filter(Boolean)
       .map((line) => {
@@ -763,6 +763,7 @@ function App() {
   const [selectedTag, setSelectedTag] = useState("all");
   const [isPurchasePanelOpen, setIsPurchasePanelOpen] = useState(false);
   const [openBrandName, setOpenBrandName] = useState("");
+  const [openFlavorId, setOpenFlavorId] = useState(null);
 
   const quickTags = [
     "ягоды",
@@ -1618,7 +1619,7 @@ function App() {
                   value={editForm.packsText}
                   onChange={handleEditChange}
                   rows="4"
-                  placeholder={"100 г: 2\n25 г: 1"}
+                  placeholder={"100 г: 2\\n25 г: 1"}
                   required
                 />
                 <span className="form-hint">
@@ -1824,9 +1825,10 @@ function App() {
                 <article className="brand-group" key={group.brand}>
                   <button
                     className={isOpen ? "brand-row open" : "brand-row"}
-                    onClick={() =>
-                      setOpenBrandName(isOpen ? "" : group.brand)
-                    }
+                    onClick={() => {
+                      setOpenBrandName(isOpen ? "" : group.brand);
+                      setOpenFlavorId(null);
+                    }}
                   >
                     <div>
                       <strong>{group.brand}</strong>
@@ -1853,86 +1855,122 @@ function App() {
                   </button>
 
                   {isOpen && (
-                    <div className="brand-flavor-list">
+                    <div className="brand-flavor-list flavor-list-mode">
                       {group.items.map((flavor) => {
                         const status = getStatus(flavor);
+                        const isFlavorOpen = openFlavorId === flavor.id;
+                        const totalQuantity = getTotalQuantity(flavor.packs || []);
 
                         return (
-                          <article className="flavor-card compact" key={flavor.id}>
-                            <div className="card-top">
-                              <div>
-                                <p className="brand">{flavor.brand}</p>
-                                <h2>{flavor.name}</h2>
+                          <article
+                            className={
+                              isFlavorOpen
+                                ? "flavor-row-group open"
+                                : "flavor-row-group"
+                            }
+                            key={flavor.id}
+                          >
+                            <button
+                              className="flavor-row-button"
+                              onClick={() =>
+                                setOpenFlavorId(isFlavorOpen ? null : flavor.id)
+                              }
+                            >
+                              <div className="flavor-row-main">
+                                <strong>{flavor.name}</strong>
+
+                                <span>
+                                  {totalQuantity} пач. ·{" "}
+                                  {(flavor.packs || [])
+                                    .map((pack) => `${pack.weight}: ${pack.quantity}`)
+                                    .join(" · ")}
+                                </span>
+
+                                <div className="flavor-row-tags-preview">
+                                  {(flavor.tags || []).slice(0, 4).map((tag) => (
+                                    <em key={tag}>#{tag}</em>
+                                  ))}
+                                </div>
                               </div>
 
-                              <span className={status.className}>
-                                {status.text}
-                              </span>
-                            </div>
+                              <div className="flavor-row-meta">
+                                <span className={status.className}>
+                                  {status.text}
+                                </span>
 
-                            <div className="packs">
-                              <p className="section-label">Фасовки</p>
+                                <span className="flavor-row-arrow">
+                                  {isFlavorOpen ? "↑" : "↓"}
+                                </span>
+                              </div>
+                            </button>
 
-                              {(flavor.packs || []).map((pack) => (
-                                <div className="pack-row" key={pack.weight}>
-                                  <span>{pack.weight}</span>
-                                  <strong>{pack.quantity} пач.</strong>
+                            {isFlavorOpen && (
+                              <div className="flavor-details-card">
+                                <div className="packs">
+                                  <p className="section-label">Фасовки</p>
+
+                                  {(flavor.packs || []).map((pack) => (
+                                    <div className="pack-row" key={pack.weight}>
+                                      <span>{pack.weight}</span>
+                                      <strong>{pack.quantity} пач.</strong>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
 
-                            <div className="tags">
-                              {(flavor.tags || []).map((tag) => (
-                                <span key={tag}>#{tag}</span>
-                              ))}
-                            </div>
+                                <div className="tags">
+                                  {(flavor.tags || []).map((tag) => (
+                                    <span key={tag}>#{tag}</span>
+                                  ))}
+                                </div>
 
-                            {!isDemoMode && (
-                              <div className="actions">
-                                <button onClick={() => increasePack(flavor.id)}>
-                                  +1 пачка
-                                </button>
-
-                                <button onClick={() => decreasePack(flavor.id)}>
-                                  −1 пачка
-                                </button>
-
-                                <button onClick={() => clearFlavor(flavor.id)}>
-                                  Выбить
-                                </button>
-
-                                <button onClick={() => openEditForm(flavor)}>
-                                  Редактировать
-                                </button>
-
-                                {!flavor.archived &&
-                                  getTotalQuantity(flavor.packs || []) > 0 && (
-                                    <button onClick={() => toggleLowStock(flavor)}>
-                                      {Boolean(flavor.lowStock || flavor.low_stock)
-                                        ? "Убрать мало"
-                                        : "Мало осталось"}
+                                {!isDemoMode && (
+                                  <div className="actions">
+                                    <button onClick={() => increasePack(flavor.id)}>
+                                      +1 пачка
                                     </button>
-                                  )}
 
-                                {flavor.archived ? (
-                                  <button onClick={() => restoreFlavor(flavor.id)}>
-                                    Вернуть
-                                  </button>
-                                ) : (
-                                  <button
-                                    className="danger"
-                                    onClick={() => archiveFlavor(flavor.id)}
-                                  >
-                                    В архив
-                                  </button>
+                                    <button onClick={() => decreasePack(flavor.id)}>
+                                      −1 пачка
+                                    </button>
+
+                                    <button onClick={() => clearFlavor(flavor.id)}>
+                                      Выбить
+                                    </button>
+
+                                    <button onClick={() => openEditForm(flavor)}>
+                                      Редактировать
+                                    </button>
+
+                                    {!flavor.archived &&
+                                      getTotalQuantity(flavor.packs || []) > 0 && (
+                                        <button onClick={() => toggleLowStock(flavor)}>
+                                          {Boolean(flavor.lowStock || flavor.low_stock)
+                                            ? "Убрать мало"
+                                            : "Мало осталось"}
+                                        </button>
+                                      )}
+
+                                    {flavor.archived ? (
+                                      <button onClick={() => restoreFlavor(flavor.id)}>
+                                        Вернуть
+                                      </button>
+                                    ) : (
+                                      <button
+                                        className="danger"
+                                        onClick={() => archiveFlavor(flavor.id)}
+                                      >
+                                        В архив
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+
+                                {isDemoMode && (
+                                  <p className="readonly-note">
+                                    Ознакомительный режим: редактирование недоступно
+                                  </p>
                                 )}
                               </div>
-                            )}
-
-                            {isDemoMode && (
-                              <p className="readonly-note">
-                                Ознакомительный режим: редактирование недоступно
-                              </p>
                             )}
                           </article>
                         );
