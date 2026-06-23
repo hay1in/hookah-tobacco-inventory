@@ -1046,6 +1046,29 @@ function App() {
         );
       }
 
+      setPendingImportRows(rows);
+      setPendingImportFileName(file.name || "Excel-файл");
+      setIsImportPreviewOpen(true);
+      setCurrentView("inventory");
+      setErrorText("");
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось импортировать Excel");
+    } finally {
+      setIsLoading(false);
+      event.target.value = "";
+    }
+  };
+
+  const confirmImportPreview = async () => {
+    if (pendingImportRows.length === 0) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorText("");
+
       createBackupExcel("before-import");
 
       const response = await apiFetch("/api/flavors/import", {
@@ -1053,7 +1076,7 @@ function App() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ rows }),
+        body: JSON.stringify({ rows: pendingImportRows }),
       });
 
       if (!response.ok) {
@@ -1084,6 +1107,10 @@ function App() {
 
       await refreshFlavors();
 
+      setPendingImportRows([]);
+      setPendingImportFileName("");
+      setIsImportPreviewOpen(false);
+
       setSearchText("");
       setSelectedTag("all");
       setStatusFilter("all");
@@ -1097,8 +1124,13 @@ function App() {
       setErrorText(error.message || "Не удалось импортировать Excel");
     } finally {
       setIsLoading(false);
-      event.target.value = "";
     }
+  };
+
+  const cancelImportPreview = () => {
+    setPendingImportRows([]);
+    setPendingImportFileName("");
+    setIsImportPreviewOpen(false);
   };
 
   const [searchText, setSearchText] = useState("");
@@ -1111,6 +1143,9 @@ function App() {
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
   const [selectedFlavorIds, setSelectedFlavorIds] = useState([]);
+  const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
+  const [pendingImportRows, setPendingImportRows] = useState([]);
+  const [pendingImportFileName, setPendingImportFileName] = useState("");
 
   const quickTags = [
     "ягоды",
@@ -1197,6 +1232,21 @@ function App() {
         "ru"
       )
     );
+
+
+  const importPreviewExistingCount = pendingImportRows.filter((row) => {
+    const rowBrand = normalizeDuplicateKey(row.brand);
+    const rowName = normalizeDuplicateKey(row.name);
+
+    return flavors.some(
+      (flavor) =>
+        normalizeDuplicateKey(flavor.brand) === rowBrand &&
+        normalizeDuplicateKey(flavor.name) === rowName
+    );
+  }).length;
+
+  const importPreviewNewCount =
+    pendingImportRows.length - importPreviewExistingCount;
 
   const groupedFlavorsByBrand = Array.from(
     filteredFlavors.reduce((groups, flavor) => {
@@ -3030,6 +3080,86 @@ function App() {
             <option value={weight} key={weight} />
           ))}
         </datalist>
+
+        {isImportPreviewOpen && (
+          <section className="supply-panel import-preview-panel">
+            <div className="supply-panel-top">
+              <div>
+                <p className="eyebrow dark">Предпросмотр импорта</p>
+                <h2>{pendingImportFileName}</h2>
+              </div>
+
+              <button className="close-button" onClick={cancelImportPreview}>
+                Закрыть
+              </button>
+            </div>
+
+            <div className="import-preview-summary">
+              <article>
+                <span>Строк найдено</span>
+                <strong>{pendingImportRows.length}</strong>
+              </article>
+
+              <article>
+                <span>Уже есть в базе</span>
+                <strong>{importPreviewExistingCount}</strong>
+              </article>
+
+              <article>
+                <span>Новых позиций</span>
+                <strong>{importPreviewNewCount}</strong>
+              </article>
+            </div>
+
+            <div className="import-preview-table-wrap">
+              <table className="import-preview-table">
+                <thead>
+                  <tr>
+                    <th>Бренд</th>
+                    <th>Вкус</th>
+                    <th>Фасовка</th>
+                    <th>Кол-во</th>
+                    <th>Закуплено</th>
+                    <th>Теги</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {pendingImportRows.slice(0, 20).map((row, index) => (
+                    <tr key={`${row.brand}-${row.name}-${row.weight}-${index}`}>
+                      <td>{row.brand}</td>
+                      <td>{row.name}</td>
+                      <td>{row.weight}</td>
+                      <td>{row.quantity}</td>
+                      <td>{row.purchasedQuantity}</td>
+                      <td>{row.tags}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {pendingImportRows.length > 20 && (
+              <p className="form-hint">
+                Показаны первые 20 строк из {pendingImportRows.length}.
+              </p>
+            )}
+
+            <div className="import-preview-actions">
+              <button
+                className="submit-button"
+                onClick={confirmImportPreview}
+                disabled={isLoading}
+              >
+                {isLoading ? "Импортируем..." : "Подтвердить импорт"}
+              </button>
+
+              <button className="close-button" onClick={cancelImportPreview}>
+                Отменить
+              </button>
+            </div>
+          </section>
+        )}
 
         {isSupplyFormOpen && (
           <section className="supply-panel">
