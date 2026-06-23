@@ -513,6 +513,71 @@ app.post("/api/flavors/import", async (req, res) => {
 });
 
 
+
+app.patch("/api/flavors/:id/packs/:packIndex/adjust", async (req, res) => {
+  const delta = Number(req.body.delta);
+
+  if (![1, -1].includes(delta)) {
+    return res.status(400).json({ message: "Некорректное изменение фасовки" });
+  }
+
+  try {
+    const flavorResult = await pool.query(
+      "SELECT * FROM flavors WHERE id = $1",
+      [req.params.id]
+    );
+
+    if (flavorResult.rows.length === 0) {
+      return res.status(404).json({ message: "Вкус не найден" });
+    }
+
+    const flavor = flavorResult.rows[0];
+    const packs = Array.isArray(flavor.packs) ? flavor.packs : [];
+    const packIndex = Number(req.params.packIndex);
+
+    if (!Number.isInteger(packIndex) || packIndex < 0 || packIndex >= packs.length) {
+      return res.status(404).json({ message: "Фасовка не найдена" });
+    }
+
+    const pack = packs[packIndex];
+
+    const currentQuantity = Number(pack.quantity || 0);
+    const currentPurchasedQuantity = Number(
+      pack.purchasedQuantity ?? pack.purchased_quantity ?? currentQuantity
+    );
+
+    if (delta === 1) {
+      pack.quantity = currentQuantity + 1;
+      pack.purchasedQuantity = currentPurchasedQuantity + 1;
+    } else {
+      pack.quantity = Math.max(currentQuantity - 1, 0);
+      pack.purchasedQuantity = Math.max(currentPurchasedQuantity, currentQuantity);
+    }
+
+    delete pack.purchased_quantity;
+
+    const shouldRestoreFromArchive = delta === 1;
+
+    const result = await pool.query(
+      `
+        UPDATE flavors
+        SET
+          packs = $1,
+          archived = CASE WHEN $3 THEN FALSE ELSE archived END,
+          updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `,
+      [JSON.stringify(packs), req.params.id, shouldRestoreFromArchive]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Adjust pack error:", error);
+    res.status(500).json({ message: "Не удалось изменить фасовку" });
+  }
+});
+
 app.patch("/api/flavors/:id/increase", async (req, res) => {
   try {
     const flavorResult = await pool.query(

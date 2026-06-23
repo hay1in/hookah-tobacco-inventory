@@ -1492,3 +1492,44 @@ h1 {
     justify-content: flex-start;
   }
 }
+
+.pack-control-row {
+  align-items: center;
+  gap: 12px;
+}
+
+.pack-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pack-counter button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: #211b18;
+  color: #fff7ed;
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.pack-counter button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #3b2a20;
+}
+
+.pack-counter button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pack-counter strong {
+  min-width: 64px;
+  text-align: center;
+}

@@ -164,6 +164,30 @@ function App() {
     };
   };
 
+  const adjustPackQuantity = async (flavorId, packIndex, delta) => {
+    try {
+      const response = await apiFetch(
+        `/api/flavors/${flavorId}/packs/${packIndex}/adjust`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ delta }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Не удалось изменить фасовку");
+      }
+
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось изменить фасовку");
+    }
+  };
+
   const increasePack = async (flavorId) => {
     try {
       const response = await apiFetch(`/api/flavors/${flavorId}/increase`, {
@@ -2035,10 +2059,47 @@ function App() {
                                 <div className="packs">
                                   <p className="section-label">Фасовки</p>
 
-                                  {(flavor.packs || []).map((pack) => (
-                                    <div className="pack-row" key={pack.weight}>
+                                  {(flavor.packs || []).map((pack, packIndex) => (
+                                    <div
+                                      className="pack-row pack-control-row"
+                                      key={`${pack.weight}-${packIndex}`}
+                                    >
                                       <span>{pack.weight}</span>
-                                      <strong>{pack.quantity} пач.</strong>
+
+                                      {!isDemoMode ? (
+                                        <div className="pack-counter">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              adjustPackQuantity(
+                                                flavor.id,
+                                                packIndex,
+                                                -1
+                                              )
+                                            }
+                                            disabled={Number(pack.quantity || 0) <= 0}
+                                          >
+                                            −
+                                          </button>
+
+                                          <strong>{pack.quantity} пач.</strong>
+
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              adjustPackQuantity(
+                                                flavor.id,
+                                                packIndex,
+                                                1
+                                              )
+                                            }
+                                          >
+                                            +
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <strong>{pack.quantity} пач.</strong>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
@@ -2051,14 +2112,6 @@ function App() {
 
                                 {!isDemoMode && (
                                   <div className="actions">
-                                    <button onClick={() => increasePack(flavor.id)}>
-                                      +1 пачка
-                                    </button>
-
-                                    <button onClick={() => decreasePack(flavor.id)}>
-                                      −1 пачка
-                                    </button>
-
                                     <button onClick={() => clearFlavor(flavor.id)}>
                                       Выбить
                                     </button>
