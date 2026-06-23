@@ -58,6 +58,12 @@ function App() {
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
   const [actionLogs, setActionLogs] = useState([]);
+  const [aliases, setAliases] = useState([]);
+  const [aliasForm, setAliasForm] = useState({
+    type: "brand",
+    alias: "",
+    canonical: "",
+  });
   const [isCompactMode, setIsCompactMode] = useState(
     () => localStorage.getItem("compactMode") === "true"
   );
