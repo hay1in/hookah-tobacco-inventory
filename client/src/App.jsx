@@ -741,6 +741,8 @@ function App() {
       return;
     }
 
+    createBackupExcel("before-clear-database");
+
     try {
       const response = await apiFetch("/api/admin/clear-database", {
         method: "DELETE",
@@ -858,6 +860,67 @@ function App() {
 
     const today = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(workbook, `zakupka-tabaka-${today}.xlsx`);
+  };
+
+  const createBackupExcel = (reason = "backup") => {
+    if (!Array.isArray(flavors) || flavors.length === 0) {
+      return;
+    }
+
+    const rows = flavors.flatMap((flavor) => {
+      const packs =
+        Array.isArray(flavor.packs) && flavor.packs.length > 0
+          ? flavor.packs
+          : [{ weight: "", quantity: 0 }];
+
+      return packs.map((pack) => ({
+        "Бренд": flavor.brand || "",
+        "Вкус": flavor.name || "",
+        "Фасовка": pack.weight || "",
+        "Количество": Number(pack.quantity || 0),
+        "Закуплено": Number(
+          pack.purchasedQuantity ??
+            pack.purchased_quantity ??
+            pack.quantity ??
+            0
+        ),
+        "Теги": (flavor.tags || []).join(", "),
+        "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock)
+          ? "да"
+          : "нет",
+        "Закупка подтверждена": Boolean(
+          flavor.purchaseConfirmed || flavor.purchase_confirmed
+        )
+          ? "да"
+          : "нет",
+        "Архив": flavor.archived ? "да" : "нет",
+      }));
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    worksheet["!cols"] = [
+      { wch: 22 },
+      { wch: 30 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 42 },
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 12 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Backup");
+
+    const timestamp = new Date()
+      .toISOString()
+      .slice(0, 16)
+      .replace("T", "-")
+      .replace(":", "-");
+
+    XLSX.writeFile(workbook, `backup-${reason}-${timestamp}.xlsx`);
   };
 
   const getExcelValue = (row, names) => {
@@ -982,6 +1045,8 @@ function App() {
           "В Excel не найдено строк с обязательными колонками: Бренд, Вкус, Фасовка"
         );
       }
+
+      createBackupExcel("before-import");
 
       const response = await apiFetch("/api/flavors/import", {
         method: "POST",
@@ -1613,6 +1678,8 @@ function App() {
       return;
     }
 
+    createBackupExcel("before-merge-tags");
+
     try {
       const response = await apiFetch("/api/tags/merge", {
         method: "POST",
@@ -1663,6 +1730,8 @@ function App() {
     if (!isConfirmed) {
       return;
     }
+
+    createBackupExcel("before-merge-duplicates");
 
     try {
       const response = await apiFetch("/api/flavors/merge", {
@@ -1800,6 +1869,8 @@ function App() {
     if (!isConfirmed) {
       return;
     }
+
+    createBackupExcel(`before-bulk-${action}`);
 
     try {
       const response = await apiFetch("/api/flavors/bulk", {
