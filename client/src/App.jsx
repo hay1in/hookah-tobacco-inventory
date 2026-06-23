@@ -73,6 +73,7 @@ function App() {
   const [flavors, setFlavors] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
+  const [notifications, setNotifications] = useState([]);
 
   const [isSupplyFormOpen, setIsSupplyFormOpen] = useState(false);
   const [supplyForm, setSupplyForm] = useState({
@@ -92,6 +93,59 @@ function App() {
     tags: "",
     minStock: 1,
   });
+
+  const showNotification = (message, type = "success") => {
+    const id =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`;
+
+    setNotifications((currentNotifications) => [
+      ...currentNotifications,
+      {
+        id,
+        message,
+        type,
+      },
+    ]);
+
+    window.setTimeout(() => {
+      setNotifications((currentNotifications) =>
+        currentNotifications.filter((notification) => notification.id !== id)
+      );
+    }, 3600);
+  };
+
+  const closeNotification = (notificationId) => {
+    setNotifications((currentNotifications) =>
+      currentNotifications.filter(
+        (notification) => notification.id !== notificationId
+      )
+    );
+  };
+
+  const renderNotifications = () => {
+    if (notifications.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="notification-stack">
+        {notifications.map((notification) => (
+          <div
+            className={`notification-toast ${notification.type}`}
+            key={notification.id}
+          >
+            <span>{notification.message}</span>
+
+            <button onClick={() => closeNotification(notification.id)}>
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const apiFetch = (path, options = {}) => {
     return fetch(`${API_URL}${path}`, {
@@ -355,8 +409,10 @@ function App() {
       }
 
       await refreshFlavors();
+      showNotification("Пачка добавлена", "success");
     } catch (error) {
       console.error(error);
+      showNotification(error.message || "Не удалось добавить пачку", "error");
       setErrorText(error.message || "Не удалось добавить пачку");
     }
   };
@@ -372,8 +428,10 @@ function App() {
       }
 
       await refreshFlavors();
+      showNotification("Пачка списана", "success");
     } catch (error) {
       console.error(error);
+      showNotification(error.message || "Не удалось списать пачку", "error");
       setErrorText(error.message || "Не удалось списать пачку");
     }
   };
@@ -396,8 +454,10 @@ function App() {
       });
 
       await refreshFlavors();
+      showNotification("Вкус выбит", "success");
     } catch (error) {
       console.error(error);
+      showNotification(error.message || "Не удалось выбить вкус", "error");
       setErrorText(error.message || "Не удалось выбить вкус");
     }
   };
@@ -428,8 +488,10 @@ function App() {
       });
 
       await refreshFlavors();
+      showNotification("Вкус отправлен в архив", "success");
     } catch (error) {
       console.error(error);
+      showNotification(error.message || "Не удалось отправить вкус в архив", "error");
       setErrorText(error.message || "Не удалось отправить вкус в архив");
     }
   };
@@ -452,8 +514,10 @@ function App() {
       });
 
       await refreshFlavors();
+      showNotification("Вкус возвращён из архива", "success");
     } catch (error) {
       console.error(error);
+      showNotification(error.message || "Не удалось вернуть вкус из архива", "error");
       setErrorText(error.message || "Не удалось вернуть вкус из архива");
     }
   };
@@ -764,7 +828,7 @@ function App() {
       setSelectedTag("all");
       setStatusFilter("all");
 
-      window.alert("База очищена. Теперь можно загружать историю закупа.");
+      showNotification("База очищена. Теперь можно загружать историю закупа.", "success");
     } catch (error) {
       console.error(error);
       setErrorText(error.message || "Не удалось очистить базу");
@@ -811,7 +875,7 @@ function App() {
 
   const exportPurchaseToExcel = () => {
     if (purchaseFlavors.length === 0) {
-      window.alert("Сейчас нет позиций, которые требуется закупить.");
+      showNotification("Сейчас нет позиций, которые требуется закупить.", "info");
       return;
     }
 
@@ -927,6 +991,7 @@ function App() {
       .replace(":", "-");
 
     XLSX.writeFile(workbook, `backup-${reason}-${timestamp}.xlsx`);
+    showNotification("Backup скачан", "info");
   };
 
   const getExcelValue = (row, names) => {
@@ -1122,8 +1187,9 @@ function App() {
       setStatusFilter("all");
       setCurrentView("inventory");
 
-      window.alert(
-        `Excel импортирован. Обновлено вкусов: ${result.importedCount}`
+      showNotification(
+        `Excel импортирован. Обновлено вкусов: ${result.importedCount}`,
+        "success"
       );
     } catch (error) {
       console.error(error);
@@ -2025,6 +2091,9 @@ function App() {
     };
 
     return (
+      <>
+      {renderNotifications()}
+
       <header className="header">
         <div>
           <p className="eyebrow">Hookah Inventory</p>
@@ -2197,6 +2266,7 @@ function App() {
           )}
         </div>
       </header>
+      </>
     );
   };
 
