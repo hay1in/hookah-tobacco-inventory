@@ -12,6 +12,7 @@ function App() {
   const [accessRole, setAccessRole] = useState("admin");
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
+  const [actionLogs, setActionLogs] = useState([]);
 
   const isDemoMode = accessRole === "test";
 
@@ -99,6 +100,51 @@ function App() {
     }
   };
 
+  const addActionLog = async ({ action, flavor, details = {} }) => {
+    if (isDemoMode) {
+      return;
+    }
+
+    try {
+      await apiFetch("/api/action-logs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          flavorId: flavor?.id || null,
+          brand: flavor?.brand || "",
+          name: flavor?.name || "",
+          details,
+        }),
+      });
+    } catch (error) {
+      console.error("Action log error:", error);
+    }
+  };
+
+  const loadActionLogs = async () => {
+    try {
+      const response = await apiFetch("/api/action-logs");
+
+      if (!response.ok) {
+        throw new Error("Не удалось загрузить историю");
+      }
+
+      const data = await response.json();
+      setActionLogs(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось загрузить историю");
+    }
+  };
+
+  const openHistory = async () => {
+    setCurrentView("history");
+    await loadActionLogs();
+  };
+
   const handleLogout = () => {
     setIsAuthorized(false);
     setAdminPassword("");
@@ -181,6 +227,18 @@ function App() {
         throw new Error("Не удалось изменить фасовку");
       }
 
+      const flavor = flavors.find((item) => item.id === flavorId);
+      const pack = (flavor?.packs || [])[packIndex];
+
+      await addActionLog({
+        action: delta === 1 ? "pack_plus" : "pack_minus",
+        flavor,
+        details: {
+          weight: pack?.weight || "",
+          delta,
+        },
+      });
+
       await refreshFlavors();
     } catch (error) {
       console.error(error);
@@ -232,6 +290,13 @@ function App() {
         throw new Error("Не удалось выбить вкус");
       }
 
+      const flavor = flavors.find((item) => item.id === flavorId);
+
+      await addActionLog({
+        action: "clear",
+        flavor,
+      });
+
       await refreshFlavors();
     } catch (error) {
       console.error(error);
@@ -257,6 +322,13 @@ function App() {
         throw new Error("Не удалось отправить вкус в архив");
       }
 
+      const flavor = flavors.find((item) => item.id === flavorId);
+
+      await addActionLog({
+        action: "archive",
+        flavor,
+      });
+
       await refreshFlavors();
     } catch (error) {
       console.error(error);
@@ -273,6 +345,13 @@ function App() {
       if (!response.ok) {
         throw new Error("Не удалось вернуть вкус из архива");
       }
+
+      const flavor = flavors.find((item) => item.id === flavorId);
+
+      await addActionLog({
+        action: "restore",
+        flavor,
+      });
 
       await refreshFlavors();
     } catch (error) {
@@ -299,6 +378,11 @@ function App() {
       if (!response.ok) {
         throw new Error("Не удалось изменить статус вкуса");
       }
+
+      await addActionLog({
+        action: currentValue ? "low_stock_off" : "low_stock_on",
+        flavor,
+      });
 
       await refreshFlavors();
     } catch (error) {
@@ -343,6 +427,18 @@ function App() {
       if (!response.ok) {
         throw new Error("Не удалось добавить поставку");
       }
+
+      await addActionLog({
+        action: "supply",
+        flavor: {
+          brand: payload.brand,
+          name: payload.name,
+        },
+        details: {
+          weight: payload.weight,
+          quantity: payload.quantity,
+        },
+      });
 
       await refreshFlavors();
 
@@ -822,6 +918,13 @@ function App() {
 
       const result = await response.json();
 
+      await addActionLog({
+        action: "import_excel",
+        details: {
+          importedCount: result.importedCount,
+        },
+      });
+
       await refreshFlavors();
 
       setSearchText("");
@@ -1272,6 +1375,13 @@ function App() {
         throw new Error("Не удалось изменить подтверждение закупки");
       }
 
+      await addActionLog({
+        action: currentValue
+          ? "purchase_confirmed_off"
+          : "purchase_confirmed_on",
+        flavor,
+      });
+
       await refreshFlavors();
     } catch (error) {
       console.error(error);
@@ -1279,6 +1389,52 @@ function App() {
         error.message || "Не удалось изменить подтверждение закупки"
       );
     }
+  };
+
+  const actionLabels = {
+    pack_plus: "+1 фасовка",
+    pack_minus: "−1 фасовка",
+    clear: "Выбит вкус",
+    archive: "В архив",
+    restore: "Возврат из архива",
+    low_stock_on: "Мало осталось",
+    low_stock_off: "Снято “мало осталось”",
+    purchase_confirmed_on: "Закупка подтверждена",
+    purchase_confirmed_off: "Подтверждение закупки снято",
+    supply: "Поставка",
+    import_excel: "Импорт Excel",
+  };
+
+  const formatActionTime = (value) => {
+    if (!value) {
+      return "";
+    }
+
+    return new Date(value).toLocaleString("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatActionDetails = (log) => {
+    const details = log.details || {};
+
+    if (log.action === "pack_plus" || log.action === "pack_minus") {
+      return details.weight ? `Фасовка: ${details.weight}` : "";
+    }
+
+    if (log.action === "supply") {
+      return `${details.weight || ""} · ${details.quantity || 0} пач.`;
+    }
+
+    if (log.action === "import_excel") {
+      return `Обновлено вкусов: ${details.importedCount || 0}`;
+    }
+
+    return "";
   };
 
   if (!isAuthorized) {
@@ -1312,6 +1468,94 @@ function App() {
   }
 
 
+  if (currentView === "history") {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <p className="eyebrow">Hookah Inventory</p>
+            <h1>История действий</h1>
+            <p className="subtitle">
+              Последние изменения склада, закупки и архива
+            </p>
+
+            {isDemoMode && (
+              <p className="demo-badge">Ознакомительный режим</p>
+            )}
+          </div>
+
+          <div className="header-actions">
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("inventory")}
+            >
+              Склад
+            </button>
+
+            <button className="secondary-button" onClick={openHistory}>
+              История
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={() => setCurrentView("analytics")}
+            >
+              Аналитика
+            </button>
+
+            <button className="secondary-button" onClick={handleLogout}>
+              Выйти
+            </button>
+          </div>
+        </header>
+
+        <main className="content">
+          <section className="history-panel">
+            <div className="history-panel-top">
+              <h2>Последние действия</h2>
+
+              <button className="secondary-button" onClick={loadActionLogs}>
+                Обновить
+              </button>
+            </div>
+
+            {actionLogs.length === 0 && (
+              <p className="info-message">История пока пустая</p>
+            )}
+
+            <div className="history-list">
+              {actionLogs.map((log) => (
+                <article className="history-item" key={log.id}>
+                  <div>
+                    <span className="history-time">
+                      {formatActionTime(log.createdAt)}
+                    </span>
+
+                    <strong>
+                      {actionLabels[log.action] || log.action}
+                    </strong>
+
+                    {(log.brand || log.name) && (
+                      <p>
+                        {log.brand}
+                        {log.brand && log.name ? " — " : ""}
+                        {log.name}
+                      </p>
+                    )}
+
+                    {formatActionDetails(log) && (
+                      <small>{formatActionDetails(log)}</small>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   if (currentView === "analytics") {
     return (
       <div className="app">
@@ -1334,6 +1578,10 @@ function App() {
               onClick={() => setCurrentView("inventory")}
             >
               Склад
+            </button>
+
+            <button className="secondary-button" onClick={openHistory}>
+              История
             </button>
 
             <button className="secondary-button" onClick={handleLogout}>
@@ -1626,6 +1874,10 @@ function App() {
             onClick={() => setCurrentView("analytics")}
           >
             Аналитика
+          </button>
+
+          <button className="secondary-button" onClick={openHistory}>
+            История
           </button>
 
           {!isDemoMode && (

@@ -1533,3 +1533,71 @@ h1 {
   min-width: 64px;
   text-align: center;
 }
+
+.history-panel {
+  border-radius: 28px;
+  padding: 18px;
+  background: rgba(255, 247, 237, 0.12);
+  border: 1px solid rgba(255, 247, 237, 0.16);
+  box-shadow: 0 20px 42px rgba(20, 14, 10, 0.18);
+}
+
+.history-panel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.history-panel-top h2 {
+  margin: 0;
+  color: #fff7ed;
+}
+
+.history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.history-item {
+  border-radius: 18px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(234, 212, 189, 0.9));
+  color: #211b18;
+  border: 1px solid rgba(234, 212, 189, 0.86);
+}
+
+.history-time {
+  display: inline-flex;
+  margin-bottom: 6px;
+  color: #7a563f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.history-item strong {
+  display: block;
+  font-size: 16px;
+}
+
+.history-item p {
+  margin: 5px 0 0;
+  color: #4e3628;
+  font-weight: 850;
+}
+
+.history-item small {
+  display: block;
+  margin-top: 5px;
+  color: #7a563f;
+  font-weight: 800;
+}
+
+@media (max-width: 680px) {
+  .history-panel-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

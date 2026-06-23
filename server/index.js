@@ -187,6 +187,85 @@ app.get("/", (req, res) => {
 
 
 
+
+async function ensureActionLogsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS action_logs (
+      id SERIAL PRIMARY KEY,
+      action TEXT NOT NULL,
+      flavor_id INTEGER,
+      brand TEXT,
+      name TEXT,
+      details JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  `);
+}
+
+app.get("/api/action-logs", async (req, res) => {
+  try {
+    await ensureActionLogsTable();
+
+    const result = await pool.query(`
+      SELECT
+        id,
+        action,
+        flavor_id AS "flavorId",
+        brand,
+        name,
+        details,
+        created_at AS "createdAt"
+      FROM action_logs
+      ORDER BY created_at DESC
+      LIMIT 150
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Get action logs error:", error);
+    res.status(500).json({ message: "Не удалось получить историю действий" });
+  }
+});
+
+app.post("/api/action-logs", async (req, res) => {
+  const { action, flavorId, brand, name, details } = req.body;
+
+  if (!action) {
+    return res.status(400).json({ message: "Не указано действие" });
+  }
+
+  try {
+    await ensureActionLogsTable();
+
+    const result = await pool.query(
+      `
+        INSERT INTO action_logs (action, flavor_id, brand, name, details)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING
+          id,
+          action,
+          flavor_id AS "flavorId",
+          brand,
+          name,
+          details,
+          created_at AS "createdAt"
+      `,
+      [
+        action,
+        flavorId || null,
+        brand || "",
+        name || "",
+        JSON.stringify(details || {}),
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Create action log error:", error);
+    res.status(500).json({ message: "Не удалось сохранить действие" });
+  }
+});
+
 app.get("/api/flavors", async (req, res) => {
   try {
     await pool.query(`
