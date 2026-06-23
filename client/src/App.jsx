@@ -2832,13 +2832,6 @@ function App() {
 
                 <button
                   className="collapse-button"
-                  onClick={exportPurchaseToExcel}
-                >
-                  Excel закупки
-                </button>
-
-                <button
-                  className="collapse-button"
                   onClick={() => setIsPurchasePanelOpen(!isPurchasePanelOpen)}
                 >
                   {isPurchasePanelOpen ? "Свернуть" : "Показать"}
