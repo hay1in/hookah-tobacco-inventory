@@ -964,6 +964,7 @@ function App() {
   const [openAnalyticsBrandName, setOpenAnalyticsBrandName] = useState("");
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
+  const [selectedFlavorIds, setSelectedFlavorIds] = useState([]);
 
   const quickTags = [
     "ягоды",
@@ -1628,6 +1629,7 @@ function App() {
     import_excel: "Импорт Excel",
     merge_duplicates: "Объединение дублей",
     merge_tags: "Объединение тегов",
+    bulk_action: "Массовое действие",
   };
 
   const formatActionTime = (value) => {
@@ -1669,7 +1671,88 @@ function App() {
       }`;
     }
 
+    if (log.action === "bulk_action") {
+      return `Действие: ${details.bulkAction || ""} · обновлено: ${
+        details.updatedCount || 0
+      }`;
+    }
+
     return "";
+  };
+
+  const toggleFlavorSelection = (flavorId) => {
+    setSelectedFlavorIds((currentIds) =>
+      currentIds.includes(flavorId)
+        ? currentIds.filter((id) => id !== flavorId)
+        : [...currentIds, flavorId]
+    );
+  };
+
+  const selectVisibleFlavors = () => {
+    setSelectedFlavorIds(filteredFlavors.map((flavor) => flavor.id));
+  };
+
+  const clearSelectedFlavors = () => {
+    setSelectedFlavorIds([]);
+  };
+
+  const applyBulkAction = async (action) => {
+    const actionTitles = {
+      archive: "отправить выбранные вкусы в архив",
+      restore: "вернуть выбранные вкусы из архива",
+      low_stock_on: "отметить выбранные вкусы как “мало осталось”",
+      low_stock_off: "убрать отметку “мало осталось”",
+      purchase_confirmed_on: "подтвердить закупку выбранных вкусов",
+      purchase_confirmed_off: "снять подтверждение закупки",
+    };
+
+    const selectedCount = selectedFlavorIds.length;
+
+    if (selectedCount === 0) {
+      return;
+    }
+
+    const isConfirmed = window.confirm(
+      `Точно ${actionTitles[action]}? Выбрано: ${selectedCount}`
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await apiFetch("/api/flavors/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ids: selectedFlavorIds,
+          action,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Не удалось выполнить массовое действие");
+      }
+
+      const result = await response.json();
+
+      await addActionLog({
+        action: "bulk_action",
+        details: {
+          bulkAction: action,
+          updatedCount: result.updatedCount,
+        },
+      });
+
+      clearSelectedFlavors();
+      await refreshFlavors();
+    } catch (error) {
+      console.error(error);
+      setErrorText(error.message || "Не удалось выполнить массовое действие");
+    }
   };
 
   const renderAppHeader = ({ title, subtitle, isInventory = false }) => {
@@ -3089,6 +3172,7 @@ function App() {
               setStatusFilter(event.target.value);
               setOpenBrandName("");
               setOpenFlavorId(null);
+              clearSelectedFlavors();
             }}
           >
             <option value="all">Все статусы</option>
@@ -3097,7 +3181,55 @@ function App() {
             <option value="Отсутствует">Отсутствует</option>
             <option value="Архив">Архив</option>
           </select>
+
+          {!isDemoMode && filteredFlavors.length > 0 && (
+            <button
+              className="secondary-button bulk-select-button"
+              onClick={selectVisibleFlavors}
+            >
+              Выбрать всё
+            </button>
+          )}
         </section>
+
+        {!isDemoMode && selectedFlavorIds.length > 0 && (
+          <section className="bulk-action-panel">
+            <div>
+              <strong>Выбрано: {selectedFlavorIds.length}</strong>
+              <span>Массовые действия</span>
+            </div>
+
+            <div className="bulk-action-buttons">
+              <button onClick={() => applyBulkAction("archive")}>
+                В архив
+              </button>
+
+              <button onClick={() => applyBulkAction("restore")}>
+                Вернуть
+              </button>
+
+              <button onClick={() => applyBulkAction("purchase_confirmed_on")}>
+                Подтвердить закупку
+              </button>
+
+              <button onClick={() => applyBulkAction("purchase_confirmed_off")}>
+                Снять подтверждение
+              </button>
+
+              <button onClick={() => applyBulkAction("low_stock_on")}>
+                Мало осталось
+              </button>
+
+              <button onClick={() => applyBulkAction("low_stock_off")}>
+                Убрать мало
+              </button>
+
+              <button className="secondary" onClick={clearSelectedFlavors}>
+                Сбросить
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="tag-filter-panel">
           <button
@@ -3188,12 +3320,27 @@ function App() {
                             }
                             key={flavor.id}
                           >
-                            <button
-                              className="flavor-row-button"
-                              onClick={() =>
-                                setOpenFlavorId(isFlavorOpen ? null : flavor.id)
-                              }
-                            >
+                            <div className="flavor-row-header">
+                              {!isDemoMode && (
+                                <label
+                                  className="bulk-checkbox"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedFlavorIds.includes(flavor.id)}
+                                    onChange={() => toggleFlavorSelection(flavor.id)}
+                                  />
+                                  <span></span>
+                                </label>
+                              )}
+
+                              <button
+                                className="flavor-row-button"
+                                onClick={() =>
+                                  setOpenFlavorId(isFlavorOpen ? null : flavor.id)
+                                }
+                              >
                               <div className="flavor-row-main">
                                 <strong>{flavor.name}</strong>
 
@@ -3220,7 +3367,8 @@ function App() {
                                   {isFlavorOpen ? "↑" : "↓"}
                                 </span>
                               </div>
-                            </button>
+                              </button>
+                            </div>
 
                             {isFlavorOpen && (
                               <div className="flavor-details-card">

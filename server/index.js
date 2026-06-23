@@ -491,6 +491,109 @@ app.post("/api/tags/merge", async (req, res) => {
   }
 });
 
+
+app.post("/api/flavors/bulk", async (req, res) => {
+  const { ids, action } = req.body;
+
+  const cleanIds = Array.isArray(ids)
+    ? ids.map((id) => Number(id)).filter((id) => Number.isInteger(id))
+    : [];
+
+  if (cleanIds.length === 0) {
+    return res.status(400).json({ message: "Не выбраны вкусы" });
+  }
+
+  const allowedActions = new Set([
+    "archive",
+    "restore",
+    "low_stock_on",
+    "low_stock_off",
+    "purchase_confirmed_on",
+    "purchase_confirmed_off",
+  ]);
+
+  if (!allowedActions.has(action)) {
+    return res.status(400).json({ message: "Некорректное массовое действие" });
+  }
+
+  try {
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    let query = "";
+
+    if (action === "archive") {
+      query = `
+        UPDATE flavors
+        SET archived = TRUE, updated_at = NOW()
+        WHERE id = ANY($1::int[])
+        RETURNING *
+      `;
+    }
+
+    if (action === "restore") {
+      query = `
+        UPDATE flavors
+        SET archived = FALSE, updated_at = NOW()
+        WHERE id = ANY($1::int[])
+        RETURNING *
+      `;
+    }
+
+    if (action === "low_stock_on") {
+      query = `
+        UPDATE flavors
+        SET low_stock = TRUE, updated_at = NOW()
+        WHERE id = ANY($1::int[])
+        RETURNING *
+      `;
+    }
+
+    if (action === "low_stock_off") {
+      query = `
+        UPDATE flavors
+        SET low_stock = FALSE, updated_at = NOW()
+        WHERE id = ANY($1::int[])
+        RETURNING *
+      `;
+    }
+
+    if (action === "purchase_confirmed_on") {
+      query = `
+        UPDATE flavors
+        SET purchase_confirmed = TRUE, updated_at = NOW()
+        WHERE id = ANY($1::int[])
+        RETURNING *
+      `;
+    }
+
+    if (action === "purchase_confirmed_off") {
+      query = `
+        UPDATE flavors
+        SET purchase_confirmed = FALSE, updated_at = NOW()
+        WHERE id = ANY($1::int[])
+        RETURNING *
+      `;
+    }
+
+    const result = await pool.query(query, [cleanIds]);
+
+    res.json({
+      updatedCount: result.rows.length,
+    });
+  } catch (error) {
+    console.error("Bulk action error:", error);
+    res.status(500).json({ message: "Не удалось выполнить массовое действие" });
+  }
+});
+
 app.get("/api/flavors", async (req, res) => {
   try {
     await pool.query(`
