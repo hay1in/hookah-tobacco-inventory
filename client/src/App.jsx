@@ -1213,6 +1213,7 @@ function App() {
   const [isPurchasePanelOpen, setIsPurchasePanelOpen] = useState(false);
   const [openBrandName, setOpenBrandName] = useState("");
   const [openFlavorId, setOpenFlavorId] = useState(null);
+  const [openFlavorHistoryIds, setOpenFlavorHistoryIds] = useState([]);
   const [openAnalyticsBrandName, setOpenAnalyticsBrandName] = useState("");
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
@@ -1235,6 +1236,201 @@ function App() {
     "чай",
     "орехи",
   ];
+
+  const normalizeHistoryValue = (value) => {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  const parseActionDetails = (details) => {
+    if (!details) {
+      return {};
+    }
+
+    if (typeof details === "string") {
+      try {
+        return JSON.parse(details);
+      } catch {
+        return {};
+      }
+    }
+
+    return details;
+  };
+
+  const toggleFlavorHistory = (flavorId) => {
+    setOpenFlavorHistoryIds((currentIds) => {
+      if (currentIds.includes(flavorId)) {
+        return currentIds.filter((id) => id !== flavorId);
+      }
+
+      return [...currentIds, flavorId];
+    });
+  };
+
+  const getFlavorHistory = (flavor) => {
+    const flavorBrand = normalizeHistoryValue(flavor.brand);
+    const flavorName = normalizeHistoryValue(flavor.name);
+
+    return actionLogs
+      .filter((log) => {
+        const details = parseActionDetails(log.details);
+
+        const logFlavorId =
+          details.flavorId ||
+          details.id ||
+          details.flavor?.id ||
+          details.item?.id;
+
+        if (logFlavorId && String(logFlavorId) === String(flavor.id)) {
+          return true;
+        }
+
+        const logBrand =
+          details.brand ||
+          details.flavorBrand ||
+          details.flavor?.brand ||
+          details.item?.brand ||
+          details.payload?.brand;
+
+        const logName =
+          details.name ||
+          details.flavorName ||
+          details.flavor?.name ||
+          details.item?.name ||
+          details.payload?.name;
+
+        return (
+          normalizeHistoryValue(logBrand) === flavorBrand &&
+          normalizeHistoryValue(logName) === flavorName
+        );
+      })
+      .slice(0, 12);
+  };
+
+  const formatHistoryDate = (log) => {
+    const rawDate = log.createdAt || log.created_at;
+
+    if (!rawDate) {
+      return "Дата не указана";
+    }
+
+    return new Date(rawDate).toLocaleString("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getHistoryActionTitle = (action) => {
+    const titles = {
+      pack_plus: "Добавлена пачка",
+      pack_minus: "Списана пачка",
+      clear: "Вкус выбит",
+      archive: "Вкус отправлен в архив",
+      restore: "Вкус возвращён из архива",
+      low_stock_on: "Отмечено: мало осталось",
+      low_stock_off: "Снята отметка: мало осталось",
+      purchase_confirmed_on: "Закупка подтверждена",
+      purchase_confirmed_off: "Закупка снята",
+      supply: "Поставка",
+      import_excel: "Импорт Excel",
+      merge_duplicates: "Объединение дублей",
+      merge_tags: "Объединение тегов",
+      bulk_action: "Массовое действие",
+      alias_create: "Создан алиас",
+      alias_delete: "Удалён алиас",
+    };
+
+    return titles[action] || action || "Действие";
+  };
+
+  const getHistoryActionMeta = (log) => {
+    const details = parseActionDetails(log.details);
+    const pieces = [];
+
+    const weight =
+      details.packWeight ||
+      details.weight ||
+      details.pack?.weight ||
+      details.payload?.weight;
+
+    const delta =
+      details.delta ||
+      details.quantity ||
+      details.packQuantity ||
+      details.payload?.quantity;
+
+    if (weight) {
+      pieces.push(weight);
+    }
+
+    if (delta && ["pack_plus", "pack_minus", "supply"].includes(log.action)) {
+      const numberDelta = Number(delta);
+
+      if (!Number.isNaN(numberDelta)) {
+        pieces.push(`${numberDelta > 0 ? "+" : ""}${numberDelta} пач.`);
+      }
+    }
+
+    if (details.reason) {
+      pieces.push(details.reason);
+    }
+
+    return pieces.join(" • ");
+  };
+
+  const renderFlavorHistory = (flavor) => {
+    const historyItems = getFlavorHistory(flavor);
+    const isHistoryOpen = openFlavorHistoryIds.includes(flavor.id);
+
+    return (
+      <div className="flavor-history-block">
+        <button
+          className="flavor-history-toggle"
+          type="button"
+          onClick={() => toggleFlavorHistory(flavor.id)}
+        >
+          <span>История вкуса</span>
+          <span>
+            {historyItems.length > 0
+              ? `${historyItems.length} действий`
+              : "нет записей"}
+            {" "}
+            {isHistoryOpen ? "▲" : "▼"}
+          </span>
+        </button>
+
+        {isHistoryOpen && (
+          <div className="flavor-history-list">
+            {historyItems.length === 0 ? (
+              <p className="flavor-history-empty">
+                По этому вкусу пока нет записей в истории.
+              </p>
+            ) : (
+              historyItems.map((log) => (
+                <div className="flavor-history-item" key={log.id}>
+                  <div>
+                    <strong>{getHistoryActionTitle(log.action)}</strong>
+                    {getHistoryActionMeta(log) && (
+                      <span>{getHistoryActionMeta(log)}</span>
+                    )}
+                  </div>
+
+                  <time>{formatHistoryDate(log)}</time>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const normalizeSearchValue = (value) => {
     return String(value || "")
@@ -3846,6 +4042,7 @@ function App() {
                                           >
                                             +
                                           </button>
+                    {renderFlavorHistory(flavor)}
                                         </div>
                                       ) : (
                                         <strong>{pack.quantity} пач.</strong>
