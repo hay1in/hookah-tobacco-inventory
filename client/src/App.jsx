@@ -1385,6 +1385,127 @@ function App() {
     return pieces.join(" • ");
   };
 
+  const getDaysSinceDate = (dateValue) => {
+    if (!dateValue) {
+      return null;
+    }
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    const diffMs = Date.now() - date.getTime();
+
+    return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+  };
+
+  const getFlavorMovementInfo = (flavor) => {
+    const historyItems = getFlavorHistory(flavor);
+
+    const supplyActions = new Set(["supply", "pack_plus", "import_excel"]);
+    const writeOffActions = new Set(["pack_minus", "clear"]);
+
+    const supplyLogs = historyItems.filter((log) =>
+      supplyActions.has(log.action)
+    );
+
+    const writeOffLogs = historyItems.filter((log) =>
+      writeOffActions.has(log.action)
+    );
+
+    const lastSupplyLog = supplyLogs[0] || null;
+    const lastWriteOffLog = writeOffLogs[0] || null;
+
+    const lastSupplyDate =
+      lastSupplyLog?.createdAt || lastSupplyLog?.created_at || null;
+
+    const lastWriteOffDate =
+      lastWriteOffLog?.createdAt || lastWriteOffLog?.created_at || null;
+
+    const daysSinceSupply = getDaysSinceDate(lastSupplyDate);
+    const daysSinceWriteOff = getDaysSinceDate(lastWriteOffDate);
+
+    return {
+      historyItems,
+      lastSupplyLog,
+      lastWriteOffLog,
+      lastSupplyDate,
+      lastWriteOffDate,
+      daysSinceSupply,
+      daysSinceWriteOff,
+      hasMovements: historyItems.length > 0,
+      hasSupply: supplyLogs.length > 0,
+      hasWriteOff: writeOffLogs.length > 0,
+    };
+  };
+
+  const getDeadstockReasons = (flavor) => {
+    const movement = getFlavorMovementInfo(flavor);
+    const totalQuantity = getTotalQuantity(flavor);
+    const purchasedQuantity = getTotalPurchasedQuantity(flavor);
+    const usedQuantity = Math.max(0, purchasedQuantity - totalQuantity);
+    const reasons = [];
+
+    if (flavor.archived || totalQuantity <= 0) {
+      return [];
+    }
+
+    if (!movement.hasMovements) {
+      reasons.push("Есть остаток, но нет записей о движениях");
+    }
+
+    if (!movement.hasWriteOff && purchasedQuantity > 0) {
+      reasons.push("Закупался, но ещё не списывался");
+    }
+
+    if (
+      movement.daysSinceWriteOff !== null &&
+      movement.daysSinceWriteOff >= 30
+    ) {
+      reasons.push(`Не списывался ${movement.daysSinceWriteOff} дн.`);
+    }
+
+    if (
+      movement.daysSinceSupply !== null &&
+      movement.daysSinceSupply >= 45
+    ) {
+      reasons.push(`Не закупался ${movement.daysSinceSupply} дн.`);
+    }
+
+    if (purchasedQuantity > 0 && usedQuantity === 0) {
+      reasons.push("Остаток не уменьшался с момента закупки");
+    }
+
+    if (purchasedQuantity > 0) {
+      const usedShare = usedQuantity / purchasedQuantity;
+
+      if (usedShare > 0 && usedShare <= 0.15 && totalQuantity >= 2) {
+        reasons.push("Слабое использование: списано менее 15%");
+      }
+    }
+
+    return reasons;
+  };
+
+  const getDeadstockScore = (flavor) => {
+    const reasons = getDeadstockReasons(flavor);
+    const movement = getFlavorMovementInfo(flavor);
+
+    let score = reasons.length * 10;
+
+    if (movement.daysSinceWriteOff !== null) {
+      score += Math.min(40, movement.daysSinceWriteOff);
+    }
+
+    if (movement.daysSinceSupply !== null) {
+      score += Math.min(25, Math.floor(movement.daysSinceSupply / 2));
+    }
+
+    return score;
+  };
+
   const renderFlavorHistory = (flavor) => {
     const historyItems = getFlavorHistory(flavor);
     const isHistoryOpen = openFlavorHistoryIds.includes(flavor.id);
@@ -2500,37 +2621,65 @@ function App() {
 
 
   if (currentView === "deadstock") {
-    const deadStockRows = analyticsData.usageRows
+    const deadstockRowsWithReasons = analyticsData.usageRows
+      .map((row) => {
+        const flavor = flavors.find(
+          (item) => String(item.id) === String(row.id)
+        ) || row;
+
+        const reasons = getDeadstockReasons(flavor);
+        const movement = getFlavorMovementInfo(flavor);
+
+        return {
+          ...row,
+          deadstockReasons: reasons,
+          movement,
+          deadstockScore: getDeadstockScore(flavor),
+        };
+      })
       .filter(
         (row) =>
           !row.archived &&
           row.quantity > 0 &&
           row.purchasedPacks > 0 &&
-          row.usedPacks === 0
-      )
-      .sort((a, b) => b.stockGrams - a.stockGrams);
+          row.deadstockReasons.length > 0
+      );
 
-    const slowStockRows = analyticsData.usageRows
+    const deadStockRows = deadstockRowsWithReasons
       .filter((row) => {
-        if (
-          row.archived ||
-          row.quantity <= 0 ||
-          row.purchasedPacks <= 0 ||
-          row.usedPacks <= 0
-        ) {
+        return (
+          row.usedPacks === 0 ||
+          row.deadstockReasons.some((reason) =>
+            [
+              "Есть остаток, но нет записей о движениях",
+              "Закупался, но ещё не списывался",
+              "Остаток не уменьшался с момента закупки",
+            ].includes(reason)
+          )
+        );
+      })
+      .sort((a, b) => b.deadstockScore - a.deadstockScore);
+
+    const slowStockRows = deadstockRowsWithReasons
+      .filter((row) => {
+        const isAlreadyInDeadStock = deadStockRows.some(
+          (deadRow) => String(deadRow.id) === String(row.id)
+        );
+
+        if (isAlreadyInDeadStock) {
           return false;
         }
 
-        const usageRate = row.usedPacks / row.purchasedPacks;
-
-        return usageRate <= 0.25;
+        return (
+          row.deadstockReasons.some((reason) =>
+            reason.includes("Не списывался") ||
+            reason.includes("Не закупался") ||
+            reason.includes("Слабое использование")
+          ) ||
+          (row.usedPacks > 0 && row.usedPacks / row.purchasedPacks <= 0.25)
+        );
       })
-      .sort((a, b) => {
-        const aRate = a.usedPacks / a.purchasedPacks;
-        const bRate = b.usedPacks / b.purchasedPacks;
-
-        return aRate - bRate;
-      });
+      .sort((a, b) => b.deadstockScore - a.deadstockScore);
 
     const openFlavorInInventory = (row) => {
       setSearchText(row.name);
@@ -2664,6 +2813,12 @@ function App() {
                         <div className="analytics-flavor-tags">
                           {row.tags.map((tag) => (
                             <span key={tag}>#{tag}</span>
+                          ))}
+                        </div>
+
+                        <div className="deadstock-reasons">
+                          {row.deadstockReasons.map((reason) => (
+                            <span key={reason}>{reason}</span>
                           ))}
                         </div>
                       </div>
