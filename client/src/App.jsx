@@ -603,6 +603,7 @@ function App() {
       });
 
       await refreshFlavors();
+      showNotification("Поставка добавлена и учтена на складе", "success");
 
       setSupplyForm({
         brand: "",
@@ -616,6 +617,7 @@ function App() {
       setIsSupplyFormOpen(false);
     } catch (error) {
       console.error(error);
+      showNotification(error.message || "Не удалось добавить поставку", "error");
       setErrorText(error.message || "Не удалось добавить поставку");
     }
   };
