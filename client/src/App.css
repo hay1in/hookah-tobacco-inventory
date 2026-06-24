@@ -2607,3 +2607,28 @@ h1 {
 .compact-mode .flavor-history-list {
   padding: 8px;
 }
+
+/* Fix flavor history visibility inside flavor card */
+.flavor-details-card .flavor-history-toggle {
+  color: #211b18 !important;
+  background:
+    linear-gradient(135deg, rgba(255, 247, 237, 0.98), rgba(234, 212, 189, 0.92)) !important;
+  border: none !important;
+}
+
+.flavor-details-card .flavor-history-toggle span {
+  color: #211b18 !important;
+}
+
+.flavor-details-card .flavor-history-toggle span:last-child {
+  color: #6d4c38 !important;
+}
+
+.flavor-details-card .flavor-history-toggle:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 247, 237, 1), rgba(224, 192, 160, 0.96)) !important;
+}
+
+.flavor-details-card .flavor-history-block {
+  background: rgba(255, 247, 237, 0.72);
+}
