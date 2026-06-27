@@ -411,8 +411,25 @@ function App() {
     };
   };
 
+  const highlightFlavor = (flavorId) => {
+    if (!flavorId) {
+      return;
+    }
+
+    setHighlightedFlavorId(flavorId);
+
+    window.setTimeout(() => {
+      setHighlightedFlavorId((currentId) =>
+        String(currentId) === String(flavorId) ? null : currentId
+      );
+    }, 2600);
+  };
+
   const adjustPackQuantity = async (flavorId, packIndex, delta) => {
     try {
+      const flavor = flavors.find((item) => item.id === flavorId);
+      const pack = (flavor?.packs || [])[packIndex];
+
       const response = await apiFetch(
         `/api/flavors/${flavorId}/packs/${packIndex}/adjust`,
         {
@@ -428,8 +445,36 @@ function App() {
         throw new Error("Не удалось изменить фасовку");
       }
 
-      const flavor = flavors.find((item) => item.id === flavorId);
-      const pack = (flavor?.packs || [])[packIndex];
+      const currentTotal = getTotalQuantity(flavor?.packs || []);
+      const nextTotal = Math.max(0, currentTotal + delta);
+      const isLowStock = Boolean(flavor?.lowStock || flavor?.low_stock);
+
+      if (delta > 0 && isLowStock && nextTotal >= 2) {
+        const lowStockResponse = await apiFetch(
+          `/api/flavors/${flavorId}/low-stock`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              lowStock: false,
+            }),
+          }
+        );
+
+        if (!lowStockResponse.ok) {
+          throw new Error("Пачка добавлена, но не удалось снять статус “мало осталось”");
+        }
+
+        await addActionLog({
+          action: "low_stock_off",
+          flavor,
+          details: {
+            reason: "Автоматически снято после пополнения остатка до 2+ пачек",
+          },
+        });
+      }
 
       await addActionLog({
         action: delta === 1 ? "pack_plus" : "pack_minus",
@@ -441,8 +486,21 @@ function App() {
       });
 
       await refreshFlavors();
+      highlightFlavor(flavorId);
+
+      if (delta > 0) {
+        showNotification(
+          isLowStock && nextTotal >= 2
+            ? "Пачка добавлена. Статус “мало осталось” снят."
+            : "Пачка добавлена",
+          "success"
+        );
+      } else {
+        showNotification("Пачка списана", "success");
+      }
     } catch (error) {
       console.error(error);
+      showNotification(error.message || "Не удалось изменить фасовку", "error");
       setErrorText(error.message || "Не удалось изменить фасовку");
     }
   };
@@ -596,8 +654,16 @@ function App() {
       });
 
       await refreshFlavors();
+      highlightFlavor(flavor.id);
+      showNotification(
+        currentValue
+          ? "Статус “мало осталось” снят"
+          : "Вкус отмечен как “мало осталось”",
+        "success"
+      );
     } catch (error) {
       console.error(error);
+      showNotification(error.message || "Не удалось изменить статус вкуса", "error");
       setErrorText(error.message || "Не удалось изменить статус вкуса");
     }
   };
@@ -1263,6 +1329,7 @@ function App() {
   const [openBrandName, setOpenBrandName] = useState("");
   const [openFlavorId, setOpenFlavorId] = useState(null);
   const [openFlavorHistoryIds, setOpenFlavorHistoryIds] = useState([]);
+  const [highlightedFlavorId, setHighlightedFlavorId] = useState(null);
   const [openAnalyticsBrandName, setOpenAnalyticsBrandName] = useState("");
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
@@ -2202,8 +2269,19 @@ function App() {
       });
 
       await refreshFlavors();
+      highlightFlavor(flavor.id);
+      showNotification(
+        currentValue
+          ? "Подтверждение закупки снято"
+          : "Закупка подтверждена",
+        "success"
+      );
     } catch (error) {
       console.error(error);
+      showNotification(
+        error.message || "Не удалось изменить подтверждение закупки",
+        "error"
+      );
       setErrorText(
         error.message || "Не удалось изменить подтверждение закупки"
       );
@@ -4161,11 +4239,15 @@ function App() {
 
                         return (
                           <article
-                            className={
-                              isFlavorOpen
-                                ? "flavor-row-group open"
-                                : "flavor-row-group"
-                            }
+                            className={[
+                              "flavor-row-group",
+                              isFlavorOpen ? "open" : "",
+                              String(highlightedFlavorId) === String(flavor.id)
+                                ? "recently-updated"
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
                             key={flavor.id}
                           >
                             <div className="flavor-row-header">

@@ -2708,3 +2708,24 @@ h1 {
   opacity: 0.65 !important;
   font-weight: 950 !important;
 }
+
+.flavor-row-group.recently-updated {
+  animation: recentFlavorPulse 2.6s ease;
+}
+
+.flavor-row-group.recently-updated .flavor-row-button,
+.flavor-row-group.recently-updated .flavor-details-card {
+  box-shadow:
+    0 0 0 2px rgba(229, 198, 31, 0.72),
+    0 18px 44px rgba(229, 198, 31, 0.22);
+}
+
+@keyframes recentFlavorPulse {
+  0% {
+    transform: translateY(-1px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
