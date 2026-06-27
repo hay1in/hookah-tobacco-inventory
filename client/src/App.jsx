@@ -1564,8 +1564,6 @@ function App() {
       merge_duplicates: "Объединение дублей",
       merge_tags: "Объединение тегов",
       bulk_action: "Массовое действие",
-    deadstock_excluded_on: "Исключён из залежей",
-    deadstock_excluded_off: "Возвращён в залежи",
       alias_create: "Создан алиас",
       alias_delete: "Удалён алиас",
       deadstock_excluded_on: "Исключён из залежей",
@@ -2578,6 +2576,8 @@ function App() {
     merge_duplicates: "Объединение дублей",
     merge_tags: "Объединение тегов",
     bulk_action: "Массовое действие",
+    deadstock_excluded_on: "Исключён из залежей",
+    deadstock_excluded_off: "Возвращён в залежи",
   };
 
   const formatActionTime = (value) => {
