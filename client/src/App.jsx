@@ -178,6 +178,22 @@ function App() {
     return data;
   };
 
+  const loadActionLogsWithPassword = async (password) => {
+    const response = await fetch(`${API_URL}/api/action-logs`, {
+      headers: {
+        "x-admin-password": password,
+      },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+
+    return Array.isArray(data) ? data : [];
+  };
+
   useEffect(() => {
     const savedAuth = readSavedAuth();
 
@@ -191,7 +207,9 @@ function App() {
         setAuthError("");
 
         const data = await loadFlavorsWithPassword(savedAuth.password);
+        const logs = await loadActionLogsWithPassword(savedAuth.password);
 
+        setActionLogs(logs);
         setAdminPassword(savedAuth.password);
         setAccessRole(savedAuth.role || (savedAuth.password === "test" ? "test" : "admin"));
         setFlavors(data);
@@ -224,6 +242,9 @@ function App() {
       setAuthError("");
 
       const data = await loadFlavorsWithPassword(trimmedPassword);
+      const logs = await loadActionLogsWithPassword(trimmedPassword);
+
+      setActionLogs(logs);
 
       const role = trimmedPassword === "test" ? "test" : "admin";
 
@@ -270,6 +291,9 @@ function App() {
           details,
         }),
       });
+
+      const updatedLogs = await loadActionLogsWithPassword(adminPassword);
+      setActionLogs(updatedLogs);
     } catch (error) {
       console.error("Action log error:", error);
     }
@@ -303,6 +327,7 @@ function App() {
     setAccessRole("admin");
     setPasswordInput("");
     setFlavors([]);
+    setActionLogs([]);
     setErrorText("");
     setAuthError("");
   };
@@ -327,8 +352,32 @@ function App() {
     }
   };
 
-  const getTotalQuantity = (packs = []) => {
-    return packs.reduce((sum, pack) => sum + Number(pack.quantity), 0);
+  const getPacksArray = (packsOrFlavor = []) => {
+    if (Array.isArray(packsOrFlavor)) {
+      return packsOrFlavor;
+    }
+
+    return Array.isArray(packsOrFlavor?.packs) ? packsOrFlavor.packs : [];
+  };
+
+  const getTotalQuantity = (packsOrFlavor = []) => {
+    return getPacksArray(packsOrFlavor).reduce((sum, pack) => {
+      return sum + Number(pack.quantity || 0);
+    }, 0);
+  };
+
+  const getTotalPurchasedQuantity = (packsOrFlavor = []) => {
+    return getPacksArray(packsOrFlavor).reduce((sum, pack) => {
+      return (
+        sum +
+        Number(
+          pack.purchasedQuantity ??
+            pack.purchased_quantity ??
+            pack.quantity ??
+            0
+        )
+      );
+    }, 0);
   };
 
   const getStatus = (flavor) => {
@@ -1280,7 +1329,10 @@ function App() {
         const details = parseActionDetails(log.details);
 
         const logFlavorId =
+          log.flavorId ||
+          log.flavor_id ||
           details.flavorId ||
+          details.flavor_id ||
           details.id ||
           details.flavor?.id ||
           details.item?.id;
@@ -1290,6 +1342,7 @@ function App() {
         }
 
         const logBrand =
+          log.brand ||
           details.brand ||
           details.flavorBrand ||
           details.flavor?.brand ||
@@ -1297,6 +1350,7 @@ function App() {
           details.payload?.brand;
 
         const logName =
+          log.name ||
           details.name ||
           details.flavorName ||
           details.flavor?.name ||
@@ -2753,6 +2807,12 @@ function App() {
                           <span key={tag}>#{tag}</span>
                         ))}
                       </div>
+
+                      <div className="deadstock-reasons">
+                        {row.deadstockReasons.map((reason) => (
+                          <span key={reason}>{reason}</span>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="deadstock-stats">
@@ -4197,7 +4257,6 @@ function App() {
                                           >
                                             +
                                           </button>
-                    {renderFlavorHistory(flavor)}
                                         </div>
                                       ) : (
                                         <strong>{pack.quantity} пач.</strong>
@@ -4205,6 +4264,8 @@ function App() {
                                     </div>
                                   ))}
                                 </div>
+
+                                {renderFlavorHistory(flavor)}
 
                                 <div className="tags">
                                   {(flavor.tags || []).map((tag) => (
