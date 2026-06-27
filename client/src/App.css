@@ -2632,3 +2632,56 @@ h1 {
 .flavor-details-card .flavor-history-block {
   background: rgba(255, 247, 237, 0.72);
 }
+
+/* Better flavor history accordion button */
+.flavor-details-card .flavor-history-toggle {
+  width: 100% !important;
+  min-height: 46px !important;
+  height: auto !important;
+  padding: 12px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border-radius: 0 !important;
+  text-align: left !important;
+  white-space: normal !important;
+  line-height: 1.25 !important;
+  overflow: visible !important;
+}
+
+.flavor-details-card .flavor-history-toggle span {
+  display: block !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  line-height: 1.25 !important;
+}
+
+.flavor-details-card .flavor-history-toggle span:first-child {
+  flex: 1 1 auto !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+}
+
+.flavor-details-card .flavor-history-toggle span:last-child {
+  flex: 0 0 auto !important;
+  max-width: 45% !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  text-align: right !important;
+}
+
+.compact-mode .flavor-details-card .flavor-history-toggle {
+  min-height: 40px !important;
+  padding: 9px 11px !important;
+}
+
+.compact-mode .flavor-details-card .flavor-history-toggle span:first-child {
+  font-size: 13px !important;
+}
+
+.compact-mode .flavor-details-card .flavor-history-toggle span:last-child {
+  font-size: 11px !important;
+}
