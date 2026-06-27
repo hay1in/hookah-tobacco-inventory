@@ -49,6 +49,10 @@ const clearSavedAuth = () => {
   localStorage.removeItem(AUTH_STORAGE_KEY);
 };
 
+const getTodayInputDate = () => {
+  return new Date().toISOString().slice(0, 10);
+};
+
 function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [currentView, setCurrentView] = useState("inventory");
@@ -82,6 +86,7 @@ function App() {
     name: "",
     weight: "",
     quantity: 1,
+    supplyDate: getTodayInputDate(),
     tags: "",
     minStock: 1,
   });
@@ -686,6 +691,7 @@ function App() {
       name: supplyForm.name,
       weight: supplyForm.weight,
       quantity: Number(supplyForm.quantity),
+      supplyDate: supplyForm.supplyDate || getTodayInputDate(),
       tags: supplyForm.tags
         .split(",")
         .map((tag) => tag.trim())
@@ -715,6 +721,7 @@ function App() {
         details: {
           weight: payload.weight,
           quantity: payload.quantity,
+          suppliedAt: payload.supplyDate,
         },
       });
 
@@ -726,6 +733,7 @@ function App() {
         name: "",
         weight: "",
         quantity: 1,
+        supplyDate: getTodayInputDate(),
         tags: "",
         minStock: 1,
       });
@@ -850,6 +858,7 @@ function App() {
       name: flavor.name || "",
       weight: firstPack?.weight || "",
       quantity: 1,
+      supplyDate: getTodayInputDate(),
       tags: (flavor.tags || []).join(", "),
       minStock: flavor.minStock || 1,
     });
@@ -1433,8 +1442,18 @@ function App() {
       .slice(0, 12);
   };
 
+  const getActionEffectiveDate = (log) => {
+    const details = parseActionDetails(log.details);
+
+    if (log.action === "supply" && details.suppliedAt) {
+      return details.suppliedAt;
+    }
+
+    return log.createdAt || log.created_at || null;
+  };
+
   const formatHistoryDate = (log) => {
-    const rawDate = log.createdAt || log.created_at;
+    const rawDate = getActionEffectiveDate(log);
 
     if (!rawDate) {
       return "Дата не указана";
@@ -1500,6 +1519,10 @@ function App() {
       }
     }
 
+    if (log.action === "supply" && details.suppliedAt) {
+      pieces.push(`дата поставки: ${new Date(details.suppliedAt).toLocaleDateString("ru-RU")}`);
+    }
+
     if (details.reason) {
       pieces.push(details.reason);
     }
@@ -1540,11 +1563,13 @@ function App() {
     const lastSupplyLog = supplyLogs[0] || null;
     const lastWriteOffLog = writeOffLogs[0] || null;
 
-    const lastSupplyDate =
-      lastSupplyLog?.createdAt || lastSupplyLog?.created_at || null;
+    const lastSupplyDate = lastSupplyLog
+      ? getActionEffectiveDate(lastSupplyLog)
+      : null;
 
-    const lastWriteOffDate =
-      lastWriteOffLog?.createdAt || lastWriteOffLog?.created_at || null;
+    const lastWriteOffDate = lastWriteOffLog
+      ? getActionEffectiveDate(lastWriteOffLog)
+      : null;
 
     const daysSinceSupply = getDaysSinceDate(lastSupplyDate);
     const daysSinceWriteOff = getDaysSinceDate(lastWriteOffDate);
@@ -3899,6 +3924,17 @@ function App() {
                   name="quantity"
                   min="1"
                   value={supplyForm.quantity}
+                  onChange={handleSupplyChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Дата поставки
+                <input
+                  type="date"
+                  name="supplyDate"
+                  value={supplyForm.supplyDate}
                   onChange={handleSupplyChange}
                   required
                 />
