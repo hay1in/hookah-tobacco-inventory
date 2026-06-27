@@ -2766,3 +2766,14 @@ h1 {
   padding: 7px 10px;
   font-size: 12px;
 }
+
+.deadstock-excluded-badge {
+  background: rgba(255, 247, 237, 0.16) !important;
+  border: 1px solid rgba(255, 247, 237, 0.34) !important;
+  color: #fff7ed !important;
+  font-weight: 950 !important;
+}
+
+.compact-mode .deadstock-excluded-badge {
+  font-size: 11px !important;
+}

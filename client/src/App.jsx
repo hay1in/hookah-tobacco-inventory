@@ -987,6 +987,11 @@ function App() {
         "Закуплено": Number(pack.purchasedQuantity ?? pack.purchased_quantity ?? pack.quantity ?? 0),
         "Теги": (flavor.tags || []).join(", "),
         "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock) ? "да" : "нет",
+        "Не считать залежью": Boolean(
+          flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
+        )
+          ? "да"
+          : "нет",
         "Архив": flavor.archived ? "да" : "нет",
       }));
     });
@@ -1093,6 +1098,11 @@ function App() {
         ),
         "Теги": (flavor.tags || []).join(", "),
         "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock)
+          ? "да"
+          : "нет",
+        "Не считать залежью": Boolean(
+          flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
+        )
           ? "да"
           : "нет",
         "Закупка подтверждена": Boolean(
@@ -1235,6 +1245,15 @@ function App() {
             getExcelValue(row, ["Архив", "archived", "Archived"])
           );
 
+          const excludedFromDeadstock = parseExcelBoolean(
+            getExcelValue(row, [
+              "Не считать залежью",
+              "Исключить из залежей",
+              "excludedFromDeadstock",
+              "excluded_from_deadstock",
+            ])
+          );
+
           const supplyDate = String(
             getExcelValue(row, [
               "Дата поставки",
@@ -1273,6 +1292,7 @@ function App() {
             tags,
             lowStock,
             archived,
+            excludedFromDeadstock,
             supplyDate,
             supplier,
             price,
@@ -1544,8 +1564,12 @@ function App() {
       merge_duplicates: "Объединение дублей",
       merge_tags: "Объединение тегов",
       bulk_action: "Массовое действие",
+    deadstock_excluded_on: "Исключён из залежей",
+    deadstock_excluded_off: "Возвращён в залежи",
       alias_create: "Создан алиас",
       alias_delete: "Удалён алиас",
+      deadstock_excluded_on: "Исключён из залежей",
+      deadstock_excluded_off: "Возвращён в залежи",
     };
 
     return titles[action] || action || "Действие";
@@ -1663,7 +1687,12 @@ function App() {
     const usedQuantity = Math.max(0, purchasedQuantity - totalQuantity);
     const reasons = [];
 
-    if (flavor.archived || totalQuantity <= 0) {
+    if (
+      flavor.archived ||
+      totalQuantity <= 0 ||
+      flavor.excludedFromDeadstock ||
+      flavor.excluded_from_deadstock
+    ) {
       return [];
     }
 
@@ -2330,6 +2359,55 @@ function App() {
         return b.totalQuantity - a.totalQuantity;
       })
       .slice(0, 5);
+  };
+
+  const toggleDeadstockExcluded = async (flavor) => {
+    const currentValue = Boolean(
+      flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
+    );
+
+    try {
+      const response = await apiFetch(
+        `/api/flavors/${flavor.id}/deadstock-excluded`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            excludedFromDeadstock: !currentValue,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Не удалось изменить настройку залежей");
+      }
+
+      await addActionLog({
+        action: currentValue
+          ? "deadstock_excluded_off"
+          : "deadstock_excluded_on",
+        flavor,
+      });
+
+      await refreshFlavors();
+      highlightFlavor(flavor.id);
+
+      showNotification(
+        currentValue
+          ? "Вкус снова учитывается в залежах"
+          : "Вкус исключён из залежей",
+        "success"
+      );
+    } catch (error) {
+      console.error(error);
+      showNotification(
+        error.message || "Не удалось изменить настройку залежей",
+        "error"
+      );
+      setErrorText(error.message || "Не удалось изменить настройку залежей");
+    }
   };
 
   const togglePurchaseConfirmed = async (flavor) => {
@@ -3060,6 +3138,12 @@ function App() {
                       </button>
 
                       {!isDemoMode && (
+                        <button onClick={() => toggleDeadstockExcluded(row)}>
+                          Не считать залежью
+                        </button>
+                      )}
+
+                      {!isDemoMode && (
                         <button
                           className="danger"
                           onClick={() => archiveFlavor(row.id)}
@@ -3106,8 +3190,11 @@ function App() {
                         </div>
 
                         <div className="deadstock-reasons">
-                          {row.deadstockReasons.map((reason) => (
-                            <span key={reason}>{reason}</span>
+                          {row.deadstockReasons.map((reason, index) => (
+                            <span key={reason}>
+                              {index > 0 && <em>•</em>}
+                              {reason}
+                            </span>
                           ))}
                         </div>
                       </div>
@@ -3129,6 +3216,12 @@ function App() {
                         <button onClick={() => openFlavorInInventory(row)}>
                           Открыть
                         </button>
+
+                        {!isDemoMode && (
+                          <button onClick={() => toggleDeadstockExcluded(row)}>
+                            Не считать залежью
+                          </button>
+                        )}
 
                         {!isDemoMode && (
                           <button
@@ -4541,6 +4634,15 @@ function App() {
                                 {renderFlavorHistory(flavor)}
 
                                 <div className="tags">
+                                  {Boolean(
+                                    flavor.excludedFromDeadstock ||
+                                      flavor.excluded_from_deadstock
+                                  ) && (
+                                    <span className="deadstock-excluded-badge">
+                                      не считать залежью
+                                    </span>
+                                  )}
+
                                   {(flavor.tags || []).map((tag) => (
                                     <span key={tag}>#{tag}</span>
                                   ))}
@@ -4564,6 +4666,17 @@ function App() {
                                             : "Мало осталось"}
                                         </button>
                                       )}
+
+                                    {!flavor.archived && (
+                                      <button onClick={() => toggleDeadstockExcluded(flavor)}>
+                                        {Boolean(
+                                          flavor.excludedFromDeadstock ||
+                                            flavor.excluded_from_deadstock
+                                        )
+                                          ? "Вернуть в залежи"
+                                          : "Не считать залежью"}
+                                      </button>
+                                    )}
 
                                     {flavor.archived ? (
                                       <button onClick={() => restoreFlavor(flavor.id)}>

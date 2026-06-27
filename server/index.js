@@ -729,7 +729,7 @@ app.post("/api/flavors/supply", async (req, res) => {
 
     const result = await pool.query(
       `
-        INSERT INTO flavors (brand, name, packs, tags, min_stock, archived, low_stock)
+        INSERT INTO flavors (brand, name, packs, tags, min_stock, archived, low_stock, excluded_from_deadstock)
         VALUES ($1, $2, $3, $4, $5, FALSE, FALSE)
         RETURNING *
       `,
@@ -775,6 +775,9 @@ app.post("/api/flavors/import", async (req, res) => {
         : row.purchasedQuantity
     );
     const archived = Boolean(row.archived);
+      const excludedFromDeadstock = Boolean(
+        row.excludedFromDeadstock || row.excluded_from_deadstock
+      );
     const lowStock = Boolean(row.lowStock);
 
     if (
@@ -799,6 +802,7 @@ app.post("/api/flavors/import", async (req, res) => {
         tags: new Set(),
         archived,
         lowStock,
+                excludedFromDeadstock,
       });
     }
 
@@ -1199,6 +1203,38 @@ app.put("/api/flavors/:id", async (req, res) => {
 
 
 
+
+app.patch("/api/flavors/:id/deadstock-excluded", async (req, res) => {
+  const { id } = req.params;
+  const { excludedFromDeadstock } = req.body;
+
+  try {
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    const result = await pool.query(
+      `
+        UPDATE flavors
+        SET excluded_from_deadstock = $1,
+            updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `,
+      [Boolean(excludedFromDeadstock), id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Вкус не найден" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Не удалось изменить настройку залежей" });
+  }
+});
 
 app.patch("/api/flavors/:id/purchase-confirmed", async (req, res) => {
   const { purchaseConfirmed } = req.body;
