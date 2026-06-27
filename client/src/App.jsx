@@ -2809,8 +2809,11 @@ function App() {
                       </div>
 
                       <div className="deadstock-reasons">
-                        {row.deadstockReasons.map((reason) => (
-                          <span key={reason}>{reason}</span>
+                        {row.deadstockReasons.map((reason, index) => (
+                          <span key={reason}>
+                            {index > 0 && <em>•</em>}
+                            {reason}
+                          </span>
                         ))}
                       </div>
                     </div>

@@ -2685,3 +2685,26 @@ h1 {
 .compact-mode .flavor-details-card .flavor-history-toggle span:last-child {
   font-size: 11px !important;
 }
+
+/* Deadstock reasons readability fix */
+.deadstock-reasons {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 7px 10px !important;
+  margin-top: 10px !important;
+}
+
+.deadstock-reasons span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
+}
+
+.deadstock-reasons em {
+  font-style: normal !important;
+  opacity: 0.65 !important;
+  font-weight: 950 !important;
+}
