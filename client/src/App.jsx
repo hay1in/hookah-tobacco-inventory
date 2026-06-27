@@ -87,6 +87,8 @@ function App() {
     weight: "",
     quantity: 1,
     supplyDate: getTodayInputDate(),
+    supplier: "",
+    price: "",
     tags: "",
     minStock: 1,
   });
@@ -692,6 +694,8 @@ function App() {
       weight: supplyForm.weight,
       quantity: Number(supplyForm.quantity),
       supplyDate: supplyForm.supplyDate || getTodayInputDate(),
+      supplier: supplyForm.supplier.trim(),
+      price: supplyForm.price === "" ? null : Number(supplyForm.price),
       tags: supplyForm.tags
         .split(",")
         .map((tag) => tag.trim())
@@ -722,6 +726,8 @@ function App() {
           weight: payload.weight,
           quantity: payload.quantity,
           suppliedAt: payload.supplyDate,
+          supplier: payload.supplier,
+          price: payload.price,
         },
       });
 
@@ -734,6 +740,8 @@ function App() {
         weight: "",
         quantity: 1,
         supplyDate: getTodayInputDate(),
+        supplier: "",
+        price: "",
         tags: "",
         minStock: 1,
       });
@@ -859,6 +867,8 @@ function App() {
       weight: firstPack?.weight || "",
       quantity: 1,
       supplyDate: getTodayInputDate(),
+      supplier: "",
+      price: "",
       tags: (flavor.tags || []).join(", "),
       minStock: flavor.minStock || 1,
     });
@@ -1225,6 +1235,35 @@ function App() {
             getExcelValue(row, ["Архив", "archived", "Archived"])
           );
 
+          const supplyDate = String(
+            getExcelValue(row, [
+              "Дата поставки",
+              "Дата",
+              "date",
+              "Date",
+              "supplyDate",
+              "Supply date",
+            ])
+          ).trim();
+
+          const supplier = String(
+            getExcelValue(row, [
+              "Поставщик",
+              "supplier",
+              "Supplier",
+            ])
+          ).trim();
+
+          const price = parseExcelNumber(
+            getExcelValue(row, [
+              "Цена",
+              "Цена за пачку",
+              "price",
+              "Price",
+            ]),
+            0
+          );
+
           return {
             brand,
             name,
@@ -1234,6 +1273,9 @@ function App() {
             tags,
             lowStock,
             archived,
+            supplyDate,
+            supplier,
+            price,
           };
         })
         .filter((row) => row.brand && row.name && row.weight);
@@ -1302,6 +1344,24 @@ function App() {
           importedCount: result.importedCount,
         },
       });
+
+      for (const row of pendingImportRows) {
+        await addActionLog({
+          action: "supply",
+          flavor: {
+            brand: row.brand,
+            name: row.name,
+          },
+          details: {
+            weight: row.weight,
+            quantity: row.quantity,
+            suppliedAt: row.supplyDate || getTodayInputDate(),
+            supplier: row.supplier || "",
+            price: row.price || null,
+            source: "excel_import",
+          },
+        });
+      }
 
       await refreshFlavors();
 
@@ -1521,6 +1581,14 @@ function App() {
 
     if (log.action === "supply" && details.suppliedAt) {
       pieces.push(`дата поставки: ${new Date(details.suppliedAt).toLocaleDateString("ru-RU")}`);
+    }
+
+    if (log.action === "supply" && details.supplier) {
+      pieces.push(`поставщик: ${details.supplier}`);
+    }
+
+    if (log.action === "supply" && details.price !== null && details.price !== undefined && details.price !== "") {
+      pieces.push(`цена: ${Number(details.price).toLocaleString("ru-RU")} ₽`);
     }
 
     if (details.reason) {
@@ -3823,6 +3891,9 @@ function App() {
                     <th>Фасовка</th>
                     <th>Кол-во</th>
                     <th>Закуплено</th>
+                    <th>Дата</th>
+                    <th>Поставщик</th>
+                    <th>Цена</th>
                     <th>Теги</th>
                   </tr>
                 </thead>
@@ -3835,6 +3906,9 @@ function App() {
                       <td>{row.weight}</td>
                       <td>{row.quantity}</td>
                       <td>{row.purchasedQuantity}</td>
+                      <td>{row.supplyDate || "—"}</td>
+                      <td>{row.supplier || "—"}</td>
+                      <td>{row.price ? `${row.price} ₽` : "—"}</td>
                       <td>{row.tags}</td>
                     </tr>
                   ))}
@@ -3937,6 +4011,29 @@ function App() {
                   value={supplyForm.supplyDate}
                   onChange={handleSupplyChange}
                   required
+                />
+              </label>
+
+              <label>
+                Поставщик
+                <input
+                  name="supplier"
+                  value={supplyForm.supplier}
+                  onChange={handleSupplyChange}
+                  placeholder="Например, Опт РФ"
+                />
+              </label>
+
+              <label>
+                Цена за пачку
+                <input
+                  type="number"
+                  name="price"
+                  min="0"
+                  step="0.01"
+                  value={supplyForm.price}
+                  onChange={handleSupplyChange}
+                  placeholder="Например, 850"
                 />
               </label>
 
