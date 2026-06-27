@@ -53,6 +53,7 @@ function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [currentView, setCurrentView] = useState("inventory");
   const [analyticsFilter, setAnalyticsFilter] = useState("all");
+  const [deadstockFilter, setDeadstockFilter] = useState("all");
   const [adminPassword, setAdminPassword] = useState("");
   const [accessRole, setAccessRole] = useState("admin");
   const [passwordInput, setPasswordInput] = useState("");
@@ -2752,6 +2753,36 @@ function App() {
   }
 
 
+  const matchesDeadstockFilter = (row) => {
+    if (deadstockFilter === "all") {
+      return true;
+    }
+
+    const reasons = row.deadstockReasons || [];
+
+    if (deadstockFilter === "noMovement") {
+      return reasons.some((reason) =>
+        reason.includes("нет записей о движениях") ||
+        reason.includes("ещё не списывался") ||
+        reason.includes("Остаток не уменьшался")
+      );
+    }
+
+    if (deadstockFilter === "noWriteOff") {
+      return reasons.some((reason) => reason.includes("Не списывался"));
+    }
+
+    if (deadstockFilter === "noSupply") {
+      return reasons.some((reason) => reason.includes("Не закупался"));
+    }
+
+    if (deadstockFilter === "slowUsage") {
+      return reasons.some((reason) => reason.includes("Слабое использование"));
+    }
+
+    return true;
+  };
+
   if (currentView === "deadstock") {
     const deadstockRowsWithReasons = analyticsData.usageRows
       .map((row) => {
@@ -2778,6 +2809,7 @@ function App() {
       );
 
     const deadStockRows = deadstockRowsWithReasons
+      .filter(matchesDeadstockFilter)
       .filter((row) => {
         return (
           row.usedPacks === 0 ||
@@ -2793,6 +2825,7 @@ function App() {
       .sort((a, b) => b.deadstockScore - a.deadstockScore);
 
     const slowStockRows = deadstockRowsWithReasons
+      .filter(matchesDeadstockFilter)
       .filter((row) => {
         const isAlreadyInDeadStock = deadStockRows.some(
           (deadRow) => String(deadRow.id) === String(row.id)
@@ -2826,10 +2859,32 @@ function App() {
       <div className={isCompactMode ? "app compact-mode" : "app"}>
         {renderAppHeader({
           title: "Залежи",
-          subtitle: "Вкусы, которые лежат на полке и почти не используются",
+          subtitle: "Вкусы, которые лежат на полке, давно не двигались или слабо используются",
         })}
 
         <main className="content deadstock-page">
+          <section className="deadstock-filter-panel">
+            {[
+              ["all", "Все"],
+              ["noMovement", "Нет движений"],
+              ["noWriteOff", "Не списывались 30+ дней"],
+              ["noSupply", "Не закупались 45+ дней"],
+              ["slowUsage", "Слабое использование"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                className={
+                  deadstockFilter === value
+                    ? "deadstock-filter-button active"
+                    : "deadstock-filter-button"
+                }
+                onClick={() => setDeadstockFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </section>
+
           <section className="analytics-grid">
             <article className="analytics-card">
               <span>Не списывались</span>

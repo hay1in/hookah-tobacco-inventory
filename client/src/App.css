@@ -2729,3 +2729,40 @@ h1 {
     transform: translateY(0);
   }
 }
+
+.deadstock-filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.deadstock-filter-button {
+  border: 1px solid rgba(255, 247, 237, 0.2);
+  border-radius: 999px;
+  padding: 10px 13px;
+  background: rgba(255, 247, 237, 0.1);
+  color: #fff7ed;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.deadstock-filter-button:hover {
+  background: rgba(255, 247, 237, 0.18);
+}
+
+.deadstock-filter-button.active {
+  background: #fff7ed;
+  color: #211b18;
+  border-color: rgba(255, 247, 237, 0.85);
+}
+
+.compact-mode .deadstock-filter-panel {
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.compact-mode .deadstock-filter-button {
+  padding: 7px 10px;
+  font-size: 12px;
+}
