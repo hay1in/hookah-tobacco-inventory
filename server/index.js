@@ -696,24 +696,33 @@ app.post("/api/flavors/supply", async (req, res) => {
         new Set([...(flavor.tags || []), ...cleanTags].map((tag) => String(tag).trim()).filter(Boolean))
       );
 
-      const result = await pool.query(
-        `
-          UPDATE flavors
-          SET packs = $1,
-              tags = $2,
-              min_stock = $3,
-              archived = FALSE,
-              updated_at = NOW()
-          WHERE id = $4
-          RETURNING *
-        `,
-        [
-          JSON.stringify(packs),
-          JSON.stringify(mergedTags),
-          Number(minStock || 0),
-          flavor.id,
-        ]
-      );
+        const totalQuantityAfterSupply = packs.reduce((sum, pack) => {
+          return sum + Number(pack.quantity || 0);
+        }, 0);
+
+        const nextLowStock =
+          totalQuantityAfterSupply >= 2 ? false : Boolean(flavor.low_stock);
+
+        const result = await pool.query(
+          `
+            UPDATE flavors
+            SET packs = $1,
+                tags = $2,
+                min_stock = $3,
+                low_stock = $4,
+                archived = FALSE,
+                updated_at = NOW()
+            WHERE id = $5
+            RETURNING *
+          `,
+          [
+            JSON.stringify(packs),
+            JSON.stringify(mergedTags),
+            Number(minStock || 0),
+            nextLowStock,
+            flavor.id,
+          ]
+        );
 
       return res.status(200).json(result.rows[0]);
     }
