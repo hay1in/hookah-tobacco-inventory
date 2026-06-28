@@ -1660,6 +1660,7 @@ function App() {
           return {
             brand,
             name,
+            originalName: rawName,
             weight,
             quantity,
             purchasedQuantity,
@@ -2387,6 +2388,13 @@ function App() {
 
     if (!Number.isFinite(quantity) || quantity <= 0) {
       warnings.push("количество 0");
+    }
+
+    if (
+      row.originalName &&
+      normalizeDuplicateKey(row.originalName) !== normalizeDuplicateKey(row.name)
+    ) {
+      warnings.push("название очищено");
     }
 
     if (importMode === "supply") {
@@ -5715,7 +5723,15 @@ function App() {
                   {importPreviewRowsWithWarnings.slice(0, 20).map((row, index) => (
                     <tr key={`${row.brand}-${row.name}-${row.weight}-${index}`}>
                       <td>{row.brand}</td>
-                      <td>{row.name}</td>
+                      <td>
+                        <strong>{row.name}</strong>
+                        {row.originalName &&
+                          normalizeDuplicateKey(row.originalName) !== normalizeDuplicateKey(row.name) && (
+                            <small className="import-original-name">
+                              было: {row.originalName}
+                            </small>
+                          )}
+                      </td>
                       <td>{row.weight}</td>
                       <td>{row.quantity}</td>
                       <td>{row.purchasedQuantity}</td>

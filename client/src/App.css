@@ -3368,3 +3368,11 @@ button.data-quality-item:hover {
 .import-warning-badge.problem {
   background: rgba(160, 64, 64, 0.14);
 }
+
+.import-original-name {
+  display: block;
+  margin-top: 4px;
+  opacity: 0.7;
+  font-size: 12px;
+  line-height: 1.25;
+}
