@@ -906,6 +906,15 @@ function App() {
     )
   ).sort((a, b) => a.localeCompare(b, "ru"));
 
+  const supplierSuggestions = Array.from(
+    new Set(
+      actionLogs
+        .map((log) => parseActionDetails(log.details).supplier)
+        .map((supplier) => String(supplier || "").trim())
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b, "ru"));
+
   const tagSuggestions = Array.from(
     new Set(
       flavors
@@ -4004,6 +4013,12 @@ function App() {
           ))}
         </datalist>
 
+        <datalist id="supplier-options">
+          {supplierSuggestions.map((supplier) => (
+            <option value={supplier} key={supplier} />
+          ))}
+        </datalist>
+
         {isImportPreviewOpen && (
           <section className="supply-panel import-preview-panel">
             <div className="supply-panel-top">
@@ -4170,6 +4185,7 @@ function App() {
                 Поставщик
                 <input
                   name="supplier"
+                  list="supplier-options"
                   value={supplyForm.supplier}
                   onChange={handleSupplyChange}
                   placeholder="Например, Опт РФ"
