@@ -1093,7 +1093,7 @@ function App() {
     }
 
     createBackupExcel("before-clear-database");
-    createFullBackupJson("before-clear-database");
+    await createFullBackupJson("before-clear-database");
 
     try {
       const response = await apiFetch("/api/admin/clear-database", {
@@ -1508,21 +1508,41 @@ function App() {
     }, 1000);
   };
 
-  const createFullBackupJson = (reason = "manual") => {
+  const createFullBackupJson = async (reason = "manual") => {
     const timestamp = new Date()
       .toISOString()
       .slice(0, 16)
       .replace("T", "-")
       .replace(":", "-");
 
-    downloadJsonFile(`backup-full-${reason}-${timestamp}.json`, {
+    const generatedAt = new Date().toISOString();
+
+    const backup = {
       app: "hookah-tobacco-inventory",
-      generatedAt: new Date().toISOString(),
+      generatedAt,
       reason,
       flavors,
       actionLogs,
       aliases,
-    });
+    };
+
+    downloadJsonFile(`backup-full-${reason}-${timestamp}.json`, backup);
+
+    try {
+      await createActionLog({
+        action: "backup_created",
+        details: {
+          reason,
+          flavorsCount: flavors.length,
+          actionLogsCount: actionLogs.length,
+          createdAt: generatedAt,
+        },
+      });
+
+      await loadActionLogs();
+    } catch (error) {
+      console.error("Backup log error:", error);
+    }
 
     showNotification("JSON backup скачан", "info");
   };
@@ -1561,7 +1581,7 @@ function App() {
         return;
       }
 
-      createFullBackupJson("before-restore");
+      await createFullBackupJson("before-restore");
 
       const response = await apiFetch("/api/admin/restore-backup", {
         method: "POST",
@@ -1576,6 +1596,15 @@ function App() {
       if (!response.ok) {
         throw new Error(result?.message || "Не удалось восстановить backup");
       }
+
+      await createActionLog({
+        action: "backup_restored",
+        details: {
+          fileName: file.name,
+          restoredFlavors: result.restoredFlavors || 0,
+          restoredActionLogs: result.restoredActionLogs || 0,
+        },
+      });
 
       await refreshFlavors();
       await loadActionLogs();
@@ -1949,7 +1978,7 @@ function App() {
       setErrorText("");
 
       createBackupExcel("before-import");
-      createFullBackupJson("before-import");
+      await createFullBackupJson("before-import");
 
       let result = { importedCount: 0 };
 
@@ -2199,6 +2228,14 @@ function App() {
   const getHistoryActionTitle = (action, log = null) => {
     if (action === "supply" && isCancelledSupplyLog(log)) {
       return "Поставка отменена";
+    }
+
+    if (action === "backup_created") {
+      return "Backup создан";
+    }
+
+    if (action === "backup_restored") {
+      return "Backup восстановлен";
     }
 
     const titles = {
@@ -3512,7 +3549,7 @@ function App() {
     }
 
     createBackupExcel("before-merge-tags");
-    createFullBackupJson("before-merge-tags");
+    await createFullBackupJson("before-merge-tags");
 
     try {
       const response = await apiFetch("/api/tags/merge", {
@@ -3566,7 +3603,7 @@ function App() {
     }
 
     createBackupExcel("before-merge-duplicates");
-    createFullBackupJson("before-merge-duplicates");
+    await createFullBackupJson("before-merge-duplicates");
 
     try {
       const response = await apiFetch("/api/flavors/merge", {
@@ -4130,7 +4167,7 @@ function App() {
     }
 
     createBackupExcel(`before-bulk-${action}`);
-    createFullBackupJson(`before-bulk-${action}`);
+    await createFullBackupJson(`before-bulk-${action}`);
 
     try {
       const response = await apiFetch("/api/flavors/bulk", {
@@ -4237,8 +4274,8 @@ function App() {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    createFullBackupJson("manual");
+                  onClick={async () => {
+                    await createFullBackupJson("manual");
                     setActiveChoiceModal(null);
                   }}
                 >
