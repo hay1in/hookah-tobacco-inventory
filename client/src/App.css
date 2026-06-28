@@ -3175,3 +3175,52 @@ h1 {
   color: #166534 !important;
 }
 
+
+.analytics-period-panel {
+  margin-top: 24px !important;
+  padding: 14px !important;
+  border-radius: 22px !important;
+  background: rgba(255, 255, 255, 0.64) !important;
+  border: 1px solid rgba(80, 102, 27, 0.12) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex-wrap: wrap !important;
+}
+
+.analytics-period-panel > span {
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  color: #50661b !important;
+  opacity: 0.8 !important;
+}
+
+.analytics-period-panel div {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+.analytics-period-panel button {
+  border: 1px solid rgba(80, 102, 27, 0.16) !important;
+  border-radius: 999px !important;
+  padding: 8px 11px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  color: #50661b !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+
+.analytics-period-panel button.active {
+  background: #50661b !important;
+  color: #fff !important;
+  border-color: #50661b !important;
+}
+
+.compact-mode .analytics-period-panel {
+  margin-top: 16px !important;
+  padding: 10px !important;
+}
+

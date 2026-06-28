@@ -1586,6 +1586,7 @@ function App() {
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState("all");
   const [activeChoiceModal, setActiveChoiceModal] = useState(null);
   const [editingSupplyLog, setEditingSupplyLog] = useState(null);
   const [editingSupplyForm, setEditingSupplyForm] = useState({
@@ -2444,6 +2445,35 @@ function App() {
 
   const analyticsRows = getAnalyticsRows();
 
+  const isInsideAnalyticsPeriod = (dateValue) => {
+    if (analyticsPeriod === "all") {
+      return true;
+    }
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+      return false;
+    }
+
+    const now = new Date();
+    const periodStart = new Date(now);
+
+    if (analyticsPeriod === "30d") {
+      periodStart.setDate(now.getDate() - 30);
+    }
+
+    if (analyticsPeriod === "3m") {
+      periodStart.setMonth(now.getMonth() - 3);
+    }
+
+    if (analyticsPeriod === "1y") {
+      periodStart.setFullYear(now.getFullYear() - 1);
+    }
+
+    return date >= periodStart;
+  };
+
   const purchaseFinanceData = (() => {
     const normalizeFinanceKey = (value) => {
       return String(value || "")
@@ -2453,7 +2483,7 @@ function App() {
         .trim();
     };
 
-    const supplyLogs = actionLogs
+    const allSupplyRows = actionLogs
       .filter((log) => log.action === "supply")
       .map((log) => {
         const details = parseActionDetails(log.details);
@@ -2480,7 +2510,7 @@ function App() {
       })
       .filter((row) => row.price > 0 && row.quantity > 0);
 
-    const chronologicalRows = [...supplyLogs].sort(
+    const chronologicalRows = [...allSupplyRows].sort(
       (a, b) => new Date(a.suppliedAt) - new Date(b.suppliedAt)
     );
 
@@ -2513,9 +2543,9 @@ function App() {
       previousPriceByItem.set(key, row.price);
     });
 
-    const rowsWithPriceChanges = chronologicalRows.sort(
-      (a, b) => new Date(b.suppliedAt) - new Date(a.suppliedAt)
-    );
+    const rowsWithPriceChanges = chronologicalRows
+      .filter((row) => isInsideAnalyticsPeriod(row.suppliedAt))
+      .sort((a, b) => new Date(b.suppliedAt) - new Date(a.suppliedAt));
 
     const totalSpent = rowsWithPriceChanges.reduce((sum, row) => sum + row.total, 0);
     const totalPacks = rowsWithPriceChanges.reduce((sum, row) => sum + row.quantity, 0);
@@ -4220,6 +4250,28 @@ function App() {
               <span>Использовано</span>
               <strong>{formatWeight(analyticsData.totalUsedGrams)}</strong>
             </article>
+          </section>
+
+          <section className="analytics-period-panel">
+            <span>Период финансовой аналитики</span>
+
+            <div>
+              {[
+                ["all", "Все время"],
+                ["30d", "30 дней"],
+                ["3m", "3 месяца"],
+                ["1y", "Год"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={analyticsPeriod === value ? "active" : ""}
+                  onClick={() => setAnalyticsPeriod(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </section>
 
           <section className="analytics-grid finance-grid">
