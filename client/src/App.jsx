@@ -3679,6 +3679,46 @@ function App() {
   const formatActionDetails = (log) => {
     const details = parseActionDetails(log.details);
 
+    if (log.action === "backup_created") {
+      const parts = [];
+
+      if (details.reason) {
+        parts.push(`причина: ${details.reason}`);
+      }
+
+      if (details.flavorsCount !== undefined) {
+        parts.push(`вкусов: ${details.flavorsCount}`);
+      }
+
+      if (details.actionLogsCount !== undefined) {
+        parts.push(`действий: ${details.actionLogsCount}`);
+      }
+
+      if (details.createdAt) {
+        parts.push(`создан: ${new Date(details.createdAt).toLocaleString("ru-RU")}`);
+      }
+
+      return parts.join(" · ");
+    }
+
+    if (log.action === "backup_restored") {
+      const parts = [];
+
+      if (details.fileName) {
+        parts.push(`файл: ${details.fileName}`);
+      }
+
+      if (details.restoredFlavors !== undefined) {
+        parts.push(`восстановлено вкусов: ${details.restoredFlavors}`);
+      }
+
+      if (details.restoredActionLogs !== undefined) {
+        parts.push(`восстановлено действий: ${details.restoredActionLogs}`);
+      }
+
+      return parts.join(" · ");
+    }
+
     if (log.action === "pack_plus" || log.action === "pack_minus") {
       return details.weight ? `Фасовка: ${details.weight}` : "";
     }
