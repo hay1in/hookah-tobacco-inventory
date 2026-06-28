@@ -927,7 +927,7 @@ app.post("/api/flavors/import", async (req, res) => {
 
       const existingFlavor = await client.query(
         `
-          SELECT id
+          SELECT id, tags
           FROM flavors
           WHERE LOWER(brand) = LOWER($1)
             AND LOWER(name) = LOWER($2)
@@ -937,6 +937,18 @@ app.post("/api/flavors/import", async (req, res) => {
       );
 
       if (existingFlavor.rows.length > 0) {
+        const existingTags = Array.isArray(existingFlavor.rows[0].tags)
+          ? existingFlavor.rows[0].tags
+          : [];
+
+        const mergedTags = Array.from(
+          new Set(
+            [...existingTags, ...tags]
+              .map((tag) => String(tag || "").trim())
+              .filter(Boolean)
+          )
+        ).sort((a, b) => a.localeCompare(b, "ru"));
+
         await client.query(
           `
             UPDATE flavors
@@ -951,7 +963,7 @@ app.post("/api/flavors/import", async (req, res) => {
           `,
           [
             JSON.stringify(packs),
-            JSON.stringify(tags),
+            JSON.stringify(mergedTags),
             flavor.archived,
             flavor.lowStock,
             flavor.excludedFromDeadstock,

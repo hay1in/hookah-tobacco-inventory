@@ -1,0 +1,167 @@
+[
+  {
+    "id": 17,
+    "brand": "Blackburn",
+    "name": "Papaya v Obed",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 1,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T00:49:54.584Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 61,
+    "brand": "Blackburn",
+    "name": "Pineapple",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 1,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T10:09:39.607Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 20,
+    "brand": "Blackburn",
+    "name": "Raspberries",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 2,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T00:52:44.420Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 18,
+    "brand": "Blackburn",
+    "name": "Real P.F.",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 1,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T00:51:14.759Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 13,
+    "brand": "Sebero",
+    "name": "Raspberries",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 1,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T00:42:59.702Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 7,
+    "brand": "Sebero",
+    "name": "Strawberry",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 1,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T00:27:05.369Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 6,
+    "brand": "Sebero",
+    "name": "Vanilla",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 2,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T00:25:47.036Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 55,
+    "brand": "Trofimoff's",
+    "name": "Finlandia Vanilla",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 1,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T01:39:44.447Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 1,
+    "brand": "Trofimoff's",
+    "name": "Italia",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 2,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T00:10:46.185Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 62,
+    "brand": "Trofimoff's",
+    "name": "Mangifera",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 2,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T10:09:39.607Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  },
+  {
+    "id": 24,
+    "brand": "Хулиган",
+    "name": "Panama",
+    "packs": [
+      {
+        "weight": "200 г",
+        "quantity": 1,
+        "purchasedQuantity": 0
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-06-28T00:56:25.097Z",
+    "updated_at": "2026-06-28T10:09:39.607Z"
+  }
+]
