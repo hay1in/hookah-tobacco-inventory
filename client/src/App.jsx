@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
-import * as XLSX from "xlsx";
 import "./App.css";
+
+let xlsxModulePromise = null;
+
+const loadXlsx = async () => {
+  if (!xlsxModulePromise) {
+    xlsxModulePromise = import("xlsx");
+  }
+
+  return await xlsxModulePromise;
+};
+
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -1108,7 +1118,9 @@ function App() {
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
+    const XLSX = await loadXlsx();
+
     const rows = flavors.flatMap((flavor) => {
       const packs =
         Array.isArray(flavor.packs) && flavor.packs.length > 0
@@ -1153,7 +1165,9 @@ function App() {
     XLSX.writeFile(workbook, `sklad-tabaka-${today}.xlsx`);
   };
 
-  const exportPurchaseToExcel = () => {
+  const exportPurchaseToExcel = async () => {
+    const XLSX = await loadXlsx();
+
     if (purchaseFlavors.length === 0) {
       showNotification("Сейчас нет позиций, которые требуется закупить.", "info");
       return;
@@ -1213,7 +1227,9 @@ function App() {
   };
 
 
-  const exportHistoryToExcel = () => {
+  const exportHistoryToExcel = async () => {
+    const XLSX = await loadXlsx();
+
     const historyRows = actionLogs.map((log) => {
       const details = parseActionDetails(log.details);
       const flavorId = log.flavorId || log.flavor_id;
@@ -1262,7 +1278,9 @@ function App() {
     XLSX.writeFile(workbook, `istoriya-tabaka-${today}.xlsx`);
   };
 
-  const exportAnalyticsToExcel = () => {
+  const exportAnalyticsToExcel = async () => {
+    const XLSX = await loadXlsx();
+
     const workbook = XLSX.utils.book_new();
 
     const brandRows = purchaseFinanceData.byBrand.map((item) => ({
@@ -1388,7 +1406,9 @@ function App() {
   };
 
 
-  const downloadImportTemplate = (mode = "supply") => {
+  const downloadImportTemplate = async (mode = "supply") => {
+    const XLSX = await loadXlsx();
+
     const isSupplyTemplate = mode === "supply";
 
     const rows = isSupplyTemplate
@@ -1581,7 +1601,9 @@ function App() {
     }
   };
 
-  const createBackupExcel = (reason = "backup") => {
+  const createBackupExcel = async (reason = "backup") => {
+    const XLSX = await loadXlsx();
+
     if (!Array.isArray(flavors) || flavors.length === 0) {
       return;
     }
@@ -1726,6 +1748,8 @@ function App() {
   };
 
   const importFromExcel = async (event) => {
+    const XLSX = await loadXlsx();
+
     const file = event.target.files?.[0];
 
     if (!file) {
