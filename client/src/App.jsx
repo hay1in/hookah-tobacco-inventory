@@ -1683,6 +1683,7 @@ function App() {
 
       setPendingImportRows(rows);
       setPendingImportFileName(file.name || "Excel-файл");
+      setShowOnlyImportProblems(false);
       setIsImportPreviewOpen(true);
       setCurrentView("inventory");
       setErrorText("");
@@ -1812,6 +1813,7 @@ function App() {
   const cancelImportPreview = () => {
     setPendingImportRows([]);
     setPendingImportFileName("");
+    setShowOnlyImportProblems(false);
     setIsImportPreviewOpen(false);
   };
 
@@ -1843,6 +1845,7 @@ function App() {
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
   const [pendingImportRows, setPendingImportRows] = useState([]);
   const [pendingImportFileName, setPendingImportFileName] = useState("");
+  const [showOnlyImportProblems, setShowOnlyImportProblems] = useState(false);
 
   const quickTags = [
     "ягоды",
@@ -2428,11 +2431,25 @@ function App() {
     warnings: getImportRowWarnings(row),
   }));
 
-  const importPreviewProblemCount = importPreviewRowsWithWarnings.filter((row) => {
+  const importProblemWarningLabels = [
+    "количество 0",
+    "нет даты",
+    "нет поставщика",
+    "нет цены",
+  ];
+
+  const hasImportRowProblems = (row) => {
     return row.warnings.some((warning) =>
-      ["количество 0", "нет даты", "нет поставщика", "нет цены"].includes(warning)
+      importProblemWarningLabels.includes(warning)
     );
-  }).length;
+  };
+
+  const importPreviewProblemCount =
+    importPreviewRowsWithWarnings.filter(hasImportRowProblems).length;
+
+  const importPreviewVisibleRows = showOnlyImportProblems
+    ? importPreviewRowsWithWarnings.filter(hasImportRowProblems)
+    : importPreviewRowsWithWarnings;
 
   const groupedFlavorsByBrand = Array.from(
     filteredFlavors.reduce((groups, flavor) => {
@@ -5702,6 +5719,26 @@ function App() {
               </article>
             </div>
 
+            {importPreviewProblemCount > 0 && (
+              <div className="import-preview-controls">
+                <button
+                  type="button"
+                  className={showOnlyImportProblems ? "active" : ""}
+                  onClick={() =>
+                    setShowOnlyImportProblems((currentValue) => !currentValue)
+                  }
+                >
+                  {showOnlyImportProblems
+                    ? "Показать все строки"
+                    : "Показать только проблемные строки"}
+                </button>
+
+                <span>
+                  Проблемных строк: {importPreviewProblemCount}
+                </span>
+              </div>
+            )}
+
             <div className="import-preview-table-wrap">
               <table className="import-preview-table">
                 <thead>
@@ -5720,7 +5757,7 @@ function App() {
                 </thead>
 
                 <tbody>
-                  {importPreviewRowsWithWarnings.slice(0, 20).map((row, index) => (
+                  {importPreviewVisibleRows.slice(0, 20).map((row, index) => (
                     <tr key={`${row.brand}-${row.name}-${row.weight}-${index}`}>
                       <td>{row.brand}</td>
                       <td>
@@ -5761,9 +5798,9 @@ function App() {
               </table>
             </div>
 
-            {pendingImportRows.length > 20 && (
+            {importPreviewVisibleRows.length > 20 && (
               <p className="form-hint">
-                Показаны первые 20 строк из {pendingImportRows.length}.
+                Показаны первые 20 строк из {importPreviewVisibleRows.length}.
               </p>
             )}
 

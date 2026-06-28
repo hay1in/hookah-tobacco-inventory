@@ -3376,3 +3376,30 @@ button.data-quality-item:hover {
   font-size: 12px;
   line-height: 1.25;
 }
+
+.import-preview-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0;
+  flex-wrap: wrap;
+}
+
+.import-preview-controls button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.import-preview-controls button.active {
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+.import-preview-controls span {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.75;
+}
