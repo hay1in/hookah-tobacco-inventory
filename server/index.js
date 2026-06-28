@@ -654,6 +654,11 @@ app.post("/api/flavors/supply", async (req, res) => {
       ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
     `);
 
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
     const existingFlavor = await pool.query(
       `
         SELECT *
