@@ -1928,6 +1928,8 @@ function App() {
       purchase_confirmed_off: "Закупка снята",
       supply: "Поставка",
       import_excel: "Импорт Excel",
+    import_inventory: "Импорт склада",
+    import_inventory: "Импорт склада",
       merge_duplicates: "Объединение дублей",
       merge_tags: "Объединение тегов",
       bulk_action: "Массовое действие",
