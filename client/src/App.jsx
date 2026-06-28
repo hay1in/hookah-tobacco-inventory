@@ -2549,6 +2549,14 @@ function App() {
       return Array.from(map.values()).sort((a, b) => b.total - a.total);
     };
 
+    const priceIncreases = rowsWithPriceChanges
+      .filter((row) => row.priceChange?.direction === "up")
+      .sort((a, b) => b.priceChange.difference - a.priceChange.difference);
+
+    const priceDecreases = rowsWithPriceChanges
+      .filter((row) => row.priceChange?.direction === "down")
+      .sort((a, b) => a.priceChange.difference - b.priceChange.difference);
+
     return {
       rows: rowsWithPriceChanges,
       totalSpent,
@@ -2556,6 +2564,8 @@ function App() {
       averagePackPrice: totalPacks > 0 ? totalSpent / totalPacks : 0,
       byBrand: groupBy("brand"),
       bySupplier: groupBy("supplier"),
+      priceIncreases,
+      priceDecreases,
     };
   })();
 
@@ -4283,6 +4293,61 @@ function App() {
               ))}
             </article>
           </section>
+
+          {(purchaseFinanceData.priceIncreases.length > 0 ||
+            purchaseFinanceData.priceDecreases.length > 0) && (
+            <section className="analytics-sections price-change-sections">
+              <article className="analytics-panel">
+                <h2>Подорожали</h2>
+
+                {purchaseFinanceData.priceIncreases.length === 0 && (
+                  <p className="info-message dark">Подорожаний пока нет</p>
+                )}
+
+                {purchaseFinanceData.priceIncreases.slice(0, 6).map((row) => (
+                  <div className="analytics-row price-change-analytics-row" key={`up-${row.id}`}>
+                    <span>
+                      {row.brand} — {row.name} · {row.weight}
+                      <em>
+                        было {row.priceChange.previousPrice.toLocaleString("ru-RU")} ₽,
+                        стало {row.price.toLocaleString("ru-RU")} ₽
+                      </em>
+                    </span>
+
+                    <strong className="price-up">
+                      +{Math.round(row.priceChange.difference).toLocaleString("ru-RU")} ₽ ·{" "}
+                      +{Math.round(row.priceChange.percent)}%
+                    </strong>
+                  </div>
+                ))}
+              </article>
+
+              <article className="analytics-panel">
+                <h2>Подешевели</h2>
+
+                {purchaseFinanceData.priceDecreases.length === 0 && (
+                  <p className="info-message dark">Снижений пока нет</p>
+                )}
+
+                {purchaseFinanceData.priceDecreases.slice(0, 6).map((row) => (
+                  <div className="analytics-row price-change-analytics-row" key={`down-${row.id}`}>
+                    <span>
+                      {row.brand} — {row.name} · {row.weight}
+                      <em>
+                        было {row.priceChange.previousPrice.toLocaleString("ru-RU")} ₽,
+                        стало {row.price.toLocaleString("ru-RU")} ₽
+                      </em>
+                    </span>
+
+                    <strong className="price-down">
+                      {Math.round(row.priceChange.difference).toLocaleString("ru-RU")} ₽ ·{" "}
+                      {Math.round(row.priceChange.percent)}%
+                    </strong>
+                  </div>
+                ))}
+              </article>
+            </section>
+          )}
 
           <section className="analytics-panel wide data-quality-panel">
             <div className="data-quality-header">

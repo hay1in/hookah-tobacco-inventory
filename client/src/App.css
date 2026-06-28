@@ -3150,3 +3150,28 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
 }
 
+
+.price-change-sections {
+  margin-top: 18px !important;
+}
+
+.price-change-analytics-row span {
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.price-change-analytics-row em {
+  font-size: 12px !important;
+  font-style: normal !important;
+  opacity: 0.68 !important;
+  font-weight: 750 !important;
+}
+
+.price-change-analytics-row .price-up {
+  color: #991b1b !important;
+}
+
+.price-change-analytics-row .price-down {
+  color: #166534 !important;
+}
+
