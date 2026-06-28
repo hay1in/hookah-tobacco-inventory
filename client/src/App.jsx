@@ -1789,6 +1789,7 @@ function App() {
     supplier: "",
     price: "",
     quantity: "",
+    weight: "",
   });
   const [selectedFlavorIds, setSelectedFlavorIds] = useState([]);
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
