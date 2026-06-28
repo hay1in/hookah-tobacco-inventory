@@ -2354,12 +2354,16 @@ function App() {
         const quantity = Number(details.quantity || 0);
         const total = price > 0 && quantity > 0 ? price * quantity : 0;
         const weight = String(details.weight || "Без фасовки").trim();
+        const weightGrams = parseWeightGrams(weight);
+        const totalGrams = weightGrams * quantity;
 
         return {
           id: log.id,
           brand: log.brand || "Без бренда",
           name: log.name || "Без вкуса",
           weight,
+          weightGrams,
+          totalGrams,
           supplier: details.supplier || "Поставщик не указан",
           price,
           quantity,
@@ -2418,6 +2422,7 @@ function App() {
           name: key,
           total: 0,
           quantity: 0,
+          grams: 0,
           supplyCount: 0,
         };
 
@@ -2425,6 +2430,11 @@ function App() {
           ...previous,
           total: previous.total + row.total,
           quantity: previous.quantity + row.quantity,
+          grams: previous.grams + row.totalGrams,
+          averagePricePerGram:
+            previous.grams + row.totalGrams > 0
+              ? (previous.total + row.total) / (previous.grams + row.totalGrams)
+              : 0,
           supplyCount: previous.supplyCount + 1,
         });
       });
@@ -4088,7 +4098,11 @@ function App() {
               {purchaseFinanceData.byBrand.slice(0, 8).map((item) => (
                 <div className="analytics-row" key={item.name}>
                   <span>
-                    {item.name} · {item.quantity} пач.
+                    {item.name} · {item.quantity} пач. ·{" "}
+                    {formatWeight(item.grams)} ·{" "}
+                    {item.averagePricePerGram
+                      ? `${item.averagePricePerGram.toFixed(2).replace(".", ",")} ₽/г`
+                      : "цена/г не рассчитана"}
                   </span>
                   <strong>{item.total.toLocaleString("ru-RU")} ₽</strong>
                 </div>
