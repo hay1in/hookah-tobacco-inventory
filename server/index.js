@@ -850,6 +850,10 @@ app.post("/api/flavors/import", async (req, res) => {
     if (lowStock) {
       flavor.lowStock = true;
     }
+
+    if (excludedFromDeadstock) {
+      flavor.excludedFromDeadstock = true;
+    }
   }
 
   const client = await pool.connect();
