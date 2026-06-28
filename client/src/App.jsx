@@ -1742,6 +1742,7 @@ function App() {
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all");
+  const [openDataQualityIssue, setOpenDataQualityIssue] = useState(null);
   const [activeChoiceModal, setActiveChoiceModal] = useState(null);
   const [importMode, setImportMode] = useState("supply");
   const [editingSupplyLog, setEditingSupplyLog] = useState(null);
@@ -2815,6 +2816,64 @@ function App() {
         suppliesWithoutDate.length,
     };
   })();
+
+
+  const dataQualityIssues = [
+    {
+      key: "noTags",
+      title: "Позиции без тегов",
+      items: dataQualityData.flavorsWithoutTags.map((flavor) => ({
+        id: flavor.id,
+        title: `${flavor.brand} — ${flavor.name}`,
+        meta: `${getTotalQuantity(flavor)} пач. на складе`,
+      })),
+    },
+    {
+      key: "noPacks",
+      title: "Позиции без фасовки",
+      items: dataQualityData.flavorsWithoutPacks.map((flavor) => ({
+        id: flavor.id,
+        title: `${flavor.brand} — ${flavor.name}`,
+        meta: "Нет данных по фасовкам",
+      })),
+    },
+    {
+      key: "brokenPurchased",
+      title: "Ошибка “закуплено”",
+      items: dataQualityData.flavorsWithBrokenPurchasedQuantity.map((flavor) => ({
+        id: flavor.id,
+        title: `${flavor.brand} — ${flavor.name}`,
+        meta: "В одной из фасовок закуплено меньше, чем осталось",
+      })),
+    },
+    {
+      key: "noPrice",
+      title: "Поставки без цены",
+      items: dataQualityData.suppliesWithoutPrice.map((log) => ({
+        id: log.id,
+        title: `${log.brand} — ${log.name}`,
+        meta: formatHistoryDate(log),
+      })),
+    },
+    {
+      key: "noSupplier",
+      title: "Поставки без поставщика",
+      items: dataQualityData.suppliesWithoutSupplier.map((log) => ({
+        id: log.id,
+        title: `${log.brand} — ${log.name}`,
+        meta: formatHistoryDate(log),
+      })),
+    },
+    {
+      key: "noDate",
+      title: "Поставки без даты",
+      items: dataQualityData.suppliesWithoutDate.map((log) => ({
+        id: log.id,
+        title: `${log.brand} — ${log.name}`,
+        meta: "Дата поставки не указана",
+      })),
+    },
+  ];
 
 
   const groupedAnalyticsRowsByBrand = Array.from(
@@ -4576,38 +4635,44 @@ function App() {
                 Критичных проблем в данных не найдено.
               </p>
             ) : (
-              <div className="data-quality-grid">
-                <article>
-                  <strong>{dataQualityData.flavorsWithoutTags.length}</strong>
-                  <span>позиций без тегов</span>
-                </article>
+              <div className="data-quality-list">
+                {dataQualityIssues.map((issue) => (
+                  <article className="data-quality-issue" key={issue.key}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenDataQualityIssue(
+                          openDataQualityIssue === issue.key ? null : issue.key
+                        )
+                      }
+                    >
+                      <span>{issue.title}</span>
+                      <strong>
+                        {issue.items.length}
+                        {openDataQualityIssue === issue.key ? " ↑" : " ↓"}
+                      </strong>
+                    </button>
 
-                <article>
-                  <strong>{dataQualityData.flavorsWithoutPacks.length}</strong>
-                  <span>позиций без фасовки</span>
-                </article>
+                    {openDataQualityIssue === issue.key && (
+                      <div className="data-quality-items">
+                        {issue.items.length === 0 ? (
+                          <p>Проблем нет</p>
+                        ) : (
+                          issue.items.slice(0, 20).map((item) => (
+                            <div className="data-quality-item" key={item.id}>
+                              <strong>{item.title}</strong>
+                              <span>{item.meta}</span>
+                            </div>
+                          ))
+                        )}
 
-                <article>
-                  <strong>
-                    {dataQualityData.flavorsWithBrokenPurchasedQuantity.length}
-                  </strong>
-                  <span>позиций с ошибкой “закуплено”</span>
-                </article>
-
-                <article>
-                  <strong>{dataQualityData.suppliesWithoutPrice.length}</strong>
-                  <span>поставок без цены</span>
-                </article>
-
-                <article>
-                  <strong>{dataQualityData.suppliesWithoutSupplier.length}</strong>
-                  <span>поставок без поставщика</span>
-                </article>
-
-                <article>
-                  <strong>{dataQualityData.suppliesWithoutDate.length}</strong>
-                  <span>поставок без даты</span>
-                </article>
+                        {issue.items.length > 20 && (
+                          <p>Показаны первые 20 из {issue.items.length}</p>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                ))}
               </div>
             )}
           </section>

@@ -3230,3 +3230,65 @@ h1 {
   color: #50661b !important;
 }
 
+
+.data-quality-list {
+  display: grid !important;
+  gap: 10px !important;
+}
+
+.data-quality-issue {
+  border-radius: 18px !important;
+  background: rgba(80, 102, 27, 0.08) !important;
+  overflow: hidden !important;
+}
+
+.data-quality-issue > button {
+  width: 100% !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #50661b !important;
+  padding: 13px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  font: inherit !important;
+}
+
+.data-quality-issue > button span {
+  font-weight: 900 !important;
+}
+
+.data-quality-issue > button strong {
+  white-space: nowrap !important;
+  font-size: 18px !important;
+}
+
+.data-quality-items {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 0 13px 13px !important;
+}
+
+.data-quality-item {
+  display: grid !important;
+  gap: 3px !important;
+  padding: 9px 10px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.62) !important;
+}
+
+.data-quality-item strong {
+  font-size: 13px !important;
+  color: #50661b !important;
+}
+
+.data-quality-item span,
+.data-quality-items p {
+  margin: 0 !important;
+  font-size: 12px !important;
+  opacity: 0.72 !important;
+  font-weight: 750 !important;
+}
+
