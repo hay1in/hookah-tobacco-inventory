@@ -2821,3 +2821,33 @@ h1 {
   padding: 8px 0 !important;
 }
 
+
+.finance-history-toggle {
+  width: 100% !important;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 16px !important;
+  color: inherit !important;
+  cursor: pointer !important;
+  text-align: left !important;
+}
+
+.finance-history-toggle span {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+}
+
+.finance-history-toggle strong {
+  font-size: 13px !important;
+  opacity: 0.72 !important;
+  white-space: nowrap !important;
+}
+
+.finance-history-toggle:hover strong {
+  opacity: 1 !important;
+}
+

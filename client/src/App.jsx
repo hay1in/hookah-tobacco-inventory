@@ -1486,6 +1486,7 @@ function App() {
   const [openAnalyticsBrandName, setOpenAnalyticsBrandName] = useState("");
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
+  const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [selectedFlavorIds, setSelectedFlavorIds] = useState([]);
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
   const [pendingImportRows, setPendingImportRows] = useState([]);
@@ -4068,23 +4069,35 @@ function App() {
 
           {purchaseFinanceData.rows.length > 0 && (
             <section className="analytics-panel wide finance-history-panel">
-              <h2>Последние закупки с ценой</h2>
+              <button
+                className="finance-history-toggle"
+                type="button"
+                onClick={() => setIsFinanceHistoryOpen(!isFinanceHistoryOpen)}
+              >
+                <span>Последние закупки с ценой</span>
+                <strong>
+                  {purchaseFinanceData.rows.length} записей{" "}
+                  {isFinanceHistoryOpen ? "↑" : "↓"}
+                </strong>
+              </button>
 
-              <div className="finance-history-list">
-                {purchaseFinanceData.rows.slice(0, 12).map((row) => (
-                  <article className="finance-history-row" key={row.id}>
-                    <div>
-                      <strong>{row.brand} — {row.name}</strong>
-                      <span>
-                        {row.supplier} · {row.quantity} пач. ×{" "}
-                        {row.price.toLocaleString("ru-RU")} ₽
-                      </span>
-                    </div>
+              {isFinanceHistoryOpen && (
+                <div className="finance-history-list">
+                  {purchaseFinanceData.rows.slice(0, 12).map((row) => (
+                    <article className="finance-history-row" key={row.id}>
+                      <div>
+                        <strong>{row.brand} — {row.name}</strong>
+                        <span>
+                          {row.supplier} · {row.quantity} пач. ×{" "}
+                          {row.price.toLocaleString("ru-RU")} ₽
+                        </span>
+                      </div>
 
-                    <strong>{row.total.toLocaleString("ru-RU")} ₽</strong>
-                  </article>
-                ))}
-              </div>
+                      <strong>{row.total.toLocaleString("ru-RU")} ₽</strong>
+                    </article>
+                  ))}
+                </div>
+              )}
             </section>
           )}
 
