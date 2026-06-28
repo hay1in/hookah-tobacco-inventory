@@ -1068,6 +1068,7 @@ function App() {
       }
 
       setFlavors([]);
+      setActionLogs([]);
       setSearchText("");
       setSelectedTag("all");
       setStatusFilter("all");
@@ -2706,6 +2707,10 @@ function App() {
     return date >= periodStart;
   };
 
+  const currentFlavorIds = new Set(
+    flavors.map((flavor) => String(flavor.id))
+  );
+
   const purchaseFinanceData = (() => {
     const normalizeFinanceKey = (value) => {
       return String(value || "")
@@ -2717,7 +2722,13 @@ function App() {
 
     const allSupplyRows = actionLogs
       .filter((log) => {
-        return log.action === "supply" && (log.flavorId || log.flavor_id);
+        const logFlavorId = log.flavorId || log.flavor_id;
+
+        return (
+          log.action === "supply" &&
+          logFlavorId &&
+          currentFlavorIds.has(String(logFlavorId))
+        );
       })
       .map((log) => {
         const details = parseActionDetails(log.details);
@@ -2860,7 +2871,13 @@ function App() {
 
     const supplyLogs = actionLogs
       .filter((log) => {
-        return log.action === "supply" && (log.flavorId || log.flavor_id);
+        const logFlavorId = log.flavorId || log.flavor_id;
+
+        return (
+          log.action === "supply" &&
+          logFlavorId &&
+          currentFlavorIds.has(String(logFlavorId))
+        );
       })
       .map((log) => ({
         ...log,
