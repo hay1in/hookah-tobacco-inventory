@@ -1476,9 +1476,15 @@ function App() {
 
     link.href = url;
     link.download = filename;
-    link.click();
+    link.style.display = "none";
 
-    URL.revokeObjectURL(url);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
   };
 
   const createFullBackupJson = (reason = "manual") => {
@@ -5215,7 +5221,7 @@ function App() {
                     </span>
 
                     <strong>
-                      {actionLabels[log.action] || log.action}
+                      {getHistoryActionTitle(log.action, log)}
                     </strong>
 
                     {(log.brand || log.name) && (
