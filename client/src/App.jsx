@@ -1466,6 +1466,20 @@ function App() {
     return "";
   };
 
+  const cleanImportedFlavorName = (value) => {
+    return String(value || "")
+      .replace(/кальянная\s+смесь/gi, "")
+      .replace(/табак\s+для\s+кальяна/gi, "")
+      .replace(/смесь\s+для\s+кальяна/gi, "")
+      .replace(/с\s+ароматом/gi, "")
+      .replace(/со\s+вкусом/gi, "")
+      .replace(/аромат/gi, "")
+      .replace(/[«»"]/g, "")
+      .replace(/\s+/g, " ")
+      .replace(/^[-–—:,.;\s]+|[-–—:,.;\s]+$/g, "")
+      .trim();
+  };
+
   const parseExcelNumber = (value, fallback = 0) => {
     const normalizedValue = String(value).replace(",", ".").trim();
     const number = Number(normalizedValue);
@@ -1545,7 +1559,7 @@ function App() {
             getExcelValue(row, ["Бренд", "brand", "Brand"])
           ).trim();
 
-          const name = String(
+          const rawName = String(
             getExcelValue(row, [
               "Вкус",
               "Название",
@@ -1555,6 +1569,8 @@ function App() {
               "Name",
             ])
           ).trim();
+
+          const name = cleanImportedFlavorName(rawName);
 
           const weight = String(
             getExcelValue(row, ["Фасовка", "Вес", "weight", "Weight"])
