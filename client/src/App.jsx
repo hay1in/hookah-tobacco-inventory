@@ -2671,7 +2671,9 @@ function App() {
     };
 
     const allSupplyRows = actionLogs
-      .filter((log) => log.action === "supply")
+      .filter((log) => {
+        return log.action === "supply" && (log.flavorId || log.flavor_id);
+      })
       .map((log) => {
         const details = parseActionDetails(log.details);
         const price = Number(details.price || 0);
@@ -2812,7 +2814,9 @@ function App() {
     });
 
     const supplyLogs = actionLogs
-      .filter((log) => log.action === "supply")
+      .filter((log) => {
+        return log.action === "supply" && (log.flavorId || log.flavor_id);
+      })
       .map((log) => ({
         ...log,
         parsedDetails: parseActionDetails(log.details),
