@@ -2851,3 +2851,37 @@ h1 {
   opacity: 1 !important;
 }
 
+
+.price-change-badge {
+  display: inline-flex !important;
+  width: fit-content !important;
+  margin-top: 3px !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  font-style: normal !important;
+  font-weight: 850 !important;
+  line-height: 1.25 !important;
+}
+
+.price-change-badge.up {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #991b1b !important;
+}
+
+.price-change-badge.down {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #166534 !important;
+}
+
+.price-change-badge.same,
+.price-change-badge.first {
+  background: rgba(80, 102, 27, 0.10) !important;
+  color: #50661b !important;
+}
+
+.compact-mode .price-change-badge {
+  font-size: 11px !important;
+  padding: 3px 7px !important;
+}
+

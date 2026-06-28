@@ -2338,6 +2338,14 @@ function App() {
   const analyticsRows = getAnalyticsRows();
 
   const purchaseFinanceData = (() => {
+    const normalizeFinanceKey = (value) => {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/ё/g, "е")
+        .replace(/\s+/g, " ")
+        .trim();
+    };
+
     const supplyLogs = actionLogs
       .filter((log) => log.action === "supply")
       .map((log) => {
@@ -2345,11 +2353,13 @@ function App() {
         const price = Number(details.price || 0);
         const quantity = Number(details.quantity || 0);
         const total = price > 0 && quantity > 0 ? price * quantity : 0;
+        const weight = String(details.weight || "Без фасовки").trim();
 
         return {
           id: log.id,
           brand: log.brand || "Без бренда",
           name: log.name || "Без вкуса",
+          weight,
           supplier: details.supplier || "Поставщик не указан",
           price,
           quantity,
@@ -2359,13 +2369,50 @@ function App() {
       })
       .filter((row) => row.price > 0 && row.quantity > 0);
 
-    const totalSpent = supplyLogs.reduce((sum, row) => sum + row.total, 0);
-    const totalPacks = supplyLogs.reduce((sum, row) => sum + row.quantity, 0);
+    const chronologicalRows = [...supplyLogs].sort(
+      (a, b) => new Date(a.suppliedAt) - new Date(b.suppliedAt)
+    );
+
+    const previousPriceByItem = new Map();
+
+    chronologicalRows.forEach((row) => {
+      const key = [
+        normalizeFinanceKey(row.brand),
+        normalizeFinanceKey(row.name),
+        normalizeFinanceKey(row.weight),
+      ].join("::");
+
+      const previousPrice = previousPriceByItem.get(key);
+
+      if (previousPrice) {
+        const difference = row.price - previousPrice;
+        const percent = previousPrice > 0 ? (difference / previousPrice) * 100 : 0;
+
+        row.priceChange = {
+          previousPrice,
+          difference,
+          percent,
+          direction:
+            difference > 0 ? "up" : difference < 0 ? "down" : "same",
+        };
+      } else {
+        row.priceChange = null;
+      }
+
+      previousPriceByItem.set(key, row.price);
+    });
+
+    const rowsWithPriceChanges = chronologicalRows.sort(
+      (a, b) => new Date(b.suppliedAt) - new Date(a.suppliedAt)
+    );
+
+    const totalSpent = rowsWithPriceChanges.reduce((sum, row) => sum + row.total, 0);
+    const totalPacks = rowsWithPriceChanges.reduce((sum, row) => sum + row.quantity, 0);
 
     const groupBy = (field) => {
       const map = new Map();
 
-      supplyLogs.forEach((row) => {
+      rowsWithPriceChanges.forEach((row) => {
         const key = row[field] || "Не указано";
         const previous = map.get(key) || {
           name: key,
@@ -2386,7 +2433,7 @@ function App() {
     };
 
     return {
-      rows: supplyLogs.sort((a, b) => new Date(b.suppliedAt) - new Date(a.suppliedAt)),
+      rows: rowsWithPriceChanges,
       totalSpent,
       totalPacks,
       averagePackPrice: totalPacks > 0 ? totalSpent / totalPacks : 0,
@@ -2394,7 +2441,6 @@ function App() {
       bySupplier: groupBy("supplier"),
     };
   })();
-
 
   const groupedAnalyticsRowsByBrand = Array.from(
     analyticsRows.reduce((groups, row) => {
@@ -4088,9 +4134,26 @@ function App() {
                       <div>
                         <strong>{row.brand} — {row.name}</strong>
                         <span>
-                          {row.supplier} · {row.quantity} пач. ×{" "}
+                          {row.supplier} · {row.weight} · {row.quantity} пач. ×{" "}
                           {row.price.toLocaleString("ru-RU")} ₽
                         </span>
+
+                        {row.priceChange ? (
+                          <em className={`price-change-badge ${row.priceChange.direction}`}>
+                            {row.priceChange.direction === "up" && "↑ "}
+                            {row.priceChange.direction === "down" && "↓ "}
+                            {row.priceChange.direction === "same" && "→ "}
+                            {row.priceChange.difference > 0 ? "+" : ""}
+                            {Math.round(row.priceChange.difference).toLocaleString("ru-RU")} ₽ ·{" "}
+                            {row.priceChange.percent > 0 ? "+" : ""}
+                            {Math.round(row.priceChange.percent)}%
+                            {" "}к прошлой поставке этой фасовки
+                          </em>
+                        ) : (
+                          <em className="price-change-badge first">
+                            первая цена для этой фасовки
+                          </em>
+                        )}
                       </div>
 
                       <strong>{row.total.toLocaleString("ru-RU")} ₽</strong>
