@@ -419,6 +419,18 @@ function App() {
     };
   };
 
+  const openSupplyLogFromAnalytics = (logId) => {
+    const log = actionLogs.find((item) => String(item.id) === String(logId));
+
+    if (!log) {
+      showNotification("Поставка не найдена в истории", "error");
+      return;
+    }
+
+    editSupplyLog(log);
+  };
+
+
   const openFlavorFromAnalytics = (flavorId) => {
     setCurrentView("inventory");
     setOpenFlavorId(flavorId);
@@ -4693,7 +4705,7 @@ function App() {
                                   return;
                                 }
 
-                                setCurrentView("history");
+                                openSupplyLogFromAnalytics(item.id);
                               }}
                             >
                               <strong>{item.title}</strong>
@@ -4702,7 +4714,7 @@ function App() {
                                 {" · "}
                                 {item.type === "flavor"
                                   ? "открыть на складе"
-                                  : "открыть историю"}
+                                  : "исправить поставку"}
                               </span>
                             </button>
                           ))
