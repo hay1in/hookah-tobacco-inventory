@@ -4214,15 +4214,16 @@ function App() {
       return;
     }
 
-    const isConfirmed = window.confirm(
-      `Точно ${actionTitles[action]}? Выбрано: ${selectedCount}`
+    const confirmationText = window.prompt(
+      `Точно ${actionTitles[action]}? Выбрано: ${selectedCount}. Чтобы продолжить, введите: МАССОВО`
     );
 
-    if (!isConfirmed) {
+    if (confirmationText !== "МАССОВО") {
+      showNotification("Массовое действие отменено", "info");
       return;
     }
 
-    createBackupExcel(`before-bulk-${action}`);
+    await createBackupExcel(`before-bulk-${action}`);
     await createFullBackupJson(`before-bulk-${action}`);
 
     try {
