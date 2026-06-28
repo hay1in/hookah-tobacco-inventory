@@ -1083,6 +1083,7 @@ function App() {
     }
 
     createBackupExcel("before-clear-database");
+    createFullBackupJson("before-clear-database");
 
     try {
       const response = await apiFetch("/api/admin/clear-database", {
@@ -1924,6 +1925,7 @@ function App() {
       setErrorText("");
 
       createBackupExcel("before-import");
+      createFullBackupJson("before-import");
 
       let result = { importedCount: 0 };
 
@@ -3486,6 +3488,7 @@ function App() {
     }
 
     createBackupExcel("before-merge-tags");
+    createFullBackupJson("before-merge-tags");
 
     try {
       const response = await apiFetch("/api/tags/merge", {
@@ -3539,6 +3542,7 @@ function App() {
     }
 
     createBackupExcel("before-merge-duplicates");
+    createFullBackupJson("before-merge-duplicates");
 
     try {
       const response = await apiFetch("/api/flavors/merge", {
@@ -4102,6 +4106,7 @@ function App() {
     }
 
     createBackupExcel(`before-bulk-${action}`);
+    createFullBackupJson(`before-bulk-${action}`);
 
     try {
       const response = await apiFetch("/api/flavors/bulk", {
