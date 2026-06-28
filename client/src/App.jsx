@@ -943,6 +943,33 @@ function App() {
     )
   ).sort((a, b) => a.localeCompare(b, "ru"));
 
+  const parseActionDetails = (details) => {
+    if (!details) {
+      return {};
+    }
+
+    if (typeof details === "string") {
+      try {
+        return JSON.parse(details);
+      } catch {
+        return {};
+      }
+    }
+
+    return details;
+  };
+
+  const isCancelledSupplyLog = (log) => {
+    if (!log || log.action !== "supply") {
+      return false;
+    }
+
+    const details = parseActionDetails(log.details);
+
+    return Boolean(details.cancelled || details.cancelledAt);
+  };
+
+
   const supplierSuggestions = Array.from(
     new Set(
       actionLogs
@@ -1184,6 +1211,55 @@ function App() {
     XLSX.writeFile(workbook, `zakupka-tabaka-${today}.xlsx`);
   };
 
+
+  const exportHistoryToExcel = () => {
+    const historyRows = actionLogs.map((log) => {
+      const details = parseActionDetails(log.details);
+      const flavorId = log.flavorId || log.flavor_id;
+      const flavorFromStock = flavors.find(
+        (item) => String(item.id) === String(flavorId)
+      );
+
+      const brand =
+        log.brand ||
+        log.flavorBrand ||
+        log.flavor_brand ||
+        flavorFromStock?.brand ||
+        "";
+
+      const name =
+        log.name ||
+        log.flavorName ||
+        log.flavor_name ||
+        flavorFromStock?.name ||
+        "";
+
+      const actionTitle = getHistoryActionTitle(log.action, log);
+      const createdAt = log.createdAt || log.created_at || log.date || "";
+
+      return {
+        "Дата": createdAt ? new Date(createdAt).toLocaleString("ru-RU") : "",
+        "Действие": actionTitle,
+        "Бренд": brand,
+        "Вкус": name,
+        "Фасовка": details.weight || "",
+        "Количество": details.quantity || "",
+        "Цена": details.price || "",
+        "Поставщик": details.supplier || "",
+        "Источник": details.source || "",
+        "Статус": isCancelledSupplyLog(log) ? "Отменена" : "Активна",
+        "Детали": formatActionDetails(log),
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(historyRows);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "История");
+
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(workbook, `istoriya-tabaka-${today}.xlsx`);
+  };
 
   const exportAnalyticsToExcel = () => {
     const workbook = XLSX.utils.book_new();
@@ -1896,32 +1972,6 @@ function App() {
       .replace(/ё/g, "е")
       .replace(/\s+/g, " ")
       .trim();
-  };
-
-  const parseActionDetails = (details) => {
-    if (!details) {
-      return {};
-    }
-
-    if (typeof details === "string") {
-      try {
-        return JSON.parse(details);
-      } catch {
-        return {};
-      }
-    }
-
-    return details;
-  };
-
-  const isCancelledSupplyLog = (log) => {
-    if (!log || log.action !== "supply") {
-      return false;
-    }
-
-    const details = parseActionDetails(log.details);
-
-    return Boolean(details.cancelled || details.cancelledAt);
   };
 
   const toggleFlavorHistory = (flavorId) => {
@@ -3973,6 +4023,143 @@ function App() {
     }
   };
 
+  const renderChoiceModal = () => {
+    if (!activeChoiceModal) {
+      return null;
+    }
+
+    return (
+      <div
+        className="choice-modal-backdrop"
+        onClick={() => setActiveChoiceModal(null)}
+      >
+        <section
+          className="choice-modal"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            className="choice-modal-close"
+            type="button"
+            onClick={() => setActiveChoiceModal(null)}
+          >
+            ×
+          </button>
+
+          {activeChoiceModal === "export" && (
+            <>
+              <span className="choice-modal-eyebrow">Экспорт</span>
+              <h2>Что выгрузить?</h2>
+
+              <div className="choice-modal-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportToExcel();
+                    setActiveChoiceModal(null);
+                  }}
+                >
+                  Экспорт склада
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportPurchaseToExcel();
+                    setActiveChoiceModal(null);
+                  }}
+                >
+                  Экспорт закупки
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportAnalyticsToExcel();
+                    setActiveChoiceModal(null);
+                  }}
+                >
+                  Экспорт аналитики
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportHistoryToExcel();
+                    setActiveChoiceModal(null);
+                  }}
+                >
+                  Экспорт истории
+                </button>
+              </div>
+            </>
+          )}
+
+          {activeChoiceModal === "import" && (
+            <>
+              <span className="choice-modal-eyebrow">Импорт</span>
+              <h2>Что сделать?</h2>
+
+              <div className="choice-modal-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    startExcelImport("supply");
+                  }}
+                >
+                  Импорт закупки
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    startExcelImport("inventory");
+                  }}
+                >
+                  Импорт склада
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    downloadImportTemplate("supply");
+                    setActiveChoiceModal(null);
+                  }}
+                >
+                  Шаблон закупки
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    downloadImportTemplate("inventory");
+                    setActiveChoiceModal(null);
+                  }}
+                >
+                  Шаблон склада
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+    );
+  };
+
+  const renderGlobalFileInput = () => {
+    return (
+      <input
+        id="import-excel-input"
+        type="file"
+        accept=".xlsx,.xls"
+        style={{ display: "none" }}
+        onChange={(event) => {
+          importFromExcel(event);
+          setActiveChoiceModal(null);
+        }}
+      />
+    );
+  };
+
   const renderAppHeader = ({ title, subtitle, isInventory = false }) => {
     const closeMenu = () => setIsHeaderMenuOpen(false);
 
@@ -3984,6 +4171,8 @@ function App() {
     return (
       <>
       {renderNotifications()}
+      {renderGlobalFileInput()}
+      {renderChoiceModal()}
 
       {editingSupplyLog && (
         <div
@@ -5594,123 +5783,6 @@ function App() {
             <option value={price} key={price} />
           ))}
         </datalist>
-
-        <input
-          id="import-excel-input"
-          type="file"
-          accept=".xlsx,.xls"
-          style={{ display: "none" }}
-          onChange={(event) => {
-            importFromExcel(event);
-            setActiveChoiceModal(null);
-          }}
-        />
-
-        {activeChoiceModal && (
-          <div
-            className="choice-modal-backdrop"
-            onClick={() => setActiveChoiceModal(null)}
-          >
-            <section
-              className="choice-modal"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <button
-                className="choice-modal-close"
-                type="button"
-                onClick={() => setActiveChoiceModal(null)}
-              >
-                ×
-              </button>
-
-              {activeChoiceModal === "export" && (
-                <>
-                  <span className="choice-modal-eyebrow">Экспорт</span>
-                  <h2>Что выгрузить?</h2>
-
-                  <div className="choice-modal-actions">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        exportToExcel();
-                        setActiveChoiceModal(null);
-                      }}
-                    >
-                      Экспорт склада
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        exportPurchaseToExcel();
-                        setActiveChoiceModal(null);
-                      }}
-                    >
-                      Экспорт закупки
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        exportAnalyticsToExcel();
-                        setActiveChoiceModal(null);
-                      }}
-                    >
-                      Экспорт аналитики
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {activeChoiceModal === "import" && (
-                <>
-                  <span className="choice-modal-eyebrow">Импорт</span>
-                  <h2>Что сделать?</h2>
-
-                  <div className="choice-modal-actions">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        startExcelImport("supply");
-                      }}
-                    >
-                      Импорт закупки
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        startExcelImport("inventory");
-                      }}
-                    >
-                      Импорт склада
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        downloadImportTemplate("supply");
-                        setActiveChoiceModal(null);
-                      }}
-                    >
-                      Шаблон закупки
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        downloadImportTemplate("inventory");
-                        setActiveChoiceModal(null);
-                      }}
-                    >
-                      Шаблон склада
-                    </button>
-                  </div>
-                </>
-              )}
-            </section>
-          </div>
-        )}
 
         {isImportPreviewOpen && (
           <section className="supply-panel import-preview-panel">
