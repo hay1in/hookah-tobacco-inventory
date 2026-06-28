@@ -1147,6 +1147,122 @@ function App() {
   };
 
 
+  const exportAnalyticsToExcel = () => {
+    const workbook = XLSX.utils.book_new();
+
+    const brandRows = purchaseFinanceData.byBrand.map((item) => ({
+      "Бренд": item.name,
+      "Сумма закупки": item.total,
+      "Пачек": item.quantity,
+      "Вес": formatWeight(item.grams),
+      "Средняя цена за грамм": item.averagePricePerGram
+        ? Number(item.averagePricePerGram.toFixed(2))
+        : "",
+      "Поставок": item.supplyCount,
+    }));
+
+    const supplierRows = purchaseFinanceData.bySupplier.map((item) => ({
+      "Поставщик": item.name,
+      "Сумма закупки": item.total,
+      "Пачек": item.quantity,
+      "Вес": formatWeight(item.grams),
+      "Средняя цена за грамм": item.averagePricePerGram
+        ? Number(item.averagePricePerGram.toFixed(2))
+        : "",
+      "Поставок": item.supplyCount,
+    }));
+
+    const priceChangeRows = [
+      ...purchaseFinanceData.priceIncreases,
+      ...purchaseFinanceData.priceDecreases,
+    ].map((row) => ({
+      "Бренд": row.brand,
+      "Вкус": row.name,
+      "Фасовка": row.weight,
+      "Дата поставки": row.suppliedAt
+        ? new Date(row.suppliedAt).toLocaleDateString("ru-RU")
+        : "",
+      "Предыдущая цена": row.priceChange?.previousPrice || "",
+      "Новая цена": row.price,
+      "Разница": row.priceChange?.difference || "",
+      "Изменение %": row.priceChange?.percent
+        ? Number(row.priceChange.percent.toFixed(2))
+        : "",
+      "Направление": row.priceChange?.direction === "up"
+        ? "подорожало"
+        : row.priceChange?.direction === "down"
+          ? "подешевело"
+          : "без изменений",
+    }));
+
+    const purchaseRows = purchaseFinanceData.rows.map((row) => ({
+      "Дата поставки": row.suppliedAt
+        ? new Date(row.suppliedAt).toLocaleDateString("ru-RU")
+        : "",
+      "Бренд": row.brand,
+      "Вкус": row.name,
+      "Фасовка": row.weight,
+      "Поставщик": row.supplier,
+      "Количество": row.quantity,
+      "Цена за пачку": row.price,
+      "Сумма": row.total,
+      "Изменение цены": row.priceChange
+        ? `${Math.round(row.priceChange.difference)} ₽ / ${Math.round(
+            row.priceChange.percent
+          )}%`
+        : "первая цена",
+    }));
+
+    const dataQualityRows = [
+      {
+        "Проблема": "Позиции без тегов",
+        "Количество": dataQualityData.flavorsWithoutTags.length,
+      },
+      {
+        "Проблема": "Позиции без фасовки",
+        "Количество": dataQualityData.flavorsWithoutPacks.length,
+      },
+      {
+        "Проблема": "Позиции с ошибкой закуплено",
+        "Количество": dataQualityData.flavorsWithBrokenPurchasedQuantity.length,
+      },
+      {
+        "Проблема": "Поставки без цены",
+        "Количество": dataQualityData.suppliesWithoutPrice.length,
+      },
+      {
+        "Проблема": "Поставки без поставщика",
+        "Количество": dataQualityData.suppliesWithoutSupplier.length,
+      },
+      {
+        "Проблема": "Поставки без даты",
+        "Количество": dataQualityData.suppliesWithoutDate.length,
+      },
+    ];
+
+    const sheets = [
+      ["Финансы по брендам", brandRows],
+      ["Финансы по поставщикам", supplierRows],
+      ["Изменение цен", priceChangeRows],
+      ["Закупки с ценой", purchaseRows],
+      ["Проблемные данные", dataQualityRows],
+    ];
+
+    sheets.forEach(([sheetName, rows]) => {
+      const worksheet = XLSX.utils.json_to_sheet(
+        rows.length > 0 ? rows : [{ "Нет данных": "" }]
+      );
+
+      worksheet["!cols"] = Array.from({ length: 10 }, () => ({ wch: 24 }));
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(workbook, `analitika-tabaka-${today}.xlsx`);
+  };
+
+
   const openExportChoice = () => {
     setActiveChoiceModal("export");
   };
@@ -4753,6 +4869,16 @@ function App() {
                       }}
                     >
                       Экспорт закупки
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportAnalyticsToExcel();
+                        setActiveChoiceModal(null);
+                      }}
+                    >
+                      Экспорт аналитики
                     </button>
                   </div>
                 </>

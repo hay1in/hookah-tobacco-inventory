@@ -3224,3 +3224,9 @@ h1 {
   padding: 10px !important;
 }
 
+
+.choice-modal-actions button:nth-child(3) {
+  background: rgba(229, 198, 31, 0.24) !important;
+  color: #50661b !important;
+}
+
