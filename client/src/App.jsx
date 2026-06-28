@@ -909,7 +909,19 @@ function App() {
   const supplierSuggestions = Array.from(
     new Set(
       actionLogs
-        .map((log) => parseActionDetails(log.details).supplier)
+        .map((log) => {
+          const details = log.details || {};
+
+          if (typeof details === "string") {
+            try {
+              return JSON.parse(details).supplier;
+            } catch {
+              return "";
+            }
+          }
+
+          return details.supplier;
+        })
         .map((supplier) => String(supplier || "").trim())
         .filter(Boolean)
     )
