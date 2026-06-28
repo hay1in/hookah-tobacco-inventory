@@ -927,6 +927,47 @@ function App() {
     )
   ).sort((a, b) => a.localeCompare(b, "ru"));
 
+  const priceSuggestions = Array.from(
+    new Set(
+      actionLogs
+        .filter((log) => log.action === "supply")
+        .map((log) => {
+          const details = log.details || {};
+          const parsedDetails =
+            typeof details === "string"
+              ? (() => {
+                  try {
+                    return JSON.parse(details);
+                  } catch {
+                    return {};
+                  }
+                })()
+              : details;
+
+          const logBrand = normalizeSearchValue(log.brand);
+          const logName = normalizeSearchValue(log.name);
+          const logWeight = normalizeSearchValue(parsedDetails.weight);
+
+          const formBrand = normalizeSearchValue(supplyForm.brand);
+          const formName = normalizeSearchValue(supplyForm.name);
+          const formWeight = normalizeSearchValue(supplyForm.weight);
+
+          const matchesBrand = !formBrand || logBrand === formBrand;
+          const matchesName = !formName || logName === formName;
+          const matchesWeight = !formWeight || logWeight === formWeight;
+
+          if (!matchesBrand || !matchesName || !matchesWeight) {
+            return "";
+          }
+
+          return parsedDetails.price;
+        })
+        .map((price) => Number(price || 0))
+        .filter((price) => price > 0)
+        .map((price) => String(price))
+    )
+  ).sort((a, b) => Number(b) - Number(a));
+
   const tagSuggestions = Array.from(
     new Set(
       flavors
@@ -4451,6 +4492,12 @@ function App() {
           ))}
         </datalist>
 
+        <datalist id="price-options">
+          {priceSuggestions.map((price) => (
+            <option value={price} key={price} />
+          ))}
+        </datalist>
+
         <input
           id="import-excel-input"
           type="file"
@@ -4637,6 +4684,7 @@ function App() {
                 <input
                   type="number"
                   name="price"
+                  list="price-options"
                   min="0"
                   step="0.01"
                   value={supplyForm.price}
