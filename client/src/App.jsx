@@ -2363,6 +2363,53 @@ function App() {
   const importPreviewNewCount =
     pendingImportRows.length - importPreviewExistingCount;
 
+  const getImportRowWarnings = (row) => {
+    const warnings = [];
+
+    const quantity = Number(row.quantity || 0);
+    const price = Number(row.price || 0);
+
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      warnings.push("количество 0");
+    }
+
+    if (importMode === "supply") {
+      if (!row.supplyDate) {
+        warnings.push("нет даты");
+      }
+
+      if (!String(row.supplier || "").trim()) {
+        warnings.push("нет поставщика");
+      }
+
+      if (!Number.isFinite(price) || price <= 0) {
+        warnings.push("нет цены");
+      }
+    }
+
+    const alreadyExists = flavors.some((flavor) => {
+      return (
+        normalizeDuplicateKey(flavor.brand) === normalizeDuplicateKey(row.brand) &&
+        normalizeDuplicateKey(flavor.name) === normalizeDuplicateKey(row.name)
+      );
+    });
+
+    warnings.push(alreadyExists ? "уже есть в базе" : "новая позиция");
+
+    return warnings;
+  };
+
+  const importPreviewRowsWithWarnings = pendingImportRows.map((row) => ({
+    ...row,
+    warnings: getImportRowWarnings(row),
+  }));
+
+  const importPreviewProblemCount = importPreviewRowsWithWarnings.filter((row) => {
+    return row.warnings.some((warning) =>
+      ["количество 0", "нет даты", "нет поставщика", "нет цены"].includes(warning)
+    );
+  }).length;
+
   const groupedFlavorsByBrand = Array.from(
     filteredFlavors.reduce((groups, flavor) => {
       const brand = flavor.brand || "Без бренда";
@@ -5624,6 +5671,11 @@ function App() {
                 <span>Новых позиций</span>
                 <strong>{importPreviewNewCount}</strong>
               </article>
+
+              <article>
+                <span>Проблемных строк</span>
+                <strong>{importPreviewProblemCount}</strong>
+              </article>
             </div>
 
             <div className="import-preview-table-wrap">
@@ -5639,11 +5691,12 @@ function App() {
                     <th>Поставщик</th>
                     <th>Цена</th>
                     <th>Теги</th>
+                    <th>Проверка</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {pendingImportRows.slice(0, 20).map((row, index) => (
+                  {importPreviewRowsWithWarnings.slice(0, 20).map((row, index) => (
                     <tr key={`${row.brand}-${row.name}-${row.weight}-${index}`}>
                       <td>{row.brand}</td>
                       <td>{row.name}</td>
@@ -5654,6 +5707,22 @@ function App() {
                       <td>{row.supplier || "—"}</td>
                       <td>{row.price ? `${row.price} ₽` : "—"}</td>
                       <td>{row.tags}</td>
+                      <td>
+                        <div className="import-warning-list">
+                          {row.warnings.map((warning) => (
+                            <span
+                              className={
+                                ["количество 0", "нет даты", "нет поставщика", "нет цены"].includes(warning)
+                                  ? "import-warning-badge problem"
+                                  : "import-warning-badge"
+                              }
+                              key={warning}
+                            >
+                              {warning}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

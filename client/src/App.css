@@ -3347,3 +3347,24 @@ button.data-quality-item:hover {
   grid-template-columns: 1fr 1fr !important;
 }
 
+
+.import-warning-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.import-warning-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: rgba(80, 102, 27, 0.1);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.import-warning-badge.problem {
+  background: rgba(160, 64, 64, 0.14);
+}
