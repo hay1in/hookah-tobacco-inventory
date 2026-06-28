@@ -3323,55 +3323,89 @@ function App() {
     return date.toISOString().slice(0, 10);
   };
 
-  const editSupplyLog = async (log) => {
+  const getSupplyEditDateInputValue = (value) => {
+    if (!value) {
+      return getTodayInputDate();
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return String(value).slice(0, 10);
+    }
+
+    return date.toISOString().slice(0, 10);
+  };
+
+  const normalizeSupplyEditWeight = (value) => {
+    const match = String(value || "").match(/\d+/);
+    return match ? `${match[0]} г` : String(value || "").trim();
+  };
+
+  const editSupplyLog = (log) => {
     const details = parseActionDetails(log.details);
 
-    const nextDate = window.prompt(
-      "Дата поставки в формате ГГГГ-ММ-ДД",
-      getDateInputValue(details.suppliedAt || log.createdAt || log.created_at)
-    );
+    setEditingSupplyLog(log);
+    setEditingSupplyForm({
+      suppliedAt: getSupplyEditDateInputValue(
+        details.suppliedAt || log.createdAt || log.created_at
+      ),
+      supplier: details.supplier || "",
+      price: details.price ?? "",
+      quantity: details.quantity ?? "",
+      weight: details.weight || "",
+    });
+  };
 
-    if (nextDate === null) {
+  const closeSupplyEditModal = () => {
+    setEditingSupplyLog(null);
+    setEditingSupplyForm({
+      suppliedAt: "",
+      supplier: "",
+      price: "",
+      quantity: "",
+      weight: "",
+    });
+  };
+
+  const handleEditingSupplyChange = (event) => {
+    const { name, value } = event.target;
+
+    setEditingSupplyForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const saveSupplyLogChanges = async () => {
+    if (!editingSupplyLog) {
       return;
     }
 
-    const nextSupplier = window.prompt(
-      "Поставщик",
-      details.supplier || ""
-    );
-
-    if (nextSupplier === null) {
-      return;
-    }
-
-    const nextPrice = window.prompt(
-      "Цена за пачку",
-      details.price ?? ""
-    );
-
-    if (nextPrice === null) {
-      return;
-    }
-
-    const nextQuantity = window.prompt(
-      "Количество пачек в записи поставки",
-      details.quantity ?? ""
-    );
-
-    if (nextQuantity === null) {
-      return;
-    }
+    const details = parseActionDetails(editingSupplyLog.details);
 
     const updatedDetails = {
       ...details,
-      suppliedAt: nextDate.trim() || details.suppliedAt || getTodayInputDate(),
-      supplier: nextSupplier.trim(),
-      price: nextPrice === "" ? null : Number(nextPrice),
-      quantity: nextQuantity === "" ? details.quantity : Number(nextQuantity),
+      weight:
+        normalizeSupplyEditWeight(editingSupplyForm.weight) ||
+        normalizeSupplyEditWeight(details.weight),
+      suppliedAt:
+        editingSupplyForm.suppliedAt.trim() ||
+        details.suppliedAt ||
+        getTodayInputDate(),
+      supplier: editingSupplyForm.supplier.trim(),
+      price:
+        editingSupplyForm.price === ""
+          ? null
+          : Number(editingSupplyForm.price),
+      quantity:
+        editingSupplyForm.quantity === ""
+          ? details.quantity
+          : Number(editingSupplyForm.quantity),
     };
 
     try {
-      const response = await apiFetch(`/api/action-logs/${log.id}`, {
+      const response = await apiFetch(`/api/action-logs/${editingSupplyLog.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -3387,11 +3421,16 @@ function App() {
 
       const updatedLogs = await loadActionLogsWithPassword(adminPassword);
       setActionLogs(updatedLogs);
+      await refreshFlavors();
+      closeSupplyEditModal();
 
       showNotification("Данные поставки исправлены", "success");
     } catch (error) {
       console.error(error);
-      showNotification(error.message || "Не удалось исправить данные поставки", "error");
+      showNotification(
+        error.message || "Не удалось исправить данные поставки",
+        "error"
+      );
       setErrorText(error.message || "Не удалось исправить данные поставки");
     }
   };
