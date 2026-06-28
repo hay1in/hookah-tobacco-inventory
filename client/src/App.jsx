@@ -927,6 +927,14 @@ function App() {
     )
   ).sort((a, b) => a.localeCompare(b, "ru"));
 
+  const normalizePriceSuggestionValue = (value) => {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
   const priceSuggestions = Array.from(
     new Set(
       actionLogs
@@ -944,13 +952,13 @@ function App() {
                 })()
               : details;
 
-          const logBrand = normalizeSearchValue(log.brand);
-          const logName = normalizeSearchValue(log.name);
-          const logWeight = normalizeSearchValue(parsedDetails.weight);
+          const logBrand = normalizePriceSuggestionValue(log.brand);
+          const logName = normalizePriceSuggestionValue(log.name);
+          const logWeight = normalizePriceSuggestionValue(parsedDetails.weight);
 
-          const formBrand = normalizeSearchValue(supplyForm.brand);
-          const formName = normalizeSearchValue(supplyForm.name);
-          const formWeight = normalizeSearchValue(supplyForm.weight);
+          const formBrand = normalizePriceSuggestionValue(supplyForm.brand);
+          const formName = normalizePriceSuggestionValue(supplyForm.name);
+          const formWeight = normalizePriceSuggestionValue(supplyForm.weight);
 
           const matchesBrand = !formBrand || logBrand === formBrand;
           const matchesName = !formName || logName === formName;
