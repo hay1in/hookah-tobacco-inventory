@@ -2885,3 +2885,85 @@ h1 {
   padding: 3px 7px !important;
 }
 
+
+.crash-screen {
+  min-height: 100vh !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 24px !important;
+  background:
+    radial-gradient(circle at top left, rgba(229, 198, 31, 0.18), transparent 34%),
+    linear-gradient(135deg, #e7ecd7, #dce5bc) !important;
+  color: #50661b !important;
+}
+
+.crash-card {
+  width: min(720px, 100%) !important;
+  padding: 28px !important;
+  border-radius: 28px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(80, 102, 27, 0.18) !important;
+  box-shadow: 0 24px 70px rgba(80, 102, 27, 0.18) !important;
+  display: grid !important;
+  gap: 14px !important;
+}
+
+.crash-eyebrow {
+  width: fit-content !important;
+  padding: 6px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #991b1b !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.crash-card h1 {
+  margin: 0 !important;
+  font-size: clamp(26px, 4vw, 42px) !important;
+  line-height: 1.05 !important;
+}
+
+.crash-card p {
+  margin: 0 !important;
+  opacity: 0.78 !important;
+  line-height: 1.55 !important;
+}
+
+.crash-card pre {
+  max-height: 220px !important;
+  overflow: auto !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  border-radius: 16px !important;
+  background: rgba(80, 102, 27, 0.09) !important;
+  border: 1px solid rgba(80, 102, 27, 0.12) !important;
+  color: #33440f !important;
+  font-size: 13px !important;
+}
+
+.crash-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+
+.crash-actions button {
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 11px 16px !important;
+  background: #50661b !important;
+  color: #fff !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+
+.crash-actions button:last-child {
+  background: rgba(80, 102, 27, 0.12) !important;
+  color: #50661b !important;
+}
+
