@@ -1778,7 +1778,9 @@ function App() {
       setCurrentView("inventory");
 
       showNotification(
-        `Excel импортирован. Обновлено вкусов: ${result.importedCount}`,
+        `${
+          importMode === "supply" ? "Закупка импортирована" : "Склад импортирован"
+        }. Обновлено вкусов: ${result.importedCount}`,
         "success"
       );
     } catch (error) {
@@ -3263,6 +3265,7 @@ function App() {
     purchase_confirmed_off: "Подтверждение закупки снято",
     supply: "Поставка",
     import_excel: "Импорт Excel",
+    import_inventory: "Импорт склада",
     merge_duplicates: "Объединение дублей",
     merge_tags: "Объединение тегов",
     bulk_action: "Массовое действие",
@@ -3312,7 +3315,7 @@ function App() {
       return parts.filter(Boolean).join(" · ");
     }
 
-    if (log.action === "import_excel") {
+    if (log.action === "import_excel" || log.action === "import_inventory") {
       return `Обновлено вкусов: ${details.importedCount || 0}`;
     }
 
@@ -3404,6 +3407,115 @@ function App() {
     }));
   };
 
+  const applySupplyLogStockCorrection = async (
+    log,
+    previousDetails,
+    nextDetails
+  ) => {
+    const flavorId = log.flavorId || log.flavor_id;
+
+    if (!flavorId) {
+      return;
+    }
+
+    const flavor = flavors.find((item) => String(item.id) === String(flavorId));
+
+    if (!flavor) {
+      return;
+    }
+
+    const previousWeight = normalizeSupplyEditWeight(previousDetails.weight);
+    const nextWeight = normalizeSupplyEditWeight(nextDetails.weight);
+
+    const previousQuantity = Number(previousDetails.quantity || 0);
+    const nextQuantity = Number(nextDetails.quantity || 0);
+
+    if (!previousWeight || !nextWeight || !previousQuantity || !nextQuantity) {
+      return;
+    }
+
+    if (
+      previousWeight === nextWeight &&
+      previousQuantity === nextQuantity
+    ) {
+      return;
+    }
+
+    const packs = Array.isArray(flavor.packs)
+      ? flavor.packs.map((pack) => ({ ...pack }))
+      : [];
+
+    const findPack = (weight) => {
+      return packs.find((pack) => {
+        return normalizeSupplyEditWeight(pack.weight) === weight;
+      });
+    };
+
+    const previousPack = findPack(previousWeight);
+
+    if (previousPack) {
+      previousPack.quantity = Math.max(
+        0,
+        Number(previousPack.quantity || 0) - previousQuantity
+      );
+
+      previousPack.purchasedQuantity = Math.max(
+        0,
+        Number(
+          previousPack.purchasedQuantity ??
+            previousPack.purchased_quantity ??
+            0
+        ) - previousQuantity
+      );
+
+      delete previousPack.purchased_quantity;
+    }
+
+    let nextPack = findPack(nextWeight);
+
+    if (!nextPack) {
+      nextPack = {
+        weight: nextWeight,
+        quantity: 0,
+        purchasedQuantity: 0,
+      };
+
+      packs.push(nextPack);
+    }
+
+    nextPack.quantity = Number(nextPack.quantity || 0) + nextQuantity;
+    nextPack.purchasedQuantity =
+      Number(
+        nextPack.purchasedQuantity ??
+          nextPack.purchased_quantity ??
+          0
+      ) + nextQuantity;
+
+    delete nextPack.purchased_quantity;
+
+    const cleanedPacks = packs.filter((pack) => {
+      return (
+        Number(pack.quantity || 0) > 0 ||
+        Number(pack.purchasedQuantity || 0) > 0
+      );
+    });
+
+    const response = await apiFetch(`/api/flavors/${flavor.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...flavor,
+        packs: cleanedPacks,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("История исправлена, но не удалось обновить склад");
+    }
+  };
+
   const saveSupplyLogChanges = async () => {
     if (!editingSupplyLog) {
       return;
@@ -3446,12 +3558,18 @@ function App() {
         throw new Error("Не удалось исправить данные поставки");
       }
 
+      await applySupplyLogStockCorrection(
+        editingSupplyLog,
+        details,
+        updatedDetails
+      );
+
       const updatedLogs = await loadActionLogsWithPassword(adminPassword);
       setActionLogs(updatedLogs);
       await refreshFlavors();
       closeSupplyEditModal();
 
-      showNotification("Данные поставки исправлены", "success");
+      showNotification("Данные поставки и склад исправлены", "success");
     } catch (error) {
       console.error(error);
       showNotification(
