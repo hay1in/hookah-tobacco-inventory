@@ -2559,6 +2559,68 @@ function App() {
     };
   })();
 
+  const dataQualityData = (() => {
+    const activeFlavors = flavors.filter((flavor) => !flavor.archived);
+
+    const flavorsWithoutTags = activeFlavors.filter((flavor) => {
+      return !Array.isArray(flavor.tags) || flavor.tags.length === 0;
+    });
+
+    const flavorsWithoutPacks = activeFlavors.filter((flavor) => {
+      return !Array.isArray(flavor.packs) || flavor.packs.length === 0;
+    });
+
+    const flavorsWithBrokenPurchasedQuantity = activeFlavors.filter((flavor) => {
+      return (flavor.packs || []).some((pack) => {
+        const quantity = Number(pack.quantity || 0);
+        const purchasedQuantity = Number(
+          pack.purchasedQuantity ??
+            pack.purchased_quantity ??
+            pack.quantity ??
+            0
+        );
+
+        return purchasedQuantity < quantity;
+      });
+    });
+
+    const supplyLogs = actionLogs
+      .filter((log) => log.action === "supply")
+      .map((log) => ({
+        ...log,
+        parsedDetails: parseActionDetails(log.details),
+      }));
+
+    const suppliesWithoutPrice = supplyLogs.filter((log) => {
+      return !Number(log.parsedDetails.price || 0);
+    });
+
+    const suppliesWithoutSupplier = supplyLogs.filter((log) => {
+      return !String(log.parsedDetails.supplier || "").trim();
+    });
+
+    const suppliesWithoutDate = supplyLogs.filter((log) => {
+      return !String(log.parsedDetails.suppliedAt || "").trim();
+    });
+
+    return {
+      flavorsWithoutTags,
+      flavorsWithoutPacks,
+      flavorsWithBrokenPurchasedQuantity,
+      suppliesWithoutPrice,
+      suppliesWithoutSupplier,
+      suppliesWithoutDate,
+      totalIssues:
+        flavorsWithoutTags.length +
+        flavorsWithoutPacks.length +
+        flavorsWithBrokenPurchasedQuantity.length +
+        suppliesWithoutPrice.length +
+        suppliesWithoutSupplier.length +
+        suppliesWithoutDate.length,
+    };
+  })();
+
+
   const groupedAnalyticsRowsByBrand = Array.from(
     analyticsRows.reduce((groups, row) => {
       const brand = row.brand || "Без бренда";
@@ -4220,6 +4282,61 @@ function App() {
                 </div>
               ))}
             </article>
+          </section>
+
+          <section className="analytics-panel wide data-quality-panel">
+            <div className="data-quality-header">
+              <div>
+                <span className="choice-modal-eyebrow">Проверка базы</span>
+                <h2>Проблемные данные</h2>
+              </div>
+
+              <strong>
+                {dataQualityData.totalIssues === 0
+                  ? "всё ок"
+                  : `${dataQualityData.totalIssues} замеч.`}
+              </strong>
+            </div>
+
+            {dataQualityData.totalIssues === 0 ? (
+              <p className="info-message dark">
+                Критичных проблем в данных не найдено.
+              </p>
+            ) : (
+              <div className="data-quality-grid">
+                <article>
+                  <strong>{dataQualityData.flavorsWithoutTags.length}</strong>
+                  <span>позиций без тегов</span>
+                </article>
+
+                <article>
+                  <strong>{dataQualityData.flavorsWithoutPacks.length}</strong>
+                  <span>позиций без фасовки</span>
+                </article>
+
+                <article>
+                  <strong>
+                    {dataQualityData.flavorsWithBrokenPurchasedQuantity.length}
+                  </strong>
+                  <span>позиций с ошибкой “закуплено”</span>
+                </article>
+
+                <article>
+                  <strong>{dataQualityData.suppliesWithoutPrice.length}</strong>
+                  <span>поставок без цены</span>
+                </article>
+
+                <article>
+                  <strong>{dataQualityData.suppliesWithoutSupplier.length}</strong>
+                  <span>поставок без поставщика</span>
+                </article>
+
+                <article>
+                  <strong>{dataQualityData.suppliesWithoutDate.length}</strong>
+                  <span>поставок без даты</span>
+                </article>
+              </div>
+            )}
           </section>
 
           {purchaseFinanceData.rows.length > 0 && (

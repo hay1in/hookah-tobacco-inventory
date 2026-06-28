@@ -3094,3 +3094,59 @@ h1 {
   grid-template-columns: 1fr 1fr !important;
 }
 
+
+.data-quality-panel {
+  margin-top: 18px !important;
+}
+
+.data-quality-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 16px !important;
+  margin-bottom: 14px !important;
+}
+
+.data-quality-header h2 {
+  margin: 8px 0 0 !important;
+}
+
+.data-quality-header > strong {
+  white-space: nowrap !important;
+  padding: 7px 11px !important;
+  border-radius: 999px !important;
+  background: rgba(80, 102, 27, 0.1) !important;
+  color: #50661b !important;
+  font-size: 13px !important;
+}
+
+.data-quality-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.data-quality-grid article {
+  padding: 13px !important;
+  border-radius: 18px !important;
+  background: rgba(80, 102, 27, 0.08) !important;
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.data-quality-grid strong {
+  font-size: 24px !important;
+  line-height: 1 !important;
+  color: #50661b !important;
+}
+
+.data-quality-grid span {
+  font-size: 13px !important;
+  opacity: 0.72 !important;
+  font-weight: 800 !important;
+}
+
+.compact-mode .data-quality-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+}
+
