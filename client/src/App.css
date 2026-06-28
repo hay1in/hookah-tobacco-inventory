@@ -3306,3 +3306,44 @@ button.data-quality-item:hover {
   background: rgba(255, 255, 255, 0.86) !important;
 }
 
+
+.supply-edit-modal {
+  gap: 12px !important;
+}
+
+.supply-edit-modal label {
+  display: grid !important;
+  gap: 7px !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  color: #50661b !important;
+}
+
+.supply-edit-modal input {
+  width: 100% !important;
+  border: 1px solid rgba(80, 102, 27, 0.18) !important;
+  border-radius: 15px !important;
+  padding: 12px 13px !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  color: #33440f !important;
+  font: inherit !important;
+  font-weight: 700 !important;
+  outline: none !important;
+}
+
+.supply-edit-modal input:focus {
+  border-color: rgba(80, 102, 27, 0.48) !important;
+  box-shadow: 0 0 0 3px rgba(229, 198, 31, 0.18) !important;
+}
+
+.supply-edit-info {
+  padding: 10px 12px !important;
+  border-radius: 16px !important;
+  background: rgba(80, 102, 27, 0.08) !important;
+  color: #50661b !important;
+}
+
+.choice-modal-actions.horizontal {
+  grid-template-columns: 1fr 1fr !important;
+}
+
