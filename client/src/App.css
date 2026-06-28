@@ -2777,3 +2777,47 @@ h1 {
 .compact-mode .deadstock-excluded-badge {
   font-size: 11px !important;
 }
+
+.finance-grid {
+  margin-top: 24px !important;
+}
+
+.finance-sections {
+  margin-top: 18px !important;
+}
+
+.finance-history-panel {
+  margin-top: 18px !important;
+}
+
+.finance-history-list {
+  display: grid !important;
+  gap: 10px !important;
+}
+
+.finance-history-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding: 12px 0 !important;
+  border-bottom: 1px solid rgba(80, 102, 27, 0.14) !important;
+}
+
+.finance-history-row div {
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.finance-history-row span {
+  opacity: 0.72 !important;
+  font-size: 13px !important;
+}
+
+.finance-history-row > strong {
+  white-space: nowrap !important;
+}
+
+.compact-mode .finance-history-row {
+  padding: 8px 0 !important;
+}
+

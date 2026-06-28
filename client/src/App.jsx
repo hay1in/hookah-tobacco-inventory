@@ -2336,6 +2336,64 @@ function App() {
 
   const analyticsRows = getAnalyticsRows();
 
+  const purchaseFinanceData = (() => {
+    const supplyLogs = actionLogs
+      .filter((log) => log.action === "supply")
+      .map((log) => {
+        const details = parseActionDetails(log.details);
+        const price = Number(details.price || 0);
+        const quantity = Number(details.quantity || 0);
+        const total = price > 0 && quantity > 0 ? price * quantity : 0;
+
+        return {
+          id: log.id,
+          brand: log.brand || "Без бренда",
+          name: log.name || "Без вкуса",
+          supplier: details.supplier || "Поставщик не указан",
+          price,
+          quantity,
+          total,
+          suppliedAt: details.suppliedAt || log.createdAt || log.created_at,
+        };
+      })
+      .filter((row) => row.price > 0 && row.quantity > 0);
+
+    const totalSpent = supplyLogs.reduce((sum, row) => sum + row.total, 0);
+    const totalPacks = supplyLogs.reduce((sum, row) => sum + row.quantity, 0);
+
+    const groupBy = (field) => {
+      const map = new Map();
+
+      supplyLogs.forEach((row) => {
+        const key = row[field] || "Не указано";
+        const previous = map.get(key) || {
+          name: key,
+          total: 0,
+          quantity: 0,
+          supplyCount: 0,
+        };
+
+        map.set(key, {
+          ...previous,
+          total: previous.total + row.total,
+          quantity: previous.quantity + row.quantity,
+          supplyCount: previous.supplyCount + 1,
+        });
+      });
+
+      return Array.from(map.values()).sort((a, b) => b.total - a.total);
+    };
+
+    return {
+      rows: supplyLogs.sort((a, b) => new Date(b.suppliedAt) - new Date(a.suppliedAt)),
+      totalSpent,
+      totalPacks,
+      averagePackPrice: totalPacks > 0 ? totalSpent / totalPacks : 0,
+      byBrand: groupBy("brand"),
+      bySupplier: groupBy("supplier"),
+    };
+  })();
+
 
   const groupedAnalyticsRowsByBrand = Array.from(
     analyticsRows.reduce((groups, row) => {
@@ -3951,6 +4009,96 @@ function App() {
               <strong>{formatWeight(analyticsData.totalUsedGrams)}</strong>
             </article>
           </section>
+
+          <section className="analytics-grid finance-grid">
+            <article className="analytics-card">
+              <span>Потрачено на закупки</span>
+              <strong>
+                {purchaseFinanceData.totalSpent.toLocaleString("ru-RU")} ₽
+              </strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Пачек с указанной ценой</span>
+              <strong>{purchaseFinanceData.totalPacks}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Средняя цена пачки</span>
+              <strong>
+                {Math.round(purchaseFinanceData.averagePackPrice).toLocaleString("ru-RU")} ₽
+              </strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Поставок с ценой</span>
+              <strong>{purchaseFinanceData.rows.length}</strong>
+            </article>
+          </section>
+
+          {purchaseFinanceData.rows.length === 0 && (
+            <p className="info-message">
+              Финансовая аналитика появится после поставок с заполненной ценой за пачку.
+            </p>
+          )}
+
+          <section className="analytics-sections finance-sections">
+            <article className="analytics-panel">
+              <h2>Топ брендов по сумме закупки</h2>
+
+              {purchaseFinanceData.byBrand.length === 0 && (
+                <p className="info-message dark">Пока нет данных по ценам</p>
+              )}
+
+              {purchaseFinanceData.byBrand.slice(0, 8).map((item) => (
+                <div className="analytics-row" key={item.name}>
+                  <span>
+                    {item.name} · {item.quantity} пач.
+                  </span>
+                  <strong>{item.total.toLocaleString("ru-RU")} ₽</strong>
+                </div>
+              ))}
+            </article>
+
+            <article className="analytics-panel">
+              <h2>Топ поставщиков по сумме закупки</h2>
+
+              {purchaseFinanceData.bySupplier.length === 0 && (
+                <p className="info-message dark">Пока нет данных по поставщикам</p>
+              )}
+
+              {purchaseFinanceData.bySupplier.slice(0, 8).map((item) => (
+                <div className="analytics-row" key={item.name}>
+                  <span>
+                    {item.name} · {item.quantity} пач.
+                  </span>
+                  <strong>{item.total.toLocaleString("ru-RU")} ₽</strong>
+                </div>
+              ))}
+            </article>
+          </section>
+
+          {purchaseFinanceData.rows.length > 0 && (
+            <section className="analytics-panel wide finance-history-panel">
+              <h2>Последние закупки с ценой</h2>
+
+              <div className="finance-history-list">
+                {purchaseFinanceData.rows.slice(0, 12).map((row) => (
+                  <article className="finance-history-row" key={row.id}>
+                    <div>
+                      <strong>{row.brand} — {row.name}</strong>
+                      <span>
+                        {row.supplier} · {row.quantity} пач. ×{" "}
+                        {row.price.toLocaleString("ru-RU")} ₽
+                      </span>
+                    </div>
+
+                    <strong>{row.total.toLocaleString("ru-RU")} ₽</strong>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="analytics-sections">
             <article className="analytics-panel">
