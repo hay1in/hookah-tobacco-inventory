@@ -1587,6 +1587,13 @@ function App() {
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [activeChoiceModal, setActiveChoiceModal] = useState(null);
+  const [editingSupplyLog, setEditingSupplyLog] = useState(null);
+  const [editingSupplyForm, setEditingSupplyForm] = useState({
+    suppliedAt: "",
+    supplier: "",
+    price: "",
+    quantity: "",
+  });
   const [selectedFlavorIds, setSelectedFlavorIds] = useState([]);
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
   const [pendingImportRows, setPendingImportRows] = useState([]);
