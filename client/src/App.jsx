@@ -1164,6 +1164,46 @@ function App() {
     return ["да", "true", "1", "yes", "архив"].includes(normalizedValue);
   };
 
+  const parseExcelDate = (value) => {
+    if (value === undefined || value === null || value === "") {
+      return "";
+    }
+
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return value.toISOString().slice(0, 10);
+    }
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+      const date = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
+
+      return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+    }
+
+    const cleanValue = String(value).trim();
+
+    if (!cleanValue) {
+      return "";
+    }
+
+    const date = new Date(cleanValue);
+
+    if (!Number.isNaN(date.getTime())) {
+      return date.toISOString().slice(0, 10);
+    }
+
+    const dateParts = cleanValue.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);
+
+    if (dateParts) {
+      const [, day, month, year] = dateParts;
+      const fullYear = year.length === 2 ? `20${year}` : year;
+
+      return `${fullYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    }
+
+    return cleanValue;
+  };
+
   const importFromExcel = async (event) => {
     const file = event.target.files?.[0];
 
@@ -1254,7 +1294,7 @@ function App() {
             ])
           );
 
-          const supplyDate = String(
+          const supplyDate = parseExcelDate(
             getExcelValue(row, [
               "Дата поставки",
               "Дата",
@@ -1263,7 +1303,7 @@ function App() {
               "supplyDate",
               "Supply date",
             ])
-          ).trim();
+          );
 
           const supplier = String(
             getExcelValue(row, [
@@ -1374,7 +1414,7 @@ function App() {
           },
           details: {
             weight: row.weight,
-            quantity: row.quantity,
+            quantity: row.purchasedQuantity || row.quantity,
             suppliedAt: row.supplyDate || getTodayInputDate(),
             supplier: row.supplier || "",
             price: row.price || null,
@@ -2595,14 +2635,31 @@ function App() {
   };
 
   const formatActionDetails = (log) => {
-    const details = log.details || {};
+    const details = parseActionDetails(log.details);
 
     if (log.action === "pack_plus" || log.action === "pack_minus") {
       return details.weight ? `Фасовка: ${details.weight}` : "";
     }
 
     if (log.action === "supply") {
-      return `${details.weight || ""} · ${details.quantity || 0} пач.`;
+      const parts = [
+        details.weight || "",
+        `${details.quantity || 0} пач.`,
+      ];
+
+      if (details.suppliedAt) {
+        parts.push(`дата: ${new Date(details.suppliedAt).toLocaleDateString("ru-RU")}`);
+      }
+
+      if (details.supplier) {
+        parts.push(`поставщик: ${details.supplier}`);
+      }
+
+      if (details.price !== null && details.price !== undefined && details.price !== "") {
+        parts.push(`цена: ${Number(details.price).toLocaleString("ru-RU")} ₽`);
+      }
+
+      return parts.filter(Boolean).join(" · ");
     }
 
     if (log.action === "import_excel") {
