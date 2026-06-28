@@ -1465,6 +1465,41 @@ function App() {
     setActiveChoiceModal("import");
   };
 
+  const downloadJsonFile = (filename, data) => {
+    const jsonText = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonText], {
+      type: "application/json;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = filename;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
+  const createFullBackupJson = (reason = "manual") => {
+    const timestamp = new Date()
+      .toISOString()
+      .slice(0, 16)
+      .replace("T", "-")
+      .replace(":", "-");
+
+    downloadJsonFile(`backup-full-${reason}-${timestamp}.json`, {
+      app: "hookah-tobacco-inventory",
+      generatedAt: new Date().toISOString(),
+      reason,
+      flavors,
+      actionLogs,
+      aliases,
+    });
+
+    showNotification("JSON backup скачан", "info");
+  };
+
   const createBackupExcel = (reason = "backup") => {
     if (!Array.isArray(flavors) || flavors.length === 0) {
       return;
@@ -4089,6 +4124,16 @@ function App() {
                   }}
                 >
                   Экспорт истории
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    createFullBackupJson("manual");
+                    setActiveChoiceModal(null);
+                  }}
+                >
+                  JSON backup
                 </button>
               </div>
             </>
