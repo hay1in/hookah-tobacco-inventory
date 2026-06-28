@@ -3066,18 +3066,6 @@ function App() {
               <div className="dropdown-section">
                 <p>Данные</p>
 
-                {!isDemoMode && (
-                  <button
-                    onClick={() => {
-                      setCurrentView("inventory");
-                      setIsSupplyFormOpen(true);
-                      closeMenu();
-                    }}
-                  >
-                    + Поставка
-                  </button>
-                )}
-
                 <button
                   onClick={() => {
                     exportToExcel();
