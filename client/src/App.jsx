@@ -754,12 +754,11 @@ function App() {
         throw new Error("Не удалось добавить поставку");
       }
 
+      const savedFlavor = await response.json();
+
       await addActionLog({
         action: "supply",
-        flavor: {
-          brand: payload.brand,
-          name: payload.name,
-        },
+        flavor: savedFlavor,
         details: {
           weight: payload.weight,
           quantity: payload.quantity,
@@ -1572,16 +1571,19 @@ function App() {
             0
           );
 
-          const purchasedQuantity = parseExcelNumber(
-            getExcelValue(row, [
-              "Закуплено",
-              "Закуп",
-              "Поступило",
-              "purchasedQuantity",
-              "Purchased",
-            ]),
-            quantity
-          );
+          const purchasedQuantity =
+            importMode === "supply"
+              ? quantity
+              : parseExcelNumber(
+                  getExcelValue(row, [
+                    "Закуплено",
+                    "Закуп",
+                    "Поступило",
+                    "purchasedQuantity",
+                    "Purchased",
+                  ]),
+                  quantity
+                );
 
           const tags = String(
             getExcelValue(row, ["Теги", "tags", "Tags"])
@@ -1686,54 +1688,80 @@ function App() {
 
       createBackupExcel("before-import");
 
-      const response = await apiFetch("/api/flavors/import", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ rows: pendingImportRows }),
-      });
+      let result = { importedCount: 0 };
 
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        let errorData = null;
+      if (importMode === "supply") {
+        for (const row of pendingImportRows) {
+          const response = await apiFetch("/api/flavors/supply", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              brand: row.brand,
+              name: row.name,
+              weight: row.weight,
+              quantity: row.quantity,
+              tags: row.tags,
+              minStock: 0,
+            }),
+          });
 
-        try {
-          errorData = errorText ? JSON.parse(errorText) : null;
-        } catch {
-          errorData = null;
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => "");
+            throw new Error(errorText || "Не удалось импортировать поставку");
+          }
+
+          const savedFlavor = await response.json();
+
+          await addActionLog({
+            action: "supply",
+            flavor: savedFlavor,
+            details: {
+              weight: row.weight,
+              quantity: row.quantity,
+              suppliedAt: row.supplyDate || getTodayInputDate(),
+              supplier: row.supplier || "",
+              price: row.price || null,
+              source: "Импорт закупки",
+            },
+          });
+
+          result.importedCount += 1;
+        }
+      } else {
+        const response = await apiFetch("/api/flavors/import", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ rows: pendingImportRows }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          let errorData = null;
+
+          try {
+            errorData = errorText ? JSON.parse(errorText) : null;
+          } catch {
+            errorData = null;
+          }
+
+          throw new Error(
+            errorData?.message ||
+              errorText ||
+              "Не удалось импортировать Excel"
+          );
         }
 
-        throw new Error(
-          errorData?.message ||
-            errorText ||
-            "Не удалось импортировать Excel"
-        );
-      }
+        result = await response.json();
 
-      const result = await response.json();
-
-      await addActionLog({
-        action: "import_excel",
-        details: {
-          importedCount: result.importedCount,
-        },
-      });
-
-      for (const row of pendingImportRows) {
         await addActionLog({
-          action: "supply",
-          flavor: {
-            brand: row.brand,
-            name: row.name,
-          },
+          action: "import_inventory",
           details: {
-            weight: row.weight,
-            quantity: row.purchasedQuantity || row.quantity,
-            suppliedAt: row.supplyDate || getTodayInputDate(),
-            supplier: row.supplier || "",
-            price: row.price || null,
-            source: "excel_import",
+            importedCount: result.importedCount,
+            source: "Импорт склада",
           },
         });
       }
@@ -1929,8 +1957,7 @@ function App() {
       purchase_confirmed_off: "Закупка снята",
       supply: "Поставка",
       import_excel: "Импорт Excel",
-    import_inventory: "Импорт склада",
-    import_inventory: "Импорт склада",
+      import_inventory: "Импорт склада",
       merge_duplicates: "Объединение дублей",
       merge_tags: "Объединение тегов",
       bulk_action: "Массовое действие",
@@ -3524,6 +3551,103 @@ function App() {
     return (
       <>
       {renderNotifications()}
+
+      {editingSupplyLog && (
+        <div
+          className="choice-modal-backdrop"
+          onClick={closeSupplyEditModal}
+        >
+          <section
+            className="choice-modal supply-edit-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className="choice-modal-close"
+              type="button"
+              onClick={closeSupplyEditModal}
+            >
+              ×
+            </button>
+
+            <span className="choice-modal-eyebrow">Поставка</span>
+            <h2>Исправить поставку</h2>
+
+            <div className="supply-edit-info">
+              <strong>
+                {editingSupplyLog.brand} — {editingSupplyLog.name}
+              </strong>
+            </div>
+
+            <label>
+              Фасовка
+              <input
+                name="weight"
+                list="weight-options"
+                value={editingSupplyForm.weight}
+                onChange={handleEditingSupplyChange}
+                placeholder="Например, 200 г"
+              />
+            </label>
+
+            <label>
+              Дата поставки
+              <input
+                type="date"
+                name="suppliedAt"
+                value={editingSupplyForm.suppliedAt}
+                onChange={handleEditingSupplyChange}
+              />
+            </label>
+
+            <label>
+              Поставщик
+              <input
+                name="supplier"
+                list="supplier-options"
+                value={editingSupplyForm.supplier}
+                onChange={handleEditingSupplyChange}
+                placeholder="Например, OSHISHA"
+              />
+            </label>
+
+            <label>
+              Цена за пачку
+              <input
+                type="number"
+                name="price"
+                min="0"
+                step="0.01"
+                value={editingSupplyForm.price}
+                onChange={handleEditingSupplyChange}
+                placeholder="Например, 1473"
+              />
+            </label>
+
+            <label>
+              Количество пачек
+              <input
+                type="number"
+                name="quantity"
+                min="0"
+                step="1"
+                value={editingSupplyForm.quantity}
+                onChange={handleEditingSupplyChange}
+                placeholder="Например, 1"
+              />
+            </label>
+
+            <div className="choice-modal-actions horizontal">
+              <button type="button" onClick={saveSupplyLogChanges}>
+                Сохранить
+              </button>
+
+              <button type="button" onClick={closeSupplyEditModal}>
+                Отмена
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <header className="header">
         <div>
@@ -5724,6 +5848,7 @@ function App() {
 
                         return (
                           <article
+                            data-flavor-id={flavor.id}
                             className={[
                               "flavor-row-group",
                               isFlavorOpen ? "open" : "",

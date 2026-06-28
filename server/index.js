@@ -168,7 +168,8 @@ async function getFlavorById(id) {
 
 app.delete("/api/admin/clear-database", async (req, res) => {
   try {
-    await pool.query("TRUNCATE TABLE flavors RESTART IDENTITY");
+    await ensureActionLogsTable();
+    await pool.query("TRUNCATE TABLE flavors, action_logs RESTART IDENTITY");
 
     res.json({
       message: "База данных очищена",
@@ -1222,11 +1223,38 @@ app.put("/api/flavors/:id", async (req, res) => {
       });
     }
 
+    const currentFlavorResult = await pool.query(
+      "SELECT packs FROM flavors WHERE id = $1",
+      [flavorId]
+    );
+
+    const currentPacks = Array.isArray(currentFlavorResult.rows[0]?.packs)
+      ? currentFlavorResult.rows[0].packs
+      : [];
+
     const normalizedPacks = packs
-      .map((pack) => ({
-        weight: String(pack.weight || "").trim(),
-        quantity: Number(pack.quantity),
-      }))
+      .map((pack) => {
+        const weight = String(pack.weight || "").trim();
+        const quantity = Number(pack.quantity);
+        const existingPack = currentPacks.find((item) => {
+          return String(item.weight || "").trim().toLowerCase() ===
+            weight.toLowerCase();
+        });
+
+        const purchasedQuantity = Number(
+          pack.purchasedQuantity ??
+            pack.purchased_quantity ??
+            existingPack?.purchasedQuantity ??
+            existingPack?.purchased_quantity ??
+            quantity
+        );
+
+        return {
+          weight,
+          quantity,
+          purchasedQuantity: Math.max(purchasedQuantity, quantity),
+        };
+      })
       .filter((pack) => pack.weight && pack.quantity >= 0);
 
     if (normalizedPacks.length === 0) {
