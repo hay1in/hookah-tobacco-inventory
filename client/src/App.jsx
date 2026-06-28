@@ -1097,6 +1097,103 @@ function App() {
     XLSX.writeFile(workbook, `zakupka-tabaka-${today}.xlsx`);
   };
 
+
+  const openExportChoice = () => {
+    const choice = window.prompt(
+      "Что экспортировать?\n1 — Склад\n2 — Закупку",
+      "1"
+    );
+
+    if (choice === null) {
+      return;
+    }
+
+    const normalizedChoice = choice.trim().toLowerCase();
+
+    if (normalizedChoice === "1" || normalizedChoice.includes("склад")) {
+      exportToExcel();
+      return;
+    }
+
+    if (normalizedChoice === "2" || normalizedChoice.includes("закуп")) {
+      exportPurchaseToExcel();
+      return;
+    }
+
+    showNotification("Выбери 1 для склада или 2 для закупки", "info");
+  };
+
+  const downloadImportTemplate = () => {
+    const rows = [
+      {
+        "Бренд": "Musthave",
+        "Вкус": "Ванильный крем",
+        "Фасовка": "100 г",
+        "Количество": 2,
+        "Закуплено": 2,
+        "Дата поставки": getTodayInputDate(),
+        "Поставщик": "Опт РФ",
+        "Цена за пачку": 850,
+        "Теги": "десерт, сливочный",
+        "Мало осталось": "нет",
+        "Не считать залежью": "нет",
+        "Архив": "нет",
+      },
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    worksheet["!cols"] = [
+      { wch: 22 },
+      { wch: 30 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 22 },
+      { wch: 16 },
+      { wch: 34 },
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 12 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Импорт");
+
+    XLSX.writeFile(workbook, "shablon-importa-zakupki.xlsx");
+  };
+
+  const openImportChoice = () => {
+    const choice = window.prompt(
+      "Что сделать?\n1 — Импорт закупки\n2 — Скачать шаблон импорта",
+      "1"
+    );
+
+    if (choice === null) {
+      return;
+    }
+
+    const normalizedChoice = choice.trim().toLowerCase();
+
+    if (normalizedChoice === "1" || normalizedChoice.includes("импорт")) {
+      document.getElementById("import-excel-input")?.click();
+      return;
+    }
+
+    if (
+      normalizedChoice === "2" ||
+      normalizedChoice.includes("шаблон") ||
+      normalizedChoice.includes("скач")
+    ) {
+      downloadImportTemplate();
+      return;
+    }
+
+    showNotification("Выбери 1 для импорта или 2 для шаблона", "info");
+  };
+
+
   const createBackupExcel = (reason = "backup") => {
     if (!Array.isArray(flavors) || flavors.length === 0) {
       return;
@@ -3125,34 +3222,22 @@ function App() {
 
                 <button
                   onClick={() => {
-                    exportToExcel();
+                    openExportChoice();
                     closeMenu();
                   }}
                 >
-                  Экспорт склада
-                </button>
-
-                <button
-                  onClick={() => {
-                    exportPurchaseToExcel();
-                    closeMenu();
-                  }}
-                >
-                  Экспорт закупки
+                  Экспорт
                 </button>
 
                 {!isDemoMode && (
-                  <label className="dropdown-file-button">
-                    Импорт Excel
-                    <input
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={(event) => {
-                        importFromExcel(event);
-                        closeMenu();
-                      }}
-                    />
-                  </label>
+                  <button
+                    onClick={() => {
+                      openImportChoice();
+                      closeMenu();
+                    }}
+                  >
+                    Импорт
+                  </button>
                 )}
 
                 {!isDemoMode && (
@@ -4365,6 +4450,14 @@ function App() {
             <option value={supplier} key={supplier} />
           ))}
         </datalist>
+
+        <input
+          id="import-excel-input"
+          type="file"
+          accept=".xlsx,.xls"
+          style={{ display: "none" }}
+          onChange={importFromExcel}
+        />
 
         {isImportPreviewOpen && (
           <section className="supply-panel import-preview-panel">
