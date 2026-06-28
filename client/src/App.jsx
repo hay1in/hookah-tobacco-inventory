@@ -73,6 +73,9 @@ function App() {
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
   const [actionLogs, setActionLogs] = useState([]);
+  const [historyActionFilter, setHistoryActionFilter] = useState("all");
+  const [historyPeriodFilter, setHistoryPeriodFilter] = useState("all");
+  const [historySearchText, setHistorySearchText] = useState("");
   const [aliases, setAliases] = useState([]);
   const [aliasForm, setAliasForm] = useState({
     type: "brand",
@@ -5350,6 +5353,108 @@ function App() {
     );
   }
 
+  const getHistoryActionGroup = (log) => {
+    if (!log) {
+      return "other";
+    }
+
+    if (log.action === "backup_created") {
+      return "backup";
+    }
+
+    if (log.action === "backup_restored") {
+      return "restore";
+    }
+
+    if (log.action === "supply" && isCancelledSupplyLog(log)) {
+      return "cancelled";
+    }
+
+    if (log.action === "supply") {
+      return "supply";
+    }
+
+    if (
+      String(log.action || "").includes("decrease") ||
+      String(log.action || "").includes("write") ||
+      String(log.action || "").includes("clear")
+    ) {
+      return "write_off";
+    }
+
+    if (
+      String(log.action || "").includes("edit") ||
+      String(log.action || "").includes("update") ||
+      String(log.action || "").includes("merge") ||
+      String(log.action || "").includes("bulk")
+    ) {
+      return "changes";
+    }
+
+    return "other";
+  };
+
+  const isHistoryLogInPeriod = (log) => {
+    if (historyPeriodFilter === "all") {
+      return true;
+    }
+
+    const value = log.createdAt || log.created_at;
+    const date = value ? new Date(value) : null;
+
+    if (!date || Number.isNaN(date.getTime())) {
+      return false;
+    }
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+    if (historyPeriodFilter === "today") {
+      return date.toDateString() === now.toDateString();
+    }
+
+    if (historyPeriodFilter === "7days") {
+      return diffDays <= 7;
+    }
+
+    if (historyPeriodFilter === "30days") {
+      return diffDays <= 30;
+    }
+
+    return true;
+  };
+
+  const filteredHistoryLogs = actionLogs.filter((log) => {
+    const actionMatches =
+      historyActionFilter === "all" ||
+      getHistoryActionGroup(log) === historyActionFilter;
+
+    const periodMatches = isHistoryLogInPeriod(log);
+
+    const search = historySearchText.trim().toLowerCase();
+
+    if (!search) {
+      return actionMatches && periodMatches;
+    }
+
+    const detailsText = formatActionDetails(log) || "";
+    const titleText = getHistoryActionTitle(log.action, log) || "";
+
+    const haystack = [
+      log.action,
+      log.brand,
+      log.name,
+      titleText,
+      detailsText,
+      JSON.stringify(parseActionDetails(log.details || {})),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return actionMatches && periodMatches && haystack.includes(search);
+  });
+
   if (currentView === "history") {
     return (
       <div className={isCompactMode ? "app compact-mode" : "app"}>
@@ -5361,19 +5466,73 @@ function App() {
         <main className="content">
           <section className="history-panel">
             <div className="history-panel-top">
-              <h2>Последние действия</h2>
+              <h2>
+                Последние действия · показано {filteredHistoryLogs.length} из {actionLogs.length}
+              </h2>
 
               <button className="secondary-button" onClick={loadActionLogs}>
                 Обновить
               </button>
             </div>
 
+            <div className="history-filters">
+              <input
+                className="search-input"
+                type="search"
+                placeholder="Поиск по истории: бренд, вкус, поставщик, детали"
+                value={historySearchText}
+                onChange={(event) => setHistorySearchText(event.target.value)}
+              />
+
+              <select
+                value={historyActionFilter}
+                onChange={(event) => setHistoryActionFilter(event.target.value)}
+              >
+                <option value="all">Все действия</option>
+                <option value="supply">Поставки</option>
+                <option value="cancelled">Отменённые поставки</option>
+                <option value="backup">Backup создан</option>
+                <option value="restore">Backup восстановлен</option>
+                <option value="write_off">Списания / уменьшения</option>
+                <option value="changes">Изменения / объединения</option>
+                <option value="other">Остальное</option>
+              </select>
+
+              <select
+                value={historyPeriodFilter}
+                onChange={(event) => setHistoryPeriodFilter(event.target.value)}
+              >
+                <option value="all">За всё время</option>
+                <option value="today">Сегодня</option>
+                <option value="7days">7 дней</option>
+                <option value="30days">30 дней</option>
+              </select>
+
+              {(historySearchText || historyActionFilter !== "all" || historyPeriodFilter !== "all") && (
+                <button
+                  className="secondary-button small"
+                  type="button"
+                  onClick={() => {
+                    setHistorySearchText("");
+                    setHistoryActionFilter("all");
+                    setHistoryPeriodFilter("all");
+                  }}
+                >
+                  Сбросить
+                </button>
+              )}
+            </div>
+
             {actionLogs.length === 0 && (
               <p className="info-message">История пока пустая</p>
             )}
 
+            {actionLogs.length > 0 && filteredHistoryLogs.length === 0 && (
+              <p className="info-message">По выбранным фильтрам ничего не найдено</p>
+            )}
+
             <div className="history-list">
-              {actionLogs.map((log) => (
+              {filteredHistoryLogs.map((log) => (
                 <article className="history-item" key={log.id}>
                   <div>
                     <span className="history-time">
