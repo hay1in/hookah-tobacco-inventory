@@ -606,6 +606,11 @@ app.get("/api/flavors", async (req, res) => {
       ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
     `);
 
+    await pool.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
     const result = await pool.query(`
       SELECT
         id,
@@ -617,6 +622,7 @@ app.get("/api/flavors", async (req, res) => {
         archived,
         low_stock AS "lowStock",
         purchase_confirmed AS "purchaseConfirmed",
+        excluded_from_deadstock AS "excludedFromDeadstock",
         created_at AS "createdAt",
         updated_at AS "updatedAt"
       FROM flavors
@@ -730,7 +736,7 @@ app.post("/api/flavors/supply", async (req, res) => {
     const result = await pool.query(
       `
         INSERT INTO flavors (brand, name, packs, tags, min_stock, archived, low_stock, excluded_from_deadstock)
-        VALUES ($1, $2, $3, $4, $5, FALSE, FALSE)
+        VALUES ($1, $2, $3, $4, $5, FALSE, FALSE, FALSE)
         RETURNING *
       `,
       [
@@ -849,6 +855,11 @@ app.post("/api/flavors/import", async (req, res) => {
       ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
     `);
 
+    await client.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
     await client.query("BEGIN");
 
     let importedCount = 0;
@@ -884,22 +895,24 @@ app.post("/api/flavors/import", async (req, res) => {
                 min_stock = 0,
                 archived = $3,
                 low_stock = $4,
+                excluded_from_deadstock = $5,
                 updated_at = NOW()
-            WHERE id = $5
+            WHERE id = $6
           `,
           [
             JSON.stringify(packs),
             JSON.stringify(tags),
             flavor.archived,
             flavor.lowStock,
+            flavor.excludedFromDeadstock,
             existingFlavor.rows[0].id,
           ]
         );
       } else {
         await client.query(
           `
-            INSERT INTO flavors (brand, name, packs, tags, min_stock, archived, low_stock)
-            VALUES ($1, $2, $3, $4, 0, $5, $6)
+            INSERT INTO flavors (brand, name, packs, tags, min_stock, archived, low_stock, excluded_from_deadstock)
+            VALUES ($1, $2, $3, $4, 0, $5, $6, $7)
           `,
           [
             flavor.brand,
@@ -908,6 +921,7 @@ app.post("/api/flavors/import", async (req, res) => {
             JSON.stringify(tags),
             flavor.archived,
             flavor.lowStock,
+            flavor.excludedFromDeadstock,
           ]
         );
       }

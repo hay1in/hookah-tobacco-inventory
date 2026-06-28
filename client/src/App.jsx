@@ -1003,8 +1003,10 @@ function App() {
       { wch: 28 },
       { wch: 14 },
       { wch: 14 },
+      { wch: 14 },
       { wch: 34 },
-      { wch: 20 },
+      { wch: 18 },
+      { wch: 24 },
       { wch: 12 },
     ];
 
@@ -3685,7 +3687,7 @@ function App() {
                 <article className="history-item" key={log.id}>
                   <div>
                     <span className="history-time">
-                      {formatActionTime(log.createdAt)}
+                      {formatActionTime(log.createdAt || log.created_at)}
                     </span>
 
                     <strong>
