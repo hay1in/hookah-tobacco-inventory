@@ -180,6 +180,199 @@ app.delete("/api/admin/clear-database", async (req, res) => {
   }
 });
 
+app.post("/api/admin/restore-backup", async (req, res) => {
+  const backup = req.body || {};
+  const flavors = Array.isArray(backup.flavors) ? backup.flavors : null;
+  const actionLogs = Array.isArray(backup.actionLogs) ? backup.actionLogs : [];
+
+  if (!flavors) {
+    return res.status(400).json({
+      message: "Некорректный JSON backup: не найден массив flavors",
+    });
+  }
+
+  if (backup.app && backup.app !== "hookah-tobacco-inventory") {
+    return res.status(400).json({
+      message: "Этот JSON backup не похож на backup Hookah Inventory",
+    });
+  }
+
+  const parseDetails = (details) => {
+    if (!details) {
+      return {};
+    }
+
+    if (typeof details === "string") {
+      try {
+        return JSON.parse(details);
+      } catch {
+        return {};
+      }
+    }
+
+    return details;
+  };
+
+  const client = await pool.connect();
+
+  try {
+    await ensureActionLogsTable();
+
+    await client.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    await client.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    await client.query(`
+      ALTER TABLE flavors
+      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
+    `);
+
+    await client.query("BEGIN");
+
+    await client.query("TRUNCATE TABLE flavors, action_logs RESTART IDENTITY");
+
+    for (const flavor of flavors) {
+      const id = Number(flavor.id);
+      const brand = String(flavor.brand || "").trim();
+      const name = String(flavor.name || "").trim();
+      const packs = Array.isArray(flavor.packs) ? flavor.packs : [];
+      const tags = Array.isArray(flavor.tags) ? flavor.tags : [];
+      const rawMinStock = Number(flavor.minStock ?? flavor.min_stock ?? 1);
+      const minStock = Number.isFinite(rawMinStock) ? rawMinStock : 1;
+      const archived = Boolean(flavor.archived);
+      const lowStock = Boolean(flavor.lowStock || flavor.low_stock);
+      const purchaseConfirmed = Boolean(
+        flavor.purchaseConfirmed || flavor.purchase_confirmed
+      );
+      const excludedFromDeadstock = Boolean(
+        flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
+      );
+      const createdAt = flavor.createdAt || flavor.created_at || new Date().toISOString();
+      const updatedAt = flavor.updatedAt || flavor.updated_at || createdAt;
+
+      if (!Number.isInteger(id) || id <= 0 || !brand || !name) {
+        throw new Error("В backup есть вкус с некорректным id, брендом или названием");
+      }
+
+      await client.query(
+        `
+          INSERT INTO flavors (
+            id,
+            brand,
+            name,
+            packs,
+            tags,
+            min_stock,
+            archived,
+            low_stock,
+            purchase_confirmed,
+            excluded_from_deadstock,
+            created_at,
+            updated_at
+          )
+          VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12)
+        `,
+        [
+          id,
+          brand,
+          name,
+          JSON.stringify(packs),
+          JSON.stringify(tags),
+          minStock,
+          archived,
+          lowStock,
+          purchaseConfirmed,
+          excludedFromDeadstock,
+          createdAt,
+          updatedAt,
+        ]
+      );
+    }
+
+    for (const log of actionLogs) {
+      const id = Number(log.id);
+      const action = String(log.action || "").trim();
+      const rawFlavorId = log.flavorId ?? log.flavor_id ?? null;
+      const flavorIdNumber = Number(rawFlavorId);
+      const flavorId =
+        Number.isInteger(flavorIdNumber) && flavorIdNumber > 0
+          ? flavorIdNumber
+          : null;
+      const brand = String(log.brand || log.flavorBrand || log.flavor_brand || "");
+      const name = String(log.name || log.flavorName || log.flavor_name || "");
+      const details = parseDetails(log.details);
+      const createdAt = log.createdAt || log.created_at || log.date || new Date().toISOString();
+
+      if (!Number.isInteger(id) || id <= 0 || !action) {
+        throw new Error("В backup есть действие с некорректным id или action");
+      }
+
+      await client.query(
+        `
+          INSERT INTO action_logs (
+            id,
+            action,
+            flavor_id,
+            brand,
+            name,
+            details,
+            created_at
+          )
+          VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
+        `,
+        [
+          id,
+          action,
+          flavorId,
+          brand,
+          name,
+          JSON.stringify(details),
+          createdAt,
+        ]
+      );
+    }
+
+    await client.query(`
+      SELECT setval(
+        pg_get_serial_sequence('flavors', 'id'),
+        COALESCE((SELECT MAX(id) FROM flavors), 1),
+        (SELECT COUNT(*) > 0 FROM flavors)
+      );
+    `);
+
+    await client.query(`
+      SELECT setval(
+        pg_get_serial_sequence('action_logs', 'id'),
+        COALESCE((SELECT MAX(id) FROM action_logs), 1),
+        (SELECT COUNT(*) > 0 FROM action_logs)
+      );
+    `);
+
+    await client.query("COMMIT");
+
+    res.json({
+      message: "Backup восстановлен",
+      restoredFlavors: flavors.length,
+      restoredActionLogs: actionLogs.length,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => null);
+    console.error("Restore backup error:", error);
+    res.status(500).json({
+      message: `Не удалось восстановить backup: ${error.message}`,
+    });
+  } finally {
+    client.release();
+  }
+});
+
+
 app.get("/", (req, res) => {
   res.json({
     message: "Hookah Tobacco Inventory API is running",

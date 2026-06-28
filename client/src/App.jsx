@@ -1506,6 +1506,80 @@ function App() {
     showNotification("JSON backup скачан", "info");
   };
 
+  const restoreFromJsonBackup = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorText("");
+
+      const fileText = await file.text();
+      const backup = JSON.parse(fileText);
+
+      const flavorsCount = Array.isArray(backup.flavors)
+        ? backup.flavors.length
+        : 0;
+
+      const actionLogsCount = Array.isArray(backup.actionLogs)
+        ? backup.actionLogs.length
+        : 0;
+
+      if (!Array.isArray(backup.flavors)) {
+        throw new Error("В JSON backup не найден массив flavors");
+      }
+
+      const isConfirmed = window.confirm(
+        `Восстановить backup из файла ${file.name}? Текущая база будет заменена. В backup: ${flavorsCount} вкусов, ${actionLogsCount} действий.`
+      );
+
+      if (!isConfirmed) {
+        return;
+      }
+
+      createFullBackupJson("before-restore");
+
+      const response = await apiFetch("/api/admin/restore-backup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(backup),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(result?.message || "Не удалось восстановить backup");
+      }
+
+      await refreshFlavors();
+      await loadActionLogs();
+
+      setSearchText("");
+      setSelectedTag("all");
+      setStatusFilter("all");
+      setOpenBrandName("");
+      setOpenFlavorId(null);
+      setCurrentView("inventory");
+
+      showNotification(
+        `Backup восстановлен: ${result.restoredFlavors || 0} вкусов, ${result.restoredActionLogs || 0} действий`,
+        "success"
+      );
+    } catch (error) {
+      console.error(error);
+      showNotification(error.message || "Не удалось восстановить JSON backup", "error");
+      setErrorText(error.message || "Не удалось восстановить JSON backup");
+    } finally {
+      setIsLoading(false);
+      event.target.value = "";
+    }
+  };
+
   const createBackupExcel = (reason = "backup") => {
     if (!Array.isArray(flavors) || flavors.length === 0) {
       return;
@@ -4188,6 +4262,16 @@ function App() {
                 >
                   Шаблон склада
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.getElementById("restore-json-input")?.click();
+                    setActiveChoiceModal(null);
+                  }}
+                >
+                  Восстановить JSON backup
+                </button>
               </div>
             </>
           )}
@@ -4198,16 +4282,26 @@ function App() {
 
   const renderGlobalFileInput = () => {
     return (
-      <input
-        id="import-excel-input"
-        type="file"
-        accept=".xlsx,.xls"
-        style={{ display: "none" }}
-        onChange={(event) => {
-          importFromExcel(event);
-          setActiveChoiceModal(null);
-        }}
-      />
+      <>
+        <input
+          id="import-excel-input"
+          type="file"
+          accept=".xlsx,.xls"
+          style={{ display: "none" }}
+          onChange={(event) => {
+            importFromExcel(event);
+            setActiveChoiceModal(null);
+          }}
+        />
+
+        <input
+          id="restore-json-input"
+          type="file"
+          accept=".json,application/json"
+          style={{ display: "none" }}
+          onChange={restoreFromJsonBackup}
+        />
+      </>
     );
   };
 
