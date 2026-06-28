@@ -267,6 +267,47 @@ app.post("/api/action-logs", async (req, res) => {
 });
 
 
+app.patch("/api/action-logs/:id", async (req, res) => {
+  const logId = Number(req.params.id);
+  const { details } = req.body;
+
+  if (!Number.isInteger(logId)) {
+    return res.status(400).json({ message: "Некорректный ID действия" });
+  }
+
+  try {
+    await ensureActionLogsTable();
+
+    const result = await pool.query(
+      `
+        UPDATE action_logs
+        SET details = $1
+        WHERE id = $2
+        RETURNING
+          id,
+          action,
+          flavor_id AS "flavorId",
+          brand,
+          name,
+          details,
+          created_at AS "createdAt"
+      `,
+      [JSON.stringify(details || {}), logId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Действие не найдено" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Update action log error:", error);
+    res.status(500).json({ message: "Не удалось обновить действие" });
+  }
+});
+
+
+
 app.post("/api/flavors/merge", async (req, res) => {
   const { primaryId, duplicateIds } = req.body;
 

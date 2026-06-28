@@ -1846,6 +1846,16 @@ function App() {
                     {getHistoryActionMeta(log) && (
                       <span>{getHistoryActionMeta(log)}</span>
                     )}
+
+                    {!isDemoMode && log.action === "supply" && (
+                      <button
+                        className="secondary-button small"
+                        type="button"
+                        onClick={() => editSupplyLog(log)}
+                      >
+                        Исправить
+                      </button>
+                    )}
                   </div>
 
                   <time>{formatHistoryDate(log)}</time>
@@ -2707,6 +2717,95 @@ function App() {
 
     return "";
   };
+
+
+  const getDateInputValue = (value) => {
+    if (!value) {
+      return getTodayInputDate();
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return String(value).slice(0, 10);
+    }
+
+    return date.toISOString().slice(0, 10);
+  };
+
+  const editSupplyLog = async (log) => {
+    const details = parseActionDetails(log.details);
+
+    const nextDate = window.prompt(
+      "Дата поставки в формате ГГГГ-ММ-ДД",
+      getDateInputValue(details.suppliedAt || log.createdAt || log.created_at)
+    );
+
+    if (nextDate === null) {
+      return;
+    }
+
+    const nextSupplier = window.prompt(
+      "Поставщик",
+      details.supplier || ""
+    );
+
+    if (nextSupplier === null) {
+      return;
+    }
+
+    const nextPrice = window.prompt(
+      "Цена за пачку",
+      details.price ?? ""
+    );
+
+    if (nextPrice === null) {
+      return;
+    }
+
+    const nextQuantity = window.prompt(
+      "Количество пачек в записи поставки",
+      details.quantity ?? ""
+    );
+
+    if (nextQuantity === null) {
+      return;
+    }
+
+    const updatedDetails = {
+      ...details,
+      suppliedAt: nextDate.trim() || details.suppliedAt || getTodayInputDate(),
+      supplier: nextSupplier.trim(),
+      price: nextPrice === "" ? null : Number(nextPrice),
+      quantity: nextQuantity === "" ? details.quantity : Number(nextQuantity),
+    };
+
+    try {
+      const response = await apiFetch(`/api/action-logs/${log.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          details: updatedDetails,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Не удалось исправить данные поставки");
+      }
+
+      const updatedLogs = await loadActionLogsWithPassword(adminPassword);
+      setActionLogs(updatedLogs);
+
+      showNotification("Данные поставки исправлены", "success");
+    } catch (error) {
+      console.error(error);
+      showNotification(error.message || "Не удалось исправить данные поставки", "error");
+      setErrorText(error.message || "Не удалось исправить данные поставки");
+    }
+  };
+
 
   const toggleFlavorSelection = (flavorId) => {
     setSelectedFlavorIds((currentIds) =>
@@ -3725,6 +3824,16 @@ function App() {
 
                     {formatActionDetails(log) && (
                       <small>{formatActionDetails(log)}</small>
+                    )}
+
+                    {!isDemoMode && log.action === "supply" && (
+                      <button
+                        className="secondary-button small"
+                        type="button"
+                        onClick={() => editSupplyLog(log)}
+                      >
+                        Исправить
+                      </button>
                     )}
                   </div>
                 </article>
