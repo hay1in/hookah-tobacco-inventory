@@ -1576,11 +1576,12 @@ function App() {
         throw new Error("В JSON backup не найден массив flavors");
       }
 
-      const isConfirmed = window.confirm(
-        `Восстановить backup из файла ${file.name}? Текущая база будет заменена. В backup: ${flavorsCount} вкусов, ${actionLogsCount} действий.`
+      const confirmationText = window.prompt(
+        `Восстановление заменит текущую базу. В backup: ${flavorsCount} вкусов, ${actionLogsCount} действий. Чтобы продолжить, введите: ВОССТАНОВИТЬ`
       );
 
-      if (!isConfirmed) {
+      if (confirmationText !== "ВОССТАНОВИТЬ") {
+        showNotification("Восстановление отменено", "info");
         return;
       }
 
