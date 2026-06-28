@@ -2967,3 +2967,89 @@ h1 {
   color: #50661b !important;
 }
 
+
+.choice-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2000 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 20px !important;
+  background: rgba(30, 41, 10, 0.42) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.choice-modal {
+  position: relative !important;
+  width: min(420px, 100%) !important;
+  padding: 24px !important;
+  border-radius: 26px !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #50661b !important;
+  box-shadow: 0 24px 80px rgba(30, 41, 10, 0.28) !important;
+  display: grid !important;
+  gap: 14px !important;
+}
+
+.choice-modal-close {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  width: 34px !important;
+  height: 34px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(80, 102, 27, 0.1) !important;
+  color: #50661b !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+
+.choice-modal-eyebrow {
+  width: fit-content !important;
+  padding: 6px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(229, 198, 31, 0.22) !important;
+  color: #50661b !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.choice-modal h2 {
+  margin: 0 !important;
+  padding-right: 34px !important;
+  font-size: 26px !important;
+  line-height: 1.05 !important;
+}
+
+.choice-modal-actions {
+  display: grid !important;
+  gap: 10px !important;
+  margin-top: 4px !important;
+}
+
+.choice-modal-actions button {
+  width: 100% !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  padding: 14px 16px !important;
+  background: #50661b !important;
+  color: #fff !important;
+  font-weight: 950 !important;
+  cursor: pointer !important;
+  text-align: left !important;
+}
+
+.choice-modal-actions button:nth-child(2) {
+  background: rgba(80, 102, 27, 0.12) !important;
+  color: #50661b !important;
+}
+
+.choice-modal-actions button:hover,
+.choice-modal-close:hover {
+  transform: translateY(-1px) !important;
+}
+

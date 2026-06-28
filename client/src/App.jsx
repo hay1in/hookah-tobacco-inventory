@@ -1148,28 +1148,7 @@ function App() {
 
 
   const openExportChoice = () => {
-    const choice = window.prompt(
-      "Что экспортировать?\n1 — Склад\n2 — Закупку",
-      "1"
-    );
-
-    if (choice === null) {
-      return;
-    }
-
-    const normalizedChoice = choice.trim().toLowerCase();
-
-    if (normalizedChoice === "1" || normalizedChoice.includes("склад")) {
-      exportToExcel();
-      return;
-    }
-
-    if (normalizedChoice === "2" || normalizedChoice.includes("закуп")) {
-      exportPurchaseToExcel();
-      return;
-    }
-
-    showNotification("Выбери 1 для склада или 2 для закупки", "info");
+    setActiveChoiceModal("export");
   };
 
   const downloadImportTemplate = () => {
@@ -1214,34 +1193,8 @@ function App() {
   };
 
   const openImportChoice = () => {
-    const choice = window.prompt(
-      "Что сделать?\n1 — Импорт закупки\n2 — Скачать шаблон импорта",
-      "1"
-    );
-
-    if (choice === null) {
-      return;
-    }
-
-    const normalizedChoice = choice.trim().toLowerCase();
-
-    if (normalizedChoice === "1" || normalizedChoice.includes("импорт")) {
-      document.getElementById("import-excel-input")?.click();
-      return;
-    }
-
-    if (
-      normalizedChoice === "2" ||
-      normalizedChoice.includes("шаблон") ||
-      normalizedChoice.includes("скач")
-    ) {
-      downloadImportTemplate();
-      return;
-    }
-
-    showNotification("Выбери 1 для импорта или 2 для шаблона", "info");
+    setActiveChoiceModal("import");
   };
-
 
   const createBackupExcel = (reason = "backup") => {
     if (!Array.isArray(flavors) || flavors.length === 0) {
@@ -1633,6 +1586,7 @@ function App() {
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
+  const [activeChoiceModal, setActiveChoiceModal] = useState(null);
   const [selectedFlavorIds, setSelectedFlavorIds] = useState([]);
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
   const [pendingImportRows, setPendingImportRows] = useState([]);
@@ -4511,8 +4465,88 @@ function App() {
           type="file"
           accept=".xlsx,.xls"
           style={{ display: "none" }}
-          onChange={importFromExcel}
+          onChange={(event) => {
+            importFromExcel(event);
+            setActiveChoiceModal(null);
+          }}
         />
+
+        {activeChoiceModal && (
+          <div
+            className="choice-modal-backdrop"
+            onClick={() => setActiveChoiceModal(null)}
+          >
+            <section
+              className="choice-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                className="choice-modal-close"
+                type="button"
+                onClick={() => setActiveChoiceModal(null)}
+              >
+                ×
+              </button>
+
+              {activeChoiceModal === "export" && (
+                <>
+                  <span className="choice-modal-eyebrow">Экспорт</span>
+                  <h2>Что выгрузить?</h2>
+
+                  <div className="choice-modal-actions">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportToExcel();
+                        setActiveChoiceModal(null);
+                      }}
+                    >
+                      Экспорт склада
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportPurchaseToExcel();
+                        setActiveChoiceModal(null);
+                      }}
+                    >
+                      Экспорт закупки
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {activeChoiceModal === "import" && (
+                <>
+                  <span className="choice-modal-eyebrow">Импорт</span>
+                  <h2>Что сделать?</h2>
+
+                  <div className="choice-modal-actions">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        document.getElementById("import-excel-input")?.click();
+                      }}
+                    >
+                      Импорт закупки
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        downloadImportTemplate();
+                        setActiveChoiceModal(null);
+                      }}
+                    >
+                      Скачать шаблон
+                    </button>
+                  </div>
+                </>
+              )}
+            </section>
+          </div>
+        )}
 
         {isImportPreviewOpen && (
           <section className="supply-panel import-preview-panel">
