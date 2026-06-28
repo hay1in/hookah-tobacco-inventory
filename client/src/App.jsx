@@ -432,7 +432,16 @@ function App() {
 
 
   const openFlavorFromAnalytics = (flavorId) => {
+    const flavor = flavors.find((item) => String(item.id) === String(flavorId));
+
+    if (!flavor) {
+      showNotification("Вкус не найден на складе", "error");
+      return;
+    }
+
     setCurrentView("inventory");
+
+    setOpenBrandName(flavor.brand || "");
     setOpenFlavorId(flavorId);
     highlightFlavor(flavorId);
 
@@ -445,9 +454,8 @@ function App() {
         behavior: "smooth",
         block: "center",
       });
-    }, 120);
+    }, 250);
   };
-
 
   const highlightFlavor = (flavorId) => {
     if (!flavorId) {
