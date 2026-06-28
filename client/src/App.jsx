@@ -1977,11 +1977,23 @@ function App() {
       }
     }
 
+    const importKindLabel =
+      importMode === "supply" ? "закупки/поставки" : "склада";
+
+    const confirmationText = window.prompt(
+      `Импорт ${importKindLabel} изменит данные в базе. Строк к импорту: ${pendingImportRows.length}. Чтобы продолжить, введите: ИМПОРТ`
+    );
+
+    if (confirmationText !== "ИМПОРТ") {
+      showNotification("Импорт отменён", "info");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setErrorText("");
 
-      createBackupExcel("before-import");
+      await createBackupExcel("before-import");
       await createFullBackupJson("before-import");
 
       let result = { importedCount: 0 };
