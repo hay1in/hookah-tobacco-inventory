@@ -3556,15 +3556,16 @@ function App() {
     const targetTag = group.items[0].tag;
     const fromTags = group.items.map((item) => item.tag);
 
-    const isConfirmed = window.confirm(
-      `Объединить теги ${fromTags.map((tag) => `#${tag}`).join(", ")} в #${targetTag}?`
+    const confirmationText = window.prompt(
+      `Объединить теги ${fromTags.map((tag) => `#${tag}`).join(", ")} в #${targetTag}? Чтобы продолжить, введите: ТЕГИ`
     );
 
-    if (!isConfirmed) {
+    if (confirmationText !== "ТЕГИ") {
+      showNotification("Объединение тегов отменено", "info");
       return;
     }
 
-    createBackupExcel("before-merge-tags");
+    await createBackupExcel("before-merge-tags");
     await createFullBackupJson("before-merge-tags");
 
     try {
@@ -3610,15 +3611,16 @@ function App() {
     const primaryFlavor = group.items[0];
     const duplicateIds = group.items.slice(1).map((flavor) => flavor.id);
 
-    const isConfirmed = window.confirm(
-      `Объединить ${group.items.length} записей в одну? Основной останется: ${primaryFlavor.brand} — ${primaryFlavor.name}`
+    const confirmationText = window.prompt(
+      `Объединить ${group.items.length} записей в одну? Основной останется: ${primaryFlavor.brand} — ${primaryFlavor.name}. Чтобы продолжить, введите: ДУБЛИ`
     );
 
-    if (!isConfirmed) {
+    if (confirmationText !== "ДУБЛИ") {
+      showNotification("Объединение дублей отменено", "info");
       return;
     }
 
-    createBackupExcel("before-merge-duplicates");
+    await createBackupExcel("before-merge-duplicates");
     await createFullBackupJson("before-merge-duplicates");
 
     try {
