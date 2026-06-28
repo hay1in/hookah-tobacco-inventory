@@ -975,7 +975,7 @@ function App() {
   const priceSuggestions = Array.from(
     new Set(
       actionLogs
-        .filter((log) => log.action === "supply")
+        .filter((log) => log.action === "supply" && !isCancelledSupplyLog(log))
         .map((log) => {
           const details = log.details || {};
           const parsedDetails =
@@ -1866,6 +1866,16 @@ function App() {
     return details;
   };
 
+  const isCancelledSupplyLog = (log) => {
+    if (!log || log.action !== "supply") {
+      return false;
+    }
+
+    const details = parseActionDetails(log.details);
+
+    return Boolean(details.cancelled || details.cancelledAt);
+  };
+
   const toggleFlavorHistory = (flavorId) => {
     setOpenFlavorHistoryIds((currentIds) => {
       if (currentIds.includes(flavorId)) {
@@ -1947,7 +1957,11 @@ function App() {
     });
   };
 
-  const getHistoryActionTitle = (action) => {
+  const getHistoryActionTitle = (action, log = null) => {
+    if (action === "supply" && isCancelledSupplyLog(log)) {
+      return "Поставка отменена";
+    }
+
     const titles = {
       pack_plus: "Добавлена пачка",
       pack_minus: "Списана пачка",
@@ -2048,7 +2062,7 @@ function App() {
     const writeOffActions = new Set(["pack_minus", "clear"]);
 
     const supplyLogs = historyItems.filter((log) =>
-      supplyActions.has(log.action)
+      supplyActions.has(log.action) && !isCancelledSupplyLog(log)
     );
 
     const writeOffLogs = historyItems.filter((log) =>
@@ -2184,12 +2198,12 @@ function App() {
               historyItems.map((log) => (
                 <div className="flavor-history-item" key={log.id}>
                   <div>
-                    <strong>{getHistoryActionTitle(log.action)}</strong>
+                    <strong>{getHistoryActionTitle(log.action, log)}</strong>
                     {getHistoryActionMeta(log) && (
                       <span>{getHistoryActionMeta(log)}</span>
                     )}
 
-                    {!isDemoMode && log.action === "supply" && (
+                    {!isDemoMode && log.action === "supply" && !isCancelledSupplyLog(log) && (
                       <button
                         className="secondary-button small"
                         type="button"
@@ -2726,6 +2740,7 @@ function App() {
 
         return (
           log.action === "supply" &&
+          !isCancelledSupplyLog(log) &&
           logFlavorId &&
           currentFlavorIds.has(String(logFlavorId))
         );
@@ -2875,6 +2890,7 @@ function App() {
 
         return (
           log.action === "supply" &&
+          !isCancelledSupplyLog(log) &&
           logFlavorId &&
           currentFlavorIds.has(String(logFlavorId))
         );
@@ -3336,6 +3352,10 @@ function App() {
         parts.push(`цена: ${Number(details.price).toLocaleString("ru-RU")} ₽`);
       }
 
+      if (isCancelledSupplyLog(log)) {
+        parts.push("отменена");
+      }
+
       return parts.filter(Boolean).join(" · ");
     }
 
@@ -3552,6 +3572,134 @@ function App() {
 
     if (!response.ok) {
       throw new Error("Не удалось обновить склад");
+    }
+  };
+
+  const applySupplyLogCancelStockCorrection = async (log) => {
+    const flavorId = log.flavorId || log.flavor_id;
+
+    if (!flavorId) {
+      return;
+    }
+
+    const flavor = flavors.find((item) => String(item.id) === String(flavorId));
+
+    if (!flavor) {
+      return;
+    }
+
+    const details = parseActionDetails(log.details);
+    const weight = normalizeSupplyEditWeight(details.weight);
+    const quantity = Number(details.quantity || 0);
+
+    if (!weight || !quantity) {
+      return;
+    }
+
+    const packs = Array.isArray(flavor.packs)
+      ? flavor.packs.map((pack) => ({ ...pack }))
+      : [];
+
+    const pack = packs.find((item) => {
+      return normalizeSupplyEditWeight(item.weight) === weight;
+    });
+
+    if (!pack) {
+      return;
+    }
+
+    const quantityBeforeCorrection = Number(pack.quantity || 0);
+    const purchasedQuantityBeforeCorrection = Number(
+      pack.purchasedQuantity ??
+        pack.purchased_quantity ??
+        quantityBeforeCorrection ??
+        0
+    );
+
+    pack.quantity = Math.max(0, quantityBeforeCorrection - quantity);
+    pack.purchasedQuantity = Math.max(
+      0,
+      (Number.isFinite(purchasedQuantityBeforeCorrection)
+        ? purchasedQuantityBeforeCorrection
+        : quantityBeforeCorrection) - quantity
+    );
+
+    delete pack.purchased_quantity;
+
+    const cleanedPacks = packs.filter((item) => {
+      return (
+        Number(item.quantity || 0) > 0 ||
+        Number(item.purchasedQuantity || 0) > 0
+      );
+    });
+
+    const response = await apiFetch(`/api/flavors/${flavor.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...flavor,
+        packs: cleanedPacks,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Не удалось вычесть поставку со склада");
+    }
+  };
+
+  const cancelSupplyLog = async () => {
+    if (!editingSupplyLog) {
+      return;
+    }
+
+    if (isCancelledSupplyLog(editingSupplyLog)) {
+      showNotification("Эта поставка уже отменена", "info");
+      return;
+    }
+
+    const isConfirmed = window.confirm(
+      "Отменить эту поставку? Количество будет вычтено со склада, а аналитика перестанет учитывать эту поставку."
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    const details = parseActionDetails(editingSupplyLog.details);
+
+    try {
+      await applySupplyLogCancelStockCorrection(editingSupplyLog);
+
+      const response = await apiFetch(`/api/action-logs/${editingSupplyLog.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          details: {
+            ...details,
+            cancelled: true,
+            cancelledAt: new Date().toISOString(),
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Склад исправлен, но не удалось отметить поставку как отменённую");
+      }
+
+      const updatedLogs = await loadActionLogsWithPassword(adminPassword);
+      setActionLogs(updatedLogs);
+      await refreshFlavors();
+      closeSupplyEditModal();
+
+      showNotification("Поставка отменена и вычтена со склада", "success");
+    } catch (error) {
+      console.error(error);
+      showNotification(error.message || "Не удалось отменить поставку", "error");
+      setErrorText(error.message || "Не удалось отменить поставку");
     }
   };
 
@@ -3812,6 +3960,14 @@ function App() {
 
               <button type="button" onClick={closeSupplyEditModal}>
                 Отмена
+              </button>
+
+              <button
+                className="danger"
+                type="button"
+                onClick={cancelSupplyLog}
+              >
+                Отменить поставку
               </button>
             </div>
           </section>
@@ -4724,7 +4880,7 @@ function App() {
                       <small>{formatActionDetails(log)}</small>
                     )}
 
-                    {!isDemoMode && log.action === "supply" && (
+                    {!isDemoMode && log.action === "supply" && !isCancelledSupplyLog(log) && (
                       <button
                         className="secondary-button small"
                         type="button"
