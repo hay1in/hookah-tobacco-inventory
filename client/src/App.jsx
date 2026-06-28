@@ -1701,6 +1701,33 @@ function App() {
       return;
     }
 
+    const hasInvalidSupplyQuantity =
+      importMode === "supply" &&
+      pendingImportRows.some((row) => {
+        const quantity = Number(row.quantity || 0);
+        return !Number.isFinite(quantity) || quantity <= 0;
+      });
+
+    if (hasInvalidSupplyQuantity) {
+      showNotification(
+        "В импорте закупки есть строки с количеством 0. Исправь файл или убери эти строки.",
+        "error"
+      );
+      setShowOnlyImportProblems(true);
+      return;
+    }
+
+    if (importPreviewProblemCount > 0) {
+      const isConfirmed = window.confirm(
+        `В импорте есть проблемные строки: ${importPreviewProblemCount}. Всё равно продолжить?`
+      );
+
+      if (!isConfirmed) {
+        setShowOnlyImportProblems(true);
+        return;
+      }
+    }
+
     try {
       setIsLoading(true);
       setErrorText("");
@@ -1789,6 +1816,7 @@ function App() {
 
       setPendingImportRows([]);
       setPendingImportFileName("");
+      setShowOnlyImportProblems(false);
       setIsImportPreviewOpen(false);
 
       setSearchText("");
@@ -2389,7 +2417,7 @@ function App() {
     const quantity = Number(row.quantity || 0);
     const price = Number(row.price || 0);
 
-    if (!Number.isFinite(quantity) || quantity <= 0) {
+    if (importMode === "supply" && (!Number.isFinite(quantity) || quantity <= 0)) {
       warnings.push("количество 0");
     }
 
