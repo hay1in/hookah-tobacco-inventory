@@ -2038,7 +2038,12 @@ function App() {
   const getFlavorMovementInfo = (flavor) => {
     const historyItems = getFlavorHistory(flavor);
 
-    const supplyActions = new Set(["supply", "pack_plus", "import_excel"]);
+    const supplyActions = new Set([
+      "supply",
+      "pack_plus",
+      "import_excel",
+      "import_inventory",
+    ]);
     const writeOffActions = new Set(["pack_minus", "clear"]);
 
     const supplyLogs = historyItems.filter((log) =>
@@ -3269,6 +3274,8 @@ function App() {
     merge_duplicates: "Объединение дублей",
     merge_tags: "Объединение тегов",
     bulk_action: "Массовое действие",
+    alias_create: "Создан алиас",
+    alias_delete: "Удалён алиас",
     deadstock_excluded_on: "Исключён из залежей",
     deadstock_excluded_off: "Возвращён в залежи",
   };
@@ -3454,18 +3461,25 @@ function App() {
     const previousPack = findPack(previousWeight);
 
     if (previousPack) {
+      const previousQuantityBeforeCorrection = Number(previousPack.quantity || 0);
+
+      const previousPurchasedQuantity = Number(
+        previousPack.purchasedQuantity ??
+          previousPack.purchased_quantity ??
+          previousQuantityBeforeCorrection ??
+          0
+      );
+
       previousPack.quantity = Math.max(
         0,
-        Number(previousPack.quantity || 0) - previousQuantity
+        previousQuantityBeforeCorrection - previousQuantity
       );
 
       previousPack.purchasedQuantity = Math.max(
         0,
-        Number(
-          previousPack.purchasedQuantity ??
-            previousPack.purchased_quantity ??
-            0
-        ) - previousQuantity
+        (Number.isFinite(previousPurchasedQuantity)
+          ? previousPurchasedQuantity
+          : previousQuantityBeforeCorrection) - previousQuantity
       );
 
       delete previousPack.purchased_quantity;
@@ -3483,13 +3497,21 @@ function App() {
       packs.push(nextPack);
     }
 
-    nextPack.quantity = Number(nextPack.quantity || 0) + nextQuantity;
+    const nextQuantityBeforeCorrection = Number(nextPack.quantity || 0);
+
+    const nextPurchasedQuantity = Number(
+      nextPack.purchasedQuantity ??
+        nextPack.purchased_quantity ??
+        nextQuantityBeforeCorrection ??
+        0
+    );
+
+    nextPack.quantity = nextQuantityBeforeCorrection + nextQuantity;
+
     nextPack.purchasedQuantity =
-      Number(
-        nextPack.purchasedQuantity ??
-          nextPack.purchased_quantity ??
-          0
-      ) + nextQuantity;
+      (Number.isFinite(nextPurchasedQuantity)
+        ? nextPurchasedQuantity
+        : nextQuantityBeforeCorrection) + nextQuantity;
 
     delete nextPack.purchased_quantity;
 
@@ -3512,7 +3534,7 @@ function App() {
     });
 
     if (!response.ok) {
-      throw new Error("История исправлена, но не удалось обновить склад");
+      throw new Error("Не удалось обновить склад");
     }
   };
 
@@ -3522,6 +3544,24 @@ function App() {
     }
 
     const details = parseActionDetails(editingSupplyLog.details);
+
+    const nextQuantity =
+      editingSupplyForm.quantity === ""
+        ? Number(details.quantity || 0)
+        : Number(editingSupplyForm.quantity);
+
+    const nextPrice =
+      editingSupplyForm.price === "" ? null : Number(editingSupplyForm.price);
+
+    if (!Number.isFinite(nextQuantity) || nextQuantity <= 0) {
+      showNotification("Количество поставки должно быть больше 0", "error");
+      return;
+    }
+
+    if (nextPrice !== null && (!Number.isFinite(nextPrice) || nextPrice < 0)) {
+      showNotification("Цена поставки должна быть 0 или больше", "error");
+      return;
+    }
 
     const updatedDetails = {
       ...details,
@@ -3533,17 +3573,17 @@ function App() {
         details.suppliedAt ||
         getTodayInputDate(),
       supplier: editingSupplyForm.supplier.trim(),
-      price:
-        editingSupplyForm.price === ""
-          ? null
-          : Number(editingSupplyForm.price),
-      quantity:
-        editingSupplyForm.quantity === ""
-          ? details.quantity
-          : Number(editingSupplyForm.quantity),
+      price: nextPrice,
+      quantity: nextQuantity,
     };
 
     try {
+      await applySupplyLogStockCorrection(
+        editingSupplyLog,
+        details,
+        updatedDetails
+      );
+
       const response = await apiFetch(`/api/action-logs/${editingSupplyLog.id}`, {
         method: "PATCH",
         headers: {
@@ -3555,14 +3595,8 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error("Не удалось исправить данные поставки");
+        throw new Error("Склад исправлен, но не удалось обновить историю поставки");
       }
-
-      await applySupplyLogStockCorrection(
-        editingSupplyLog,
-        details,
-        updatedDetails
-      );
 
       const updatedLogs = await loadActionLogsWithPassword(adminPassword);
       setActionLogs(updatedLogs);
@@ -3746,7 +3780,7 @@ function App() {
               <input
                 type="number"
                 name="quantity"
-                min="0"
+                min="1"
                 step="1"
                 value={editingSupplyForm.quantity}
                 onChange={handleEditingSupplyChange}
