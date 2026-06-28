@@ -419,6 +419,24 @@ function App() {
     };
   };
 
+  const openFlavorFromAnalytics = (flavorId) => {
+    setCurrentView("inventory");
+    setOpenFlavorId(flavorId);
+    highlightFlavor(flavorId);
+
+    window.setTimeout(() => {
+      const element = document.querySelector(
+        `[data-flavor-id="${flavorId}"]`
+      );
+
+      element?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 120);
+  };
+
+
   const highlightFlavor = (flavorId) => {
     if (!flavorId) {
       return;
@@ -2826,6 +2844,7 @@ function App() {
         id: flavor.id,
         title: `${flavor.brand} — ${flavor.name}`,
         meta: `${getTotalQuantity(flavor)} пач. на складе`,
+        type: "flavor",
       })),
     },
     {
@@ -2835,6 +2854,7 @@ function App() {
         id: flavor.id,
         title: `${flavor.brand} — ${flavor.name}`,
         meta: "Нет данных по фасовкам",
+        type: "flavor",
       })),
     },
     {
@@ -2844,6 +2864,7 @@ function App() {
         id: flavor.id,
         title: `${flavor.brand} — ${flavor.name}`,
         meta: "В одной из фасовок закуплено меньше, чем осталось",
+        type: "flavor",
       })),
     },
     {
@@ -2853,6 +2874,7 @@ function App() {
         id: log.id,
         title: `${log.brand} — ${log.name}`,
         meta: formatHistoryDate(log),
+        type: "log",
       })),
     },
     {
@@ -2862,6 +2884,7 @@ function App() {
         id: log.id,
         title: `${log.brand} — ${log.name}`,
         meta: formatHistoryDate(log),
+        type: "log",
       })),
     },
     {
@@ -2871,6 +2894,7 @@ function App() {
         id: log.id,
         title: `${log.brand} — ${log.name}`,
         meta: "Дата поставки не указана",
+        type: "log",
       })),
     },
   ];
@@ -4659,10 +4683,28 @@ function App() {
                           <p>Проблем нет</p>
                         ) : (
                           issue.items.slice(0, 20).map((item) => (
-                            <div className="data-quality-item" key={item.id}>
+                            <button
+                              className="data-quality-item"
+                              type="button"
+                              key={`${item.type}-${item.id}`}
+                              onClick={() => {
+                                if (item.type === "flavor") {
+                                  openFlavorFromAnalytics(item.id);
+                                  return;
+                                }
+
+                                setCurrentView("history");
+                              }}
+                            >
                               <strong>{item.title}</strong>
-                              <span>{item.meta}</span>
-                            </div>
+                              <span>
+                                {item.meta}
+                                {" · "}
+                                {item.type === "flavor"
+                                  ? "открыть на складе"
+                                  : "открыть историю"}
+                              </span>
+                            </button>
                           ))
                         )}
 

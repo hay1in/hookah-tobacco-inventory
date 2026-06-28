@@ -3292,3 +3292,17 @@ h1 {
   font-weight: 750 !important;
 }
 
+
+button.data-quality-item {
+  width: 100% !important;
+  border: 0 !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  font: inherit !important;
+}
+
+button.data-quality-item:hover {
+  transform: translateY(-1px) !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+}
+
