@@ -1267,45 +1267,84 @@ function App() {
     setActiveChoiceModal("export");
   };
 
-  const downloadImportTemplate = () => {
-    const rows = [
-      {
-        "Бренд": "Musthave",
-        "Вкус": "Ванильный крем",
-        "Фасовка": "100 г",
-        "Количество": 2,
-        "Закуплено": 2,
-        "Дата поставки": getTodayInputDate(),
-        "Поставщик": "Опт РФ",
-        "Цена за пачку": 850,
-        "Теги": "десерт, сливочный",
-        "Мало осталось": "нет",
-        "Не считать залежью": "нет",
-        "Архив": "нет",
-      },
-    ];
+  const startExcelImport = (mode) => {
+    setImportMode(mode);
+    document.getElementById("import-excel-input")?.click();
+  };
+
+
+  const downloadImportTemplate = (mode = "supply") => {
+    const isSupplyTemplate = mode === "supply";
+
+    const rows = isSupplyTemplate
+      ? [
+          {
+            "Бренд": "Musthave",
+            "Вкус": "Ванильный крем",
+            "Фасовка": "100 г",
+            "Количество": 2,
+            "Дата поставки": getTodayInputDate(),
+            "Поставщик": "Опт РФ",
+            "Цена за пачку": 850,
+            "Теги": "десерт, сливочный",
+            "Мало осталось": "нет",
+            "Не считать залежью": "нет",
+          },
+        ]
+      : [
+          {
+            "Бренд": "Musthave",
+            "Вкус": "Ванильный крем",
+            "Фасовка": "100 г",
+            "Количество": 2,
+            "Закуплено": 5,
+            "Теги": "десерт, сливочный",
+            "Мало осталось": "нет",
+            "Не считать залежью": "нет",
+            "Архив": "нет",
+          },
+        ];
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
 
-    worksheet["!cols"] = [
-      { wch: 22 },
-      { wch: 30 },
-      { wch: 14 },
-      { wch: 14 },
-      { wch: 14 },
-      { wch: 16 },
-      { wch: 22 },
-      { wch: 16 },
-      { wch: 34 },
-      { wch: 18 },
-      { wch: 24 },
-      { wch: 12 },
-    ];
+    worksheet["!cols"] = isSupplyTemplate
+      ? [
+          { wch: 22 },
+          { wch: 30 },
+          { wch: 14 },
+          { wch: 14 },
+          { wch: 16 },
+          { wch: 22 },
+          { wch: 16 },
+          { wch: 34 },
+          { wch: 18 },
+          { wch: 24 },
+        ]
+      : [
+          { wch: 22 },
+          { wch: 30 },
+          { wch: 14 },
+          { wch: 14 },
+          { wch: 14 },
+          { wch: 34 },
+          { wch: 18 },
+          { wch: 24 },
+          { wch: 12 },
+        ];
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Импорт");
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      isSupplyTemplate ? "Импорт закупки" : "Импорт склада"
+    );
 
-    XLSX.writeFile(workbook, "shablon-importa-zakupki.xlsx");
+    XLSX.writeFile(
+      workbook,
+      isSupplyTemplate
+        ? "shablon-importa-zakupki.xlsx"
+        : "shablon-importa-sklada.xlsx"
+    );
   };
 
   const openImportChoice = () => {
@@ -1704,6 +1743,7 @@ function App() {
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all");
   const [activeChoiceModal, setActiveChoiceModal] = useState(null);
+  const [importMode, setImportMode] = useState("supply");
   const [editingSupplyLog, setEditingSupplyLog] = useState(null);
   const [editingSupplyForm, setEditingSupplyForm] = useState({
     suppliedAt: "",
@@ -4893,7 +4933,7 @@ function App() {
                     <button
                       type="button"
                       onClick={() => {
-                        document.getElementById("import-excel-input")?.click();
+                        startExcelImport("supply");
                       }}
                     >
                       Импорт закупки
@@ -4902,11 +4942,30 @@ function App() {
                     <button
                       type="button"
                       onClick={() => {
-                        downloadImportTemplate();
+                        startExcelImport("inventory");
+                      }}
+                    >
+                      Импорт склада
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        downloadImportTemplate("supply");
                         setActiveChoiceModal(null);
                       }}
                     >
-                      Скачать шаблон
+                      Шаблон закупки
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        downloadImportTemplate("inventory");
+                        setActiveChoiceModal(null);
+                      }}
+                    >
+                      Шаблон склада
                     </button>
                   </div>
                 </>
