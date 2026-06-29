@@ -616,6 +616,15 @@ app.post("/api/flavors/merge", async (req, res) => {
 
     const idsToDelete = ids.filter((id) => id !== Number(primaryId));
 
+    await client.query(
+      `
+        UPDATE action_logs
+        SET flavor_id = $1
+        WHERE flavor_id = ANY($2::int[])
+      `,
+      [primaryFlavor.id, idsToDelete]
+    );
+
     await client.query("DELETE FROM flavors WHERE id = ANY($1::int[])", [
       idsToDelete,
     ]);
