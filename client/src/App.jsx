@@ -4599,6 +4599,10 @@ function App() {
                   Склад
                 </button>
 
+                <button onClick={() => goToView("revision")}>
+                  Ревизия
+                </button>
+
                 <button onClick={() => goToView("purchase")}>
                   Закупка
                 </button>
@@ -4761,6 +4765,65 @@ function App() {
 
     return true;
   };
+
+  if (currentView === "revision") {
+    const revisionActiveFlavors = flavors.filter((flavor) => !flavor.archived);
+    const revisionTotalPacks = revisionActiveFlavors.reduce((sum, flavor) => {
+      return sum + getTotalQuantity(flavor.packs || []);
+    }, 0);
+
+    return (
+      <div className={isCompactMode ? "app compact-mode" : "app"}>
+        {renderAppHeader({
+          title: "Ревизия склада",
+          subtitle: "Сверка фактических остатков с данными приложения",
+        })}
+
+        <main className="content revision-page">
+          <section className="analytics-grid">
+            <article className="analytics-card">
+              <span>Активных вкусов</span>
+              <strong>{revisionActiveFlavors.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Пачек по базе</span>
+              <strong>{revisionTotalPacks}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Статус</span>
+              <strong>Подготовка</strong>
+            </article>
+          </section>
+
+          <section className="history-panel">
+            <div className="history-panel-top">
+              <div>
+                <h2>Ревизия склада</h2>
+                <p>
+                  Здесь будет таблица сверки: текущее количество, фактическое
+                  количество и расхождение по каждой фасовке.
+                </p>
+              </div>
+
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setCurrentView("inventory")}
+              >
+                Вернуться на склад
+              </button>
+            </div>
+
+            <p className="info-message">
+              Следующим шагом добавим поля для ввода фактических остатков.
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (currentView === "deadstock") {
     const deadstockRowsWithReasons = analyticsData.usageRows
