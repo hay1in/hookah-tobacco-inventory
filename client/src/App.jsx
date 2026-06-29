@@ -82,9 +82,6 @@ function App() {
     alias: "",
     canonical: "",
   });
-  const [isCompactMode, setIsCompactMode] = useState(
-    () => localStorage.getItem("compactMode") === "true"
-  );
 
   const isDemoMode = accessRole === "test";
 
@@ -285,13 +282,6 @@ function App() {
     }
   };
 
-  const toggleCompactMode = () => {
-    setIsCompactMode((currentValue) => {
-      const nextValue = !currentValue;
-      localStorage.setItem("compactMode", String(nextValue));
-      return nextValue;
-    });
-  };
 
   const addActionLog = async ({ action, flavor, details = {} }) => {
     if (isDemoMode) {
@@ -4647,7 +4637,7 @@ return "";
           )}
         </div>
 
-        <div className="header-actions compact-header-actions">
+        <div className="header-actions">
           {isInventory ? (
             !isDemoMode && (
               <button
@@ -4735,14 +4725,7 @@ return "";
               <div className="dropdown-section">
                 <p>Вид</p>
 
-                <button
-                  onClick={() => {
-                    toggleCompactMode();
-                    closeMenu();
-                  }}
-                >
-                  {isCompactMode ? "Обычный режим" : "Компактный режим"}
-                </button>
+                
               </div>
 
               <div className="dropdown-section">
@@ -4941,7 +4924,7 @@ if (currentView === "deadstock") {
     };
 
     return (
-      <div className={isCompactMode ? "app compact-mode" : "app"}>
+      <div className="app">
         {renderAppHeader({
           title: "Залежи",
           subtitle: "Вкусы, которые лежат на полке, давно не двигались или слабо используются",
@@ -5208,7 +5191,7 @@ if (currentView === "deadstock") {
     ].filter((section) => section.rows.length > 0);
 
     return (
-      <div className={isCompactMode ? "app compact-mode" : "app"}>
+      <div className="app">
         {renderAppHeader({
           title: "Закупка",
           subtitle:
@@ -5351,7 +5334,7 @@ if (currentView === "deadstock") {
 
   if (currentView === "tags") {
     return (
-      <div className={isCompactMode ? "app compact-mode" : "app"}>
+      <div className="app">
         {renderAppHeader({
           title: "Теги",
           subtitle: "Карта вкусовых тегов и поиск дублей",
@@ -5446,7 +5429,7 @@ if (currentView === "deadstock") {
 
   if (currentView === "duplicates") {
     return (
-      <div className={isCompactMode ? "app compact-mode" : "app"}>
+      <div className="app">
         {renderAppHeader({
           title: "Дубли вкусов",
           subtitle: "Поиск одинаковых записей по бренду и названию",
@@ -5681,7 +5664,7 @@ if (currentView === "deadstock") {
 
   if (currentView === "history") {
     return (
-      <div className={isCompactMode ? "app compact-mode" : "app"}>
+      <div className="app">
         {renderAppHeader({
           title: "История действий",
           subtitle: "Последние изменения склада, закупки и архива",
@@ -5800,7 +5783,7 @@ if (currentView === "deadstock") {
 
   if (currentView === "analytics") {
     return (
-      <div className={isCompactMode ? "app compact-mode" : "app"}>
+      <div className="app">
         {renderAppHeader({
           title: "Аналитика",
           subtitle: "Сводка по складу, остаткам и закупленному весу",
@@ -6340,7 +6323,7 @@ if (currentView === "deadstock") {
   }
 
   return (
-    <div className={isCompactMode ? "app compact-mode" : "app"}>
+    <div className="app">
       {renderAppHeader({
         title: "Склад табака",
         subtitle: "Отслеживание вкусов, фасовок, остатков и закупки",

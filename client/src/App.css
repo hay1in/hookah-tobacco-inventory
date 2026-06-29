@@ -1176,23 +1176,6 @@ h1 {
   background: rgba(20, 14, 10, 0.22);
 }
 
-.flavor-card.compact {
-  border-radius: 22px;
-}
-
-.flavor-card.compact h2 {
-  font-size: 20px;
-}
-
-.flavor-card.compact .actions {
-  gap: 7px;
-}
-
-.flavor-card.compact .actions button {
-  padding: 9px 10px;
-  font-size: 12px;
-}
-
 @media (max-width: 700px) {
   .brand-row {
     align-items: flex-start;
@@ -1957,11 +1940,6 @@ h1 {
   }
 }
 
-.compact-header-actions {
-  position: relative;
-  align-items: flex-start;
-}
-
 .menu-toggle-button {
   min-width: 96px;
 }
@@ -2036,131 +2014,12 @@ h1 {
 }
 
 @media (max-width: 760px) {
-  .compact-header-actions {
-    width: 100%;
-  }
 
   .header-dropdown {
     left: 0;
     right: auto;
     width: 100%;
   }
-}
-
-.compact-mode .header {
-  padding: 20px;
-  gap: 14px;
-}
-
-.compact-mode .header h1 {
-  font-size: clamp(30px, 5vw, 48px);
-}
-
-.compact-mode .subtitle {
-  margin-top: 6px;
-}
-
-.compact-mode .content {
-  gap: 14px;
-}
-
-.compact-mode .toolbar,
-.compact-mode .tag-filter-panel,
-.compact-mode .purchase-panel,
-.compact-mode .supply-panel {
-  border-radius: 22px;
-  padding: 14px;
-}
-
-.compact-mode .brand-row {
-  padding: 12px 14px;
-}
-
-.compact-mode .brand-row strong {
-  font-size: 17px;
-}
-
-.compact-mode .brand-row span {
-  font-size: 12px;
-}
-
-.compact-mode .brand-flavor-list.flavor-list-mode {
-  padding: 10px;
-  gap: 8px;
-}
-
-.compact-mode .flavor-row-button {
-  padding: 10px 12px;
-}
-
-.compact-mode .flavor-row-main strong {
-  font-size: 15px;
-}
-
-.compact-mode .flavor-row-main span {
-  font-size: 12px;
-}
-
-.compact-mode .flavor-row-tags-preview {
-  display: none;
-}
-
-.compact-mode .flavor-details-card {
-  padding: 0 10px 10px;
-  gap: 10px;
-}
-
-.compact-mode .flavor-details-card .tags {
-  display: none;
-}
-
-.compact-mode .pack-row {
-  padding: 8px 0;
-}
-
-.compact-mode .pack-counter button {
-  width: 30px;
-  height: 30px;
-}
-
-.compact-mode .actions,
-.compact-mode .purchase-smart-actions,
-.compact-mode .deadstock-actions {
-  gap: 6px;
-}
-
-.compact-mode .actions button,
-.compact-mode .purchase-smart-actions button,
-.compact-mode .deadstock-actions button {
-  padding: 8px 10px;
-  font-size: 12px;
-}
-
-.compact-mode .analytics-card {
-  padding: 14px;
-}
-
-.compact-mode .analytics-card strong {
-  font-size: 24px;
-}
-
-.compact-mode .purchase-smart-card,
-.compact-mode .deadstock-card,
-.compact-mode .history-item,
-.compact-mode .duplicate-group,
-.compact-mode .tag-row-card {
-  border-radius: 18px;
-  padding: 12px;
-}
-
-.compact-mode .header-dropdown {
-  padding: 12px;
-  gap: 10px;
-}
-
-.compact-mode .dropdown-section button,
-.compact-mode .dropdown-file-button {
-  padding: 10px 11px;
 }
 
 .flavor-row-header {
@@ -2596,18 +2455,6 @@ h1 {
   font-weight: 850;
 }
 
-.compact-mode .flavor-history-block {
-  margin-top: 8px;
-}
-
-.compact-mode .flavor-history-toggle {
-  padding: 9px 11px;
-}
-
-.compact-mode .flavor-history-list {
-  padding: 8px;
-}
-
 /* Fix flavor history visibility inside flavor card */
 .flavor-details-card .flavor-history-toggle {
   color: #211b18 !important;
@@ -2671,19 +2518,6 @@ h1 {
   font-size: 12px !important;
   font-weight: 900 !important;
   text-align: right !important;
-}
-
-.compact-mode .flavor-details-card .flavor-history-toggle {
-  min-height: 40px !important;
-  padding: 9px 11px !important;
-}
-
-.compact-mode .flavor-details-card .flavor-history-toggle span:first-child {
-  font-size: 13px !important;
-}
-
-.compact-mode .flavor-details-card .flavor-history-toggle span:last-child {
-  font-size: 11px !important;
 }
 
 /* Deadstock reasons readability fix */
@@ -2757,25 +2591,11 @@ h1 {
   border-color: rgba(255, 247, 237, 0.85);
 }
 
-.compact-mode .deadstock-filter-panel {
-  gap: 7px;
-  margin-bottom: 12px;
-}
-
-.compact-mode .deadstock-filter-button {
-  padding: 7px 10px;
-  font-size: 12px;
-}
-
 .deadstock-excluded-badge {
   background: rgba(255, 247, 237, 0.16) !important;
   border: 1px solid rgba(255, 247, 237, 0.34) !important;
   color: #fff7ed !important;
   font-weight: 950 !important;
-}
-
-.compact-mode .deadstock-excluded-badge {
-  font-size: 11px !important;
 }
 
 .finance-grid {
@@ -2817,11 +2637,6 @@ h1 {
   white-space: nowrap !important;
 }
 
-.compact-mode .finance-history-row {
-  padding: 8px 0 !important;
-}
-
-
 .finance-history-toggle {
   width: 100% !important;
   border: 0 !important;
@@ -2851,7 +2666,6 @@ h1 {
   opacity: 1 !important;
 }
 
-
 .price-change-badge {
   display: inline-flex !important;
   width: fit-content !important;
@@ -2879,12 +2693,6 @@ h1 {
   background: rgba(80, 102, 27, 0.10) !important;
   color: #50661b !important;
 }
-
-.compact-mode .price-change-badge {
-  font-size: 11px !important;
-  padding: 3px 7px !important;
-}
-
 
 .crash-screen {
   min-height: 100vh !important;
@@ -2966,7 +2774,6 @@ h1 {
   background: rgba(80, 102, 27, 0.12) !important;
   color: #50661b !important;
 }
-
 
 .choice-modal-backdrop {
   position: fixed !important;
@@ -3053,7 +2860,6 @@ h1 {
   transform: translateY(-1px) !important;
 }
 
-
 .supply-edit-modal {
   gap: 12px !important;
 }
@@ -3093,7 +2899,6 @@ h1 {
 .choice-modal-actions.horizontal {
   grid-template-columns: 1fr 1fr !important;
 }
-
 
 .data-quality-panel {
   margin-top: 18px !important;
@@ -3146,11 +2951,6 @@ h1 {
   font-weight: 800 !important;
 }
 
-.compact-mode .data-quality-grid {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
-}
-
-
 .price-change-sections {
   margin-top: 18px !important;
 }
@@ -3174,7 +2974,6 @@ h1 {
 .price-change-analytics-row .price-down {
   color: #166534 !important;
 }
-
 
 .analytics-period-panel {
   margin-top: 24px !important;
@@ -3219,17 +3018,10 @@ h1 {
   border-color: #50661b !important;
 }
 
-.compact-mode .analytics-period-panel {
-  margin-top: 16px !important;
-  padding: 10px !important;
-}
-
-
 .choice-modal-actions button:nth-child(3) {
   background: rgba(229, 198, 31, 0.24) !important;
   color: #50661b !important;
 }
-
 
 .data-quality-list {
   display: grid !important;
@@ -3292,7 +3084,6 @@ h1 {
   font-weight: 750 !important;
 }
 
-
 button.data-quality-item {
   width: 100% !important;
   border: 0 !important;
@@ -3305,7 +3096,6 @@ button.data-quality-item:hover {
   transform: translateY(-1px) !important;
   background: rgba(255, 255, 255, 0.86) !important;
 }
-
 
 .supply-edit-modal {
   gap: 12px !important;
@@ -3346,7 +3136,6 @@ button.data-quality-item:hover {
 .choice-modal-actions.horizontal {
   grid-template-columns: 1fr 1fr !important;
 }
-
 
 .import-warning-list {
   display: flex;
