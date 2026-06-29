@@ -5452,42 +5452,70 @@ if (currentView === "deadstock") {
         <main className="content">
           <section className="duplicates-panel">
             <div className="history-panel-top">
-              <h2>Найдено групп дублей: {duplicateGroups.length}</h2>
+              <div>
+                <p className="eyebrow dark">Дубли</p>
+                <h2>Найдено групп дублей: {duplicateGroups.length}</h2>
+              </div>
+            </div>
 
-              {brandDuplicateGroups.length > 0 && (
-                <section className="supply-panel">
-                  <div className="supply-panel-top">
+            {brandDuplicateGroups.length > 0 && (
+                <section className="brand-variant-panel">
+                  <div className="brand-variant-panel-header">
                     <div>
                       <p className="eyebrow dark">Бренды</p>
                       <h2>
                         Варианты написания брендов: {brandDuplicateGroups.length}
                       </h2>
                     </div>
+
+                    <p className="brand-variant-description">
+                      Это не точные дубли вкусов, а разные написания одного бренда.
+                      Выбери основной вариант, и приложение приведёт все позиции бренда к нему.
+                    </p>
                   </div>
 
-                  <div className="duplicate-list">
+                  <div className="brand-variant-list">
                     {brandDuplicateGroups.map((group) => (
-                      <article className="duplicate-card" key={group.key}>
-                        <div>
-                          <h3>{group.variants.map((variant) => variant.name).join(" / ")}</h3>
-                          <p className="form-hint">
-                            Всего вкусов с этим брендом: {group.flavors.length}
+                      <article className="brand-variant-card" key={group.key}>
+                        <div className="brand-variant-card-main">
+                          <h3>
+                            {group.variants.map((variant) => variant.name).join(" / ")}
+                          </h3>
+
+                          <p>
+                            Всего позиций с этим брендом: {group.flavors.length}
                           </p>
+
+                          <div className="brand-variant-tags">
+                            {group.variants.map((variant) => (
+                              <span key={variant.name}>
+                                {variant.name}: {variant.count}
+                              </span>
+                            ))}
+                          </div>
                         </div>
 
-                        <div className="tag-list">
-                          {group.variants.map((variant) => (
-                            <span key={variant.name}>
-                              {variant.name}: {variant.count}
-                            </span>
-                          ))}
-                        </div>
+                        {!isDemoMode && (
+                          <div className="brand-variant-actions">
+                            {group.variants.map((variant) => (
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                key={variant.name}
+                                onClick={() =>
+                                  mergeBrandVariantGroup(group, variant.name)
+                                }
+                              >
+                                Привести к “{variant.name}”
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </article>
                     ))}
                   </div>
                 </section>
               )}
-            </div>
 
             {duplicateGroups.length === 0 && (
               <p className="info-message">
