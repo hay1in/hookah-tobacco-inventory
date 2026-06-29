@@ -5336,6 +5336,40 @@ if (currentView === "deadstock") {
           <section className="duplicates-panel">
             <div className="history-panel-top">
               <h2>Найдено групп дублей: {duplicateGroups.length}</h2>
+
+              {brandDuplicateGroups.length > 0 && (
+                <section className="supply-panel">
+                  <div className="supply-panel-top">
+                    <div>
+                      <p className="eyebrow dark">Бренды</p>
+                      <h2>
+                        Варианты написания брендов: {brandDuplicateGroups.length}
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="duplicate-list">
+                    {brandDuplicateGroups.map((group) => (
+                      <article className="duplicate-card" key={group.key}>
+                        <div>
+                          <h3>{group.variants.map((variant) => variant.name).join(" / ")}</h3>
+                          <p className="form-hint">
+                            Всего вкусов с этим брендом: {group.flavors.length}
+                          </p>
+                        </div>
+
+                        <div className="tag-list">
+                          {group.variants.map((variant) => (
+                            <span key={variant.name}>
+                              {variant.name}: {variant.count}
+                            </span>
+                          ))}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
 
             {duplicateGroups.length === 0 && (
