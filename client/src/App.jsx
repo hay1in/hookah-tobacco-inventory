@@ -4387,6 +4387,9 @@ return "";
     const closeMenu = () => setIsHeaderMenuOpen(false);
 
     const goToView = (view) => {
+      setErrorText("");
+      setActiveChoiceModal(null);
+      setEditingSupplyLog(null);
       setCurrentView(view);
       closeMenu();
     };
@@ -4518,6 +4521,7 @@ return "";
             !isDemoMode && (
               <button
                 className="primary-button"
+                type="button"
                 onClick={() => setIsSupplyFormOpen(true)}
               >
                 + Поставка
@@ -4526,6 +4530,7 @@ return "";
           ) : (
             <button
               className="secondary-button"
+              type="button"
               onClick={() => goToView("inventory")}
             >
               Склад
@@ -4534,12 +4539,17 @@ return "";
 
           <button
             className="secondary-button menu-toggle-button"
+            type="button"
             onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
           >
             Меню {isHeaderMenuOpen ? "↑" : "↓"}
           </button>
 
-          <button className="secondary-button" onClick={handleLogout}>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleLogout}
+          >
             Выйти
           </button>
 
@@ -4548,23 +4558,24 @@ return "";
               <div className="dropdown-section">
                 <p>Разделы</p>
 
-                <button onClick={() => goToView("inventory")}>
+                <button type="button" onClick={() => goToView("inventory")}>
                   Склад
                 </button>
 
-                <button onClick={() => goToView("purchase")}>
+                <button type="button" onClick={() => goToView("purchase")}>
                   Закупка
                 </button>
 
-                <button onClick={() => goToView("analytics")}>
+                <button type="button" onClick={() => goToView("analytics")}>
                   Аналитика
                 </button>
 
-                <button onClick={() => goToView("deadstock")}>
+                <button type="button" onClick={() => goToView("deadstock")}>
                   Залежи
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => {
                     openHistory();
                     closeMenu();
@@ -4573,15 +4584,16 @@ return "";
                   История
                 </button>
 
-                <button onClick={() => goToView("duplicates")}>
+                <button type="button" onClick={() => goToView("duplicates")}>
                   Дубли
                 </button>
 
-                <button onClick={() => goToView("tags")}>
+                <button type="button" onClick={() => goToView("tags")}>
                   Теги
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => {
                     setSearchText("");
                     setSelectedTag("all");
@@ -4602,6 +4614,7 @@ return "";
                 <p>Вид</p>
 
                 <button
+                  type="button"
                   onClick={() => {
                     toggleCompactMode();
                     closeMenu();
@@ -4615,6 +4628,7 @@ return "";
                 <p>Данные</p>
 
                 <button
+                  type="button"
                   onClick={() => {
                     openExportChoice();
                     closeMenu();
@@ -4625,6 +4639,7 @@ return "";
 
                 {!isDemoMode && (
                   <button
+                    type="button"
                     onClick={() => {
                       openImportChoice();
                       closeMenu();
@@ -4637,6 +4652,7 @@ return "";
                 {!isDemoMode && (
                   <button
                     className="dropdown-danger"
+                    type="button"
                     onClick={() => {
                       clearDatabase();
                       closeMenu();
