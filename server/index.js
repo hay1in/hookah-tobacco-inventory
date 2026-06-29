@@ -502,6 +502,77 @@ app.patch("/api/action-logs/:id", async (req, res) => {
 
 
 
+app.post("/api/admin/transfer-action-logs", async (req, res) => {
+  const { fromBrand, fromName, toBrand, toName } = req.body;
+
+  const cleanFromBrand = String(fromBrand || "").trim();
+  const cleanFromName = String(fromName || "").trim();
+  const cleanToBrand = String(toBrand || "").trim();
+  const cleanToName = String(toName || "").trim();
+
+  if (!cleanFromBrand || !cleanFromName || !cleanToBrand || !cleanToName) {
+    return res.status(400).json({
+      message: "Нужно указать fromBrand, fromName, toBrand и toName",
+    });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const targetResult = await client.query(
+      `
+        SELECT id, brand, name
+        FROM flavors
+        WHERE LOWER(brand) = LOWER($1)
+          AND LOWER(name) = LOWER($2)
+        ORDER BY id
+        LIMIT 1
+      `,
+      [cleanToBrand, cleanToName]
+    );
+
+    if (targetResult.rows.length === 0) {
+      throw new Error(`Целевой вкус не найден: ${cleanToBrand} — ${cleanToName}`);
+    }
+
+    const targetFlavor = targetResult.rows[0];
+
+    const updateResult = await client.query(
+      `
+        UPDATE action_logs
+        SET flavor_id = $1
+        WHERE LOWER(brand) = LOWER($2)
+          AND LOWER(name) = LOWER($3)
+          AND (
+            flavor_id IS NULL
+            OR flavor_id <> $1
+          )
+        RETURNING id
+      `,
+      [targetFlavor.id, cleanFromBrand, cleanFromName]
+    );
+
+    await client.query("COMMIT");
+
+    res.json({
+      transferredCount: updateResult.rowCount,
+      targetFlavor,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error("Transfer action logs error:", error);
+    res.status(500).json({
+      message: error.message || "Не удалось перенести историю",
+    });
+  } finally {
+    client.release();
+  }
+});
+
+
 app.post("/api/flavors/merge", async (req, res) => {
   const { primaryId, duplicateIds } = req.body;
 
