@@ -2256,6 +2256,10 @@ function App() {
       return "Backup восстановлен";
     }
 
+    if (action === "inventory_revision") {
+      return "Ревизия склада";
+    }
+
     const titles = {
       pack_plus: "Добавлена пачка",
       pack_minus: "Списана пачка",
@@ -3785,6 +3789,23 @@ function App() {
       }`;
     }
 
+    if (log.action === "inventory_revision") {
+      const items = Array.isArray(details.items) ? details.items : [];
+      const preview = items
+        .slice(0, 3)
+        .map((item) => {
+          const difference = Number(item.difference || 0);
+          const diffText = difference > 0 ? `+${difference}` : `${difference}`;
+
+          return `${item.brand || ""} — ${item.name || ""} · ${item.weight || ""}: ${item.beforeQuantity} → ${item.afterQuantity} (${diffText})`;
+        })
+        .join(" · ");
+
+      const moreText = items.length > 3 ? ` · ещё ${items.length - 3}` : "";
+
+      return `Изменено фасовок: ${details.changesCount || items.length}${preview ? ` · ${preview}${moreText}` : ""}`;
+    }
+
     return "";
   };
 
@@ -4786,11 +4807,153 @@ function App() {
     setRevisionSearchText("");
   };
 
+  const getRevisionChanges = () => {
+    return flavors
+      .filter((flavor) => !flavor.archived)
+      .flatMap((flavor) => {
+        return (flavor.packs || []).map((pack, packIndex) => {
+          const key = getRevisionKey(flavor.id, packIndex);
+          const rawActualQuantity = revisionCounts[key];
+
+          if (rawActualQuantity === undefined || rawActualQuantity === "") {
+            return null;
+          }
+
+          const currentQuantity = Number(pack.quantity || 0);
+          const actualQuantity = Number(rawActualQuantity);
+
+          if (!Number.isFinite(actualQuantity) || actualQuantity < 0) {
+            return null;
+          }
+
+          const difference = actualQuantity - currentQuantity;
+
+          if (difference === 0) {
+            return null;
+          }
+
+          return {
+            flavor,
+            packIndex,
+            weight: pack.weight || "",
+            beforeQuantity: currentQuantity,
+            afterQuantity: actualQuantity,
+            difference,
+          };
+        });
+      })
+      .filter(Boolean);
+  };
+
+  const applyRevisionCounts = async () => {
+    const changes = getRevisionChanges();
+
+    if (changes.length === 0) {
+      showNotification("Нет расхождений для применения", "info");
+      return;
+    }
+
+    const confirmationText = window.prompt(
+      `Ревизия изменит ${changes.length} фасовок. Чтобы продолжить, введите: РЕВИЗИЯ`
+    );
+
+    if (confirmationText !== "РЕВИЗИЯ") {
+      showNotification("Ревизия отменена", "info");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorText("");
+
+      await createBackupExcel("before-revision");
+      await createFullBackupJson("before-revision");
+
+      const changesByFlavorId = changes.reduce((groups, change) => {
+        if (!groups.has(change.flavor.id)) {
+          groups.set(change.flavor.id, []);
+        }
+
+        groups.get(change.flavor.id).push(change);
+        return groups;
+      }, new Map());
+
+      for (const [flavorId, flavorChanges] of changesByFlavorId.entries()) {
+        const flavor = flavorChanges[0].flavor;
+        const nextPacks = (flavor.packs || []).map((pack, packIndex) => {
+          const change = flavorChanges.find((item) => item.packIndex === packIndex);
+
+          if (!change) {
+            return pack;
+          }
+
+          const previousPurchasedQuantity = Number(
+            pack.purchasedQuantity ?? pack.purchased_quantity ?? pack.quantity ?? 0
+          );
+
+          return {
+            ...pack,
+            quantity: change.afterQuantity,
+            purchasedQuantity: Math.max(previousPurchasedQuantity, change.afterQuantity),
+          };
+        });
+
+        const response = await apiFetch(`/api/flavors/${flavorId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            brand: flavor.brand,
+            name: flavor.name,
+            packs: nextPacks,
+            tags: flavor.tags || [],
+            minStock: flavor.minStock ?? flavor.min_stock ?? 1,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.message || "Не удалось применить ревизию");
+        }
+      }
+
+      await addActionLog({
+        action: "inventory_revision",
+        details: {
+          changesCount: changes.length,
+          items: changes.map((change) => ({
+            flavorId: change.flavor.id,
+            brand: change.flavor.brand,
+            name: change.flavor.name,
+            weight: change.weight,
+            beforeQuantity: change.beforeQuantity,
+            afterQuantity: change.afterQuantity,
+            difference: change.difference,
+          })),
+        },
+      });
+
+      resetRevisionCounts();
+      await refreshFlavors();
+      await loadActionLogs();
+
+      showNotification("Ревизия применена", "success");
+    } catch (error) {
+      console.error(error);
+      showNotification(error.message || "Не удалось применить ревизию", "error");
+      setErrorText(error.message || "Не удалось применить ревизию");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (currentView === "revision") {
     const revisionActiveFlavors = flavors.filter((flavor) => !flavor.archived);
     const revisionTotalPacks = revisionActiveFlavors.reduce((sum, flavor) => {
       return sum + getTotalQuantity(flavor.packs || []);
     }, 0);
+    const revisionChanges = getRevisionChanges();
 
     return (
       <div className={isCompactMode ? "app compact-mode" : "app"}>
@@ -4812,8 +4975,8 @@ function App() {
             </article>
 
             <article className="analytics-card">
-              <span>Статус</span>
-              <strong>Подготовка</strong>
+              <span>Расхождений</span>
+              <strong>{revisionChanges.length}</strong>
             </article>
           </section>
 
@@ -4827,6 +4990,15 @@ function App() {
               </div>
 
               <div className="purchase-header-actions">
+                <button
+                  className="submit-button"
+                  type="button"
+                  disabled={revisionChanges.length === 0 || isLoading}
+                  onClick={applyRevisionCounts}
+                >
+                  Применить ревизию
+                </button>
+
                 <button
                   className="secondary-button"
                   type="button"
