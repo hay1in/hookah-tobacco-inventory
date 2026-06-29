@@ -76,6 +76,8 @@ function App() {
   const [historyActionFilter, setHistoryActionFilter] = useState("all");
   const [historyPeriodFilter, setHistoryPeriodFilter] = useState("all");
   const [historySearchText, setHistorySearchText] = useState("");
+  const [revisionCounts, setRevisionCounts] = useState({});
+  const [revisionSearchText, setRevisionSearchText] = useState("");
   const [aliases, setAliases] = useState([]);
   const [aliasForm, setAliasForm] = useState({
     type: "brand",
@@ -4766,6 +4768,24 @@ function App() {
     return true;
   };
 
+  const getRevisionKey = (flavorId, packIndex) => {
+    return `${flavorId}-${packIndex}`;
+  };
+
+  const handleRevisionCountChange = (flavorId, packIndex, value) => {
+    const key = getRevisionKey(flavorId, packIndex);
+
+    setRevisionCounts((currentCounts) => ({
+      ...currentCounts,
+      [key]: value,
+    }));
+  };
+
+  const resetRevisionCounts = () => {
+    setRevisionCounts({});
+    setRevisionSearchText("");
+  };
+
   if (currentView === "revision") {
     const revisionActiveFlavors = flavors.filter((flavor) => !flavor.archived);
     const revisionTotalPacks = revisionActiveFlavors.reduce((sum, flavor) => {
@@ -4802,23 +4822,108 @@ function App() {
               <div>
                 <h2>Ревизия склада</h2>
                 <p>
-                  Здесь будет таблица сверки: текущее количество, фактическое
-                  количество и расхождение по каждой фасовке.
+                  Введи фактические остатки. Приложение покажет расхождение с базой.
                 </p>
               </div>
 
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => setCurrentView("inventory")}
-              >
-                Вернуться на склад
-              </button>
+              <div className="purchase-header-actions">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={resetRevisionCounts}
+                >
+                  Сбросить ревизию
+                </button>
+
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setCurrentView("inventory")}
+                >
+                  Вернуться на склад
+                </button>
+              </div>
             </div>
 
-            <p className="info-message">
-              Следующим шагом добавим поля для ввода фактических остатков.
-            </p>
+            <div className="history-filters">
+              <input
+                className="search-input"
+                type="search"
+                placeholder="Поиск по ревизии: бренд или вкус"
+                value={revisionSearchText}
+                onChange={(event) => setRevisionSearchText(event.target.value)}
+              />
+            </div>
+
+            <div className="history-list">
+              {revisionActiveFlavors
+                .filter((flavor) => {
+                  const search = revisionSearchText.trim().toLowerCase();
+
+                  if (!search) {
+                    return true;
+                  }
+
+                  return `${flavor.brand} ${flavor.name}`.toLowerCase().includes(search);
+                })
+                .map((flavor) => (
+                  <article className="history-item" key={flavor.id}>
+                    <div>
+                      <strong>
+                        {flavor.brand} — {flavor.name}
+                      </strong>
+
+                      <div className="revision-pack-list">
+                        {(flavor.packs || []).map((pack, packIndex) => {
+                          const key = getRevisionKey(flavor.id, packIndex);
+                          const currentQuantity = Number(pack.quantity || 0);
+                          const rawActualQuantity = revisionCounts[key];
+                          const hasActualQuantity =
+                            rawActualQuantity !== undefined && rawActualQuantity !== "";
+                          const actualQuantity = Number(rawActualQuantity);
+                          const difference =
+                            hasActualQuantity && Number.isFinite(actualQuantity)
+                              ? actualQuantity - currentQuantity
+                              : null;
+
+                          return (
+                            <div className="revision-pack-row" key={key}>
+                              <span>
+                                {pack.weight || "Без фасовки"} · по базе: {currentQuantity}
+                              </span>
+
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                placeholder="фактически"
+                                value={rawActualQuantity || ""}
+                                onChange={(event) =>
+                                  handleRevisionCountChange(
+                                    flavor.id,
+                                    packIndex,
+                                    event.target.value
+                                  )
+                                }
+                              />
+
+                              <strong>
+                                {difference === null
+                                  ? "—"
+                                  : difference === 0
+                                    ? "совпадает"
+                                    : difference > 0
+                                      ? `+${difference}`
+                                      : `${difference}`}
+                              </strong>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+            </div>
           </section>
         </main>
       </div>
