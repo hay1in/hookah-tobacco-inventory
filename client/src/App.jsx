@@ -78,6 +78,7 @@ function App() {
   const [historySearchText, setHistorySearchText] = useState("");
   const [revisionCounts, setRevisionCounts] = useState({});
   const [revisionSearchText, setRevisionSearchText] = useState("");
+  const [showOnlyRevisionChanges, setShowOnlyRevisionChanges] = useState(false);
   const [aliases, setAliases] = useState([]);
   const [aliasForm, setAliasForm] = useState({
     type: "brand",
@@ -4805,6 +4806,23 @@ function App() {
   const resetRevisionCounts = () => {
     setRevisionCounts({});
     setRevisionSearchText("");
+    setShowOnlyRevisionChanges(false);
+  };
+
+  const fillRevisionCountsFromCurrentStock = () => {
+    const nextCounts = {};
+
+    flavors
+      .filter((flavor) => !flavor.archived)
+      .forEach((flavor) => {
+        (flavor.packs || []).forEach((pack, packIndex) => {
+          const key = getRevisionKey(flavor.id, packIndex);
+          nextCounts[key] = String(Number(pack.quantity || 0));
+        });
+      });
+
+    setRevisionCounts(nextCounts);
+    showNotification("Фактические остатки заполнены по базе", "info");
   };
 
   const getRevisionChanges = () => {
@@ -5002,6 +5020,14 @@ function App() {
                 <button
                   className="secondary-button"
                   type="button"
+                  onClick={fillRevisionCountsFromCurrentStock}
+                >
+                  Заполнить по базе
+                </button>
+
+                <button
+                  className="secondary-button"
+                  type="button"
                   onClick={resetRevisionCounts}
                 >
                   Сбросить ревизию
@@ -5025,6 +5051,17 @@ function App() {
                 value={revisionSearchText}
                 onChange={(event) => setRevisionSearchText(event.target.value)}
               />
+
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={showOnlyRevisionChanges}
+                  onChange={(event) =>
+                    setShowOnlyRevisionChanges(event.target.checked)
+                  }
+                />
+                Только расхождения
+              </label>
             </div>
 
             <div className="history-list">
@@ -5032,11 +5069,27 @@ function App() {
                 .filter((flavor) => {
                   const search = revisionSearchText.trim().toLowerCase();
 
-                  if (!search) {
+                  if (search && !`${flavor.brand} ${flavor.name}`.toLowerCase().includes(search)) {
+                    return false;
+                  }
+
+                  if (!showOnlyRevisionChanges) {
                     return true;
                   }
 
-                  return `${flavor.brand} ${flavor.name}`.toLowerCase().includes(search);
+                  return (flavor.packs || []).some((pack, packIndex) => {
+                    const key = getRevisionKey(flavor.id, packIndex);
+                    const rawActualQuantity = revisionCounts[key];
+
+                    if (rawActualQuantity === undefined || rawActualQuantity === "") {
+                      return false;
+                    }
+
+                    const actualQuantity = Number(rawActualQuantity);
+                    const currentQuantity = Number(pack.quantity || 0);
+
+                    return Number.isFinite(actualQuantity) && actualQuantity !== currentQuantity;
+                  });
                 })
                 .map((flavor) => (
                   <article className="history-item" key={flavor.id}>
