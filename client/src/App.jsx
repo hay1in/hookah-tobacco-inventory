@@ -338,7 +338,13 @@ function App() {
 
   const openHistory = async () => {
     setCurrentView("history");
-    await loadActionLogs();
+
+    try {
+      await loadActionLogs();
+    } catch (error) {
+      console.error(error);
+      showNotification("История открыта, но логи не удалось обновить", "error");
+    }
   };
 
   const handleLogout = () => {
