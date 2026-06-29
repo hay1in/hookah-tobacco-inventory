@@ -567,43 +567,9 @@ function App() {
     }
   };
 
-  const increasePack = async (flavorId) => {
-    try {
-      const response = await apiFetch(`/api/flavors/${flavorId}/increase`, {
-        method: "PATCH",
-      });
 
-      if (!response.ok) {
-        throw new Error("Не удалось добавить пачку");
-      }
 
-      await refreshFlavors();
-      showNotification("Пачка добавлена", "success");
-    } catch (error) {
-      console.error(error);
-      showNotification(error.message || "Не удалось добавить пачку", "error");
-      setErrorText(error.message || "Не удалось добавить пачку");
-    }
-  };
 
-  const decreasePack = async (flavorId) => {
-    try {
-      const response = await apiFetch(`/api/flavors/${flavorId}/decrease`, {
-        method: "PATCH",
-      });
-
-      if (!response.ok) {
-        throw new Error("Не удалось списать пачку");
-      }
-
-      await refreshFlavors();
-      showNotification("Пачка списана", "success");
-    } catch (error) {
-      console.error(error);
-      showNotification(error.message || "Не удалось списать пачку", "error");
-      setErrorText(error.message || "Не удалось списать пачку");
-    }
-  };
 
   const clearFlavor = async (flavorId) => {
     try {
@@ -1535,7 +1501,7 @@ function App() {
     downloadJsonFile(`backup-full-${reason}-${timestamp}.json`, backup);
 
     try {
-      await createActionLog({
+      await addActionLog({
         action: "backup_created",
         details: {
           reason,
@@ -1604,7 +1570,7 @@ function App() {
         throw new Error(result?.message || "Не удалось восстановить backup");
       }
 
-      await createActionLog({
+      await addActionLog({
         action: "backup_restored",
         details: {
           fileName: file.name,
@@ -4827,55 +4793,66 @@ function App() {
 
 
   const getRevisionExportRows = () => {
-    return filteredRevisionFlavors
-      .map((flavor) => {
-        const base25 = Number(flavor.stock25 || 0);
-        const base50 = Number(flavor.stock50 || 0);
-        const base100 = Number(flavor.stock100 || 0);
+    const search = revisionSearchText.trim().toLowerCase();
 
-        const fact25 = Number(revisionCounts[`${flavor.id}-25`] ?? base25);
-        const fact50 = Number(revisionCounts[`${flavor.id}-50`] ?? base50);
-        const fact100 = Number(revisionCounts[`${flavor.id}-100`] ?? base100);
+    return flavors
+      .filter((flavor) => !flavor.archived)
+      .filter((flavor) => {
+        if (!search) {
+          return true;
+        }
 
-        const diff25 = fact25 - base25;
-        const diff50 = fact50 - base50;
-        const diff100 = fact100 - base100;
+        return `${flavor.brand || ""} ${flavor.name || ""}`
+          .toLowerCase()
+          .includes(search);
+      })
+      .flatMap((flavor) => {
+        return (flavor.packs || []).map((pack, packIndex) => {
+          const key = getRevisionKey(flavor.id, packIndex);
+          const baseQuantity = Number(pack.quantity || 0);
+          const rawActualQuantity = revisionCounts[key];
+          const hasActualQuantity =
+            rawActualQuantity !== undefined && rawActualQuantity !== "";
+          const actualQuantity = hasActualQuantity
+            ? Number(rawActualQuantity)
+            : baseQuantity;
+          const safeActualQuantity = Number.isFinite(actualQuantity)
+            ? actualQuantity
+            : baseQuantity;
+          const difference = safeActualQuantity - baseQuantity;
 
-        return {
-          id: flavor.id,
-          brand: flavor.brand || "",
-          name: flavor.name || "",
-          base25,
-          fact25,
-          diff25,
-          base50,
-          fact50,
-          diff50,
-          base100,
-          fact100,
-          diff100,
-          hasChanges: diff25 !== 0 || diff50 !== 0 || diff100 !== 0,
-        };
+          return {
+            id: flavor.id,
+            brand: flavor.brand || "",
+            name: flavor.name || "",
+            packIndex,
+            weight: pack.weight || "",
+            baseQuantity,
+            actualQuantity: safeActualQuantity,
+            difference,
+            hasChanges: difference !== 0,
+          };
+        });
       })
       .filter((row) => !showOnlyRevisionChanges || row.hasChanges);
   };
 
   const downloadRevisionJson = () => {
     const rows = getRevisionExportRows();
+    const today = new Date().toISOString().slice(0, 10);
 
     const payload = {
       app: "hookah-tobacco-inventory",
       type: "inventory_revision_export",
       generatedAt: new Date().toISOString(),
       onlyChanges: showOnlyRevisionChanges,
+      search: revisionSearchText.trim(),
       rows,
     };
 
     downloadJsonFile(
-      payload,
-      `inventory-revision-${showOnlyRevisionChanges ? "changes" : "all"}-${new Date()
-        .toISOString()
-        .slice(0, 10)}.json`
+      `inventory-revision-${showOnlyRevisionChanges ? "changes" : "all"}-${today}.json`,
+      payload
     );
   };
 
@@ -4888,26 +4865,31 @@ function App() {
         ID: row.id,
         Бренд: row.brand,
         Название: row.name,
-        "База 25г": row.base25,
-        "Факт 25г": row.fact25,
-        "Разница 25г": row.diff25,
-        "База 50г": row.base50,
-        "Факт 50г": row.fact50,
-        "Разница 50г": row.diff50,
-        "База 100г": row.base100,
-        "Факт 100г": row.fact100,
-        "Разница 100г": row.diff100,
+        Фасовка: row.weight,
+        "По базе": row.baseQuantity,
+        Фактически: row.actualQuantity,
+        Разница: row.difference,
       }))
     );
+
+    worksheet["!cols"] = [
+      { wch: 10 },
+      { wch: 24 },
+      { wch: 32 },
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 12 },
+    ];
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Ревизия");
 
+    const today = new Date().toISOString().slice(0, 10);
+
     XLSX.writeFile(
       workbook,
-      `inventory-revision-${showOnlyRevisionChanges ? "changes" : "all"}-${new Date()
-        .toISOString()
-        .slice(0, 10)}.xlsx`
+      `inventory-revision-${showOnlyRevisionChanges ? "changes" : "all"}-${today}.xlsx`
     );
   };
 
