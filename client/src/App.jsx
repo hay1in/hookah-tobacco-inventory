@@ -568,9 +568,6 @@ function App() {
   };
 
 
-
-
-
   const clearFlavor = async (flavorId) => {
     try {
       const response = await apiFetch(`/api/flavors/${flavorId}/clear`, {
@@ -1054,7 +1051,6 @@ function App() {
   };
 
 
-
   const clearDatabase = async () => {
     const confirmation = window.prompt(
       "Это полностью очистит базу вкусов. Для подтверждения напиши: ОЧИСТИТЬ"
@@ -1064,7 +1060,7 @@ function App() {
       return;
     }
 
-    createBackupExcel("before-clear-database");
+    await createBackupExcel("before-clear-database");
     await createFullBackupJson("before-clear-database");
 
     try {
@@ -2572,7 +2568,6 @@ function App() {
   });
 
 
-
   const normalizeDuplicateKey = (value) => {
     return String(value || "")
       .toLowerCase()
@@ -3776,20 +3771,6 @@ function App() {
     return "";
   };
 
-
-  const getDateInputValue = (value) => {
-    if (!value) {
-      return getTodayInputDate();
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-      return String(value).slice(0, 10);
-    }
-
-    return date.toISOString().slice(0, 10);
-  };
 
   const getSupplyEditDateInputValue = (value) => {
     if (!value) {
