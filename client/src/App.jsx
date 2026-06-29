@@ -3612,6 +3612,81 @@ const titles = {
     }
   };
 
+  const mergeBrandVariantGroup = async (group, canonicalBrand) => {
+    if (!group?.flavors?.length || !canonicalBrand) {
+      return;
+    }
+
+    const affectedFlavors = group.flavors.filter(
+      (flavor) => String(flavor.brand || "").trim() !== canonicalBrand
+    );
+
+    if (affectedFlavors.length === 0) {
+      showNotification("Все позиции уже используют это написание бренда", "info");
+      return;
+    }
+
+    const confirmationText = window.prompt(
+      `Привести ${affectedFlavors.length} позиций к бренду "${canonicalBrand}"? Чтобы продолжить, введите: БРЕНДЫ`
+    );
+
+    if (confirmationText !== "БРЕНДЫ") {
+      showNotification("Объединение написаний бренда отменено", "info");
+      return;
+    }
+
+    await createBackupExcel("before-merge-brand-variants");
+    await createFullBackupJson("before-merge-brand-variants");
+
+    try {
+      setIsLoading(true);
+
+      for (const flavor of affectedFlavors) {
+        const response = await apiFetch(`/api/flavors/${flavor.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            brand: canonicalBrand,
+            name: flavor.name || "",
+            packs: flavor.packs || [],
+            tags: flavor.tags || [],
+            minStock: flavor.minStock || flavor.min_stock || 1,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Не удалось обновить бренд у позиции: ${flavor.brand} — ${flavor.name}`
+          );
+        }
+      }
+
+      await addActionLog({
+        action: "bulk_action",
+        details: {
+          bulkAction: "merge_brand_variants",
+          updatedCount: affectedFlavors.length,
+          canonicalBrand,
+          variants: group.variants.map((variant) => variant.name),
+        },
+      });
+
+      await refreshFlavors();
+      showNotification(
+        `Написания бренда объединены: ${affectedFlavors.length} позиций`,
+        "success"
+      );
+    } catch (error) {
+      console.error(error);
+      showNotification(error.message || "Не удалось объединить написания бренда", "error");
+      setErrorText(error.message || "Не удалось объединить написания бренда");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const mergeDuplicateGroup = async (group) => {
     if (!group?.items || group.items.length < 2) {
       return;
@@ -5416,7 +5491,7 @@ if (currentView === "deadstock") {
 
             {duplicateGroups.length === 0 && (
               <p className="info-message">
-                Точные дубли не найдены. Всё чисто.
+                Точные дубли вкусов не найдены. Варианты написания брендов показаны отдельно.
               </p>
             )}
 
