@@ -2608,6 +2608,48 @@ const titles = {
     );
 
 
+  const brandDuplicateGroups = Array.from(
+    flavors.reduce((groups, flavor) => {
+      const brandKey = normalizeDuplicateKey(flavor.brand);
+      const brandLabel = String(flavor.brand || "").trim();
+
+      if (!brandKey || !brandLabel) {
+        return groups;
+      }
+
+      if (!groups.has(brandKey)) {
+        groups.set(brandKey, {
+          key: brandKey,
+          variants: new Map(),
+          flavors: [],
+        });
+      }
+
+      const group = groups.get(brandKey);
+
+      group.variants.set(
+        brandLabel,
+        (group.variants.get(brandLabel) || 0) + 1
+      );
+
+      group.flavors.push(flavor);
+
+      return groups;
+    }, new Map()).values()
+  )
+    .map((group) => ({
+      ...group,
+      variants: Array.from(group.variants.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ru")),
+    }))
+    .filter((group) => group.variants.length > 1)
+    .sort(
+      (a, b) =>
+        b.flavors.length - a.flavors.length ||
+        a.key.localeCompare(b.key, "ru")
+    );
+
   const importPreviewExistingCount = pendingImportRows.filter((row) => {
     const rowBrand = normalizeDuplicateKey(row.brand);
     const rowName = normalizeDuplicateKey(row.name);
