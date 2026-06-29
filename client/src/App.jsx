@@ -4825,6 +4825,92 @@ function App() {
     showNotification("Фактические остатки заполнены по базе", "info");
   };
 
+
+  const getRevisionExportRows = () => {
+    return filteredRevisionFlavors
+      .map((flavor) => {
+        const base25 = Number(flavor.stock25 || 0);
+        const base50 = Number(flavor.stock50 || 0);
+        const base100 = Number(flavor.stock100 || 0);
+
+        const fact25 = Number(revisionCounts[`${flavor.id}-25`] ?? base25);
+        const fact50 = Number(revisionCounts[`${flavor.id}-50`] ?? base50);
+        const fact100 = Number(revisionCounts[`${flavor.id}-100`] ?? base100);
+
+        const diff25 = fact25 - base25;
+        const diff50 = fact50 - base50;
+        const diff100 = fact100 - base100;
+
+        return {
+          id: flavor.id,
+          brand: flavor.brand || "",
+          name: flavor.name || "",
+          base25,
+          fact25,
+          diff25,
+          base50,
+          fact50,
+          diff50,
+          base100,
+          fact100,
+          diff100,
+          hasChanges: diff25 !== 0 || diff50 !== 0 || diff100 !== 0,
+        };
+      })
+      .filter((row) => !showOnlyRevisionChanges || row.hasChanges);
+  };
+
+  const downloadRevisionJson = () => {
+    const rows = getRevisionExportRows();
+
+    const payload = {
+      app: "hookah-tobacco-inventory",
+      type: "inventory_revision_export",
+      generatedAt: new Date().toISOString(),
+      onlyChanges: showOnlyRevisionChanges,
+      rows,
+    };
+
+    downloadJsonFile(
+      payload,
+      `inventory-revision-${showOnlyRevisionChanges ? "changes" : "all"}-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`
+    );
+  };
+
+  const downloadRevisionXlsx = async () => {
+    const rows = getRevisionExportRows();
+    const XLSX = await loadXlsx();
+
+    const worksheet = XLSX.utils.json_to_sheet(
+      rows.map((row) => ({
+        ID: row.id,
+        Бренд: row.brand,
+        Название: row.name,
+        "База 25г": row.base25,
+        "Факт 25г": row.fact25,
+        "Разница 25г": row.diff25,
+        "База 50г": row.base50,
+        "Факт 50г": row.fact50,
+        "Разница 50г": row.diff50,
+        "База 100г": row.base100,
+        "Факт 100г": row.fact100,
+        "Разница 100г": row.diff100,
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Ревизия");
+
+    XLSX.writeFile(
+      workbook,
+      `inventory-revision-${showOnlyRevisionChanges ? "changes" : "all"}-${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx`
+    );
+  };
+
   const getRevisionChanges = () => {
     return flavors
       .filter((flavor) => !flavor.archived)
@@ -5023,6 +5109,22 @@ function App() {
                   onClick={fillRevisionCountsFromCurrentStock}
                 >
                   Заполнить по базе
+                </button>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={downloadRevisionJson}
+                >
+                  Скачать акт JSON
+                </button>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={downloadRevisionXlsx}
+                >
+                  Скачать акт XLSX
                 </button>
 
                 <button
