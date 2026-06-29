@@ -2569,8 +2569,11 @@ const titles = {
 
   const normalizeDuplicateKey = (value) => {
     return String(value || "")
+      .normalize("NFKC")
       .toLowerCase()
       .replace(/ё/g, "е")
+      .replace(/[’‘`´ʼ]/g, "'")
+      .replace(/[‐-‒–—]/g, "-")
       .replace(/\s+/g, " ")
       .trim();
   };
