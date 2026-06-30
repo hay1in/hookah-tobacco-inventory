@@ -6257,11 +6257,15 @@ if (currentView === "deadstock") {
                   <article className="data-quality-issue" key={issue.key}>
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
                         setOpenDataQualityIssue(
                           openDataQualityIssue === issue.key ? null : issue.key
-                        )
-                      }
+                        );
+
+                        if (issue.key !== "noTagsInStock") {
+                          clearSelectedDataQualityFlavors();
+                        }
+                      }}
                     >
                       <span>{issue.title}</span>
                       <strong>
