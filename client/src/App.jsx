@@ -1087,6 +1087,59 @@ function App() {
     return Boolean(details.cancelled || details.cancelledAt);
   };
 
+  const normalizeSupplierName = (value) => {
+    const originalValue = String(value || "").trim();
+
+    if (!originalValue) {
+      return "";
+    }
+
+    const key = originalValue
+      .normalize("NFKC")
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .replace(/[«»"']/g, "")
+      .replace(/[.,]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const keyWithoutLegalForm = key
+      .replace(/^ооо\s+/, "")
+      .replace(/^ип\s+/, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const compactKey = keyWithoutLegalForm.replace(/\s+/g, "");
+
+    if (
+      key === "ооо табачная дистрибуционная компания" ||
+      key === "ооо тдк" ||
+      keyWithoutLegalForm === "табачная дистрибуционная компания" ||
+      keyWithoutLegalForm === "тдк"
+    ) {
+      return "OSHISHA";
+    }
+
+    if (key === "ооо омега" || keyWithoutLegalForm === "омега") {
+      return "ЦТД";
+    }
+
+    if (key === "ооо биг смок" || keyWithoutLegalForm === "биг смок") {
+      return "Биг Смок";
+    }
+
+    if (
+      compactKey === "хукамаркет" ||
+      compactKey === "хукаmarket" ||
+      compactKey === "hookahmarket" ||
+      compactKey === "hookamarket"
+    ) {
+      return "Хукамаркет";
+    }
+
+    return originalValue;
+  };
+
 
   const supplierSuggestions = Array.from(
     new Set(
@@ -1104,7 +1157,7 @@ function App() {
 
           return details.supplier;
         })
-        .map((supplier) => String(supplier || "").trim())
+        .map((supplier) => normalizeSupplierName(supplier))
         .filter(Boolean)
     )
   ).sort((a, b) => a.localeCompare(b, "ru"));
@@ -1970,13 +2023,15 @@ function App() {
             ])
           );
 
-          const supplier = String(
-            getExcelValue(row, [
-              "Поставщик",
-              "supplier",
-              "Supplier",
-            ])
-          ).trim();
+          const supplier = normalizeSupplierName(
+            String(
+              getExcelValue(row, [
+                "Поставщик",
+                "supplier",
+                "Supplier",
+              ])
+            ).trim()
+          );
 
           const price = parseExcelNumber(
             getExcelValue(row, [
@@ -3301,7 +3356,7 @@ const titles = {
           weight,
           weightGrams,
           totalGrams,
-          supplier: details.supplier || "Поставщик не указан",
+          supplier: normalizeSupplierName(details.supplier) || "Поставщик не указан",
           price,
           quantity,
           total,
