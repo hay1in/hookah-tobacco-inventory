@@ -3331,6 +3331,7 @@ const titles = {
       supplyLogsWithoutFlavor,
       supplyLogsWithDeletedFlavor,
       duplicateFlavorGroups: duplicateGroups,
+      brandVariantGroups: brandDuplicateGroups,
       totalIssues:
         flavorsWithoutTags.length +
         flavorsWithoutPacks.length +
@@ -3340,7 +3341,8 @@ const titles = {
         suppliesWithoutDate.length +
         supplyLogsWithoutFlavor.length +
         supplyLogsWithDeletedFlavor.length +
-        duplicateGroups.length,
+        duplicateGroups.length +
+        brandDuplicateGroups.length,
     };
   })();
 
@@ -3362,6 +3364,21 @@ const titles = {
           type: "flavor",
         };
       }),
+    },
+    {
+      key: "brandVariants",
+      title: "Варианты написания брендов",
+      items: dataQualityData.brandVariantGroups.map((group) => {
+        const firstFlavor = group.flavors[0];
+        const variants = Array.from(group.variants.keys()).join(" / ");
+
+        return {
+          id: firstFlavor?.id,
+          title: variants,
+          meta: `${group.flavors.length} позиций · привести бренд к одному написанию`,
+          type: "flavor",
+        };
+      }).filter((item) => item.id),
     },
     {
       key: "noTags",
