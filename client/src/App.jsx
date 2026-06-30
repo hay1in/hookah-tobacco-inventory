@@ -63,6 +63,15 @@ const getTodayInputDate = () => {
   return new Date().toISOString().slice(0, 10);
 };
 
+const scrollToPageTop = () => {
+  window.setTimeout(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, 0);
+};
+
 function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [currentView, setCurrentView] = useState("inventory");
@@ -766,7 +775,8 @@ function App() {
   const openEditForm = (flavor) => {
     setEditingFlavorId(flavor.id);
 
-    setEditForm({
+    
+    scrollToPageTop();setEditForm({
       brand: flavor.brand || "",
       name: flavor.name || "",
       packsText: (flavor.packs || [])
