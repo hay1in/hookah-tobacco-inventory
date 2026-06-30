@@ -4702,7 +4702,7 @@ return "";
           {activeChoiceModal === "import" && (
             <>
               <span className="choice-modal-eyebrow">Импорт</span>
-              <h2>Что сделать?</h2>
+              <h2>Загрузить историю закупки</h2>
 
               <div className="choice-modal-actions">
                 <button
@@ -4711,16 +4711,7 @@ return "";
                     startExcelImport("supply");
                   }}
                 >
-                  Импорт закупки
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    startExcelImport("inventory");
-                  }}
-                >
-                  Импорт склада
+                  Выбрать Excel закупки
                 </button>
 
                 <button
@@ -4731,16 +4722,6 @@ return "";
                   }}
                 >
                   Шаблон закупки
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    downloadImportTemplate("inventory");
-                    setActiveChoiceModal(null);
-                  }}
-                >
-                  Шаблон склада
                 </button>
 
                 <button
@@ -6752,7 +6733,6 @@ if (currentView === "deadstock") {
                     <th>Вкус</th>
                     <th>Фасовка</th>
                     <th>Кол-во</th>
-                    <th>Закуплено</th>
                     <th>Дата</th>
                     <th>Поставщик</th>
                     <th>Цена</th>
@@ -6776,7 +6756,6 @@ if (currentView === "deadstock") {
                       </td>
                       <td>{row.weight}</td>
                       <td>{row.quantity}</td>
-                      <td>{row.purchasedQuantity}</td>
                       <td>{row.supplyDate || "—"}</td>
                       <td>{row.supplier || "—"}</td>
                       <td>{row.price ? `${row.price} ₽` : "—"}</td>
