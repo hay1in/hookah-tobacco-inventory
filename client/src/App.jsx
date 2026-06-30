@@ -2546,9 +2546,12 @@ const titles = {
     const matchesStatus =
       statusFilter === "all" ? !flavor.archived : status === statusFilter;
 
+    const flavorTags = Array.isArray(flavor.tags) ? flavor.tags : [];
+
     const matchesTag =
       selectedTag === "all" ||
-      (flavor.tags || []).some(
+      (selectedTag === "__NO_TAGS__" && flavorTags.length === 0) ||
+      flavorTags.some(
         (tag) =>
           normalizeSearchValue(tag) === normalizeSearchValue(selectedTag)
       );
@@ -4837,10 +4840,6 @@ return "";
                   Теги
                 </button>
 
-                <button type="button" onClick={() => goToView("no-tags")}>
-                  Без тегов
-                </button>
-
                 <button
                   onClick={() => {
                     setSearchText("");
@@ -5457,83 +5456,6 @@ if (currentView === "deadstock") {
             ))}
           </section>
         </main>
-      </div>
-    );
-  }
-
-  if (currentView === "no-tags") {
-    return (
-      <div className="app">
-        {renderAppHeader({
-          title: "Без тегов",
-          subtitle: "Активные вкусы, которым нужно назначить вкусовые теги",
-        })}
-
-        <main className="content tags-page">
-          <section className="analytics-grid">
-            <article className="analytics-card">
-              <span>Вкусов без тегов</span>
-              <strong>{noTagFlavors.length}</strong>
-            </article>
-
-            <article className="analytics-card">
-              <span>На складе</span>
-              <strong>
-                {noTagFlavors.filter((flavor) => getTotalQuantity(flavor.packs || []) > 0).length}
-              </strong>
-            </article>
-
-            <article className="analytics-card">
-              <span>Без остатка</span>
-              <strong>
-                {noTagFlavors.filter((flavor) => getTotalQuantity(flavor.packs || []) === 0).length}
-              </strong>
-            </article>
-          </section>
-
-          <section className="tags-table-panel">
-            <h2>Вкусы без тегов</h2>
-            <p className="form-hint">
-              Нажми на вкус, чтобы открыть его карточку на складе и добавить теги.
-            </p>
-
-            {noTagFlavors.length === 0 && (
-              <p className="info-message dark">Все активные вкусы уже размечены тегами.</p>
-            )}
-
-            <div className="tags-table">
-              {noTagFlavors.map((flavor) => {
-                const total = getTotalQuantity(flavor.packs || []);
-                const packsText = (flavor.packs || [])
-                  .map((pack) => `${pack.weight}: ${Number(pack.quantity || 0)} пач.`)
-                  .join(" · ");
-
-                return (
-                  <article className="tag-row-card" key={flavor.id}>
-                    <div>
-                      <strong>{flavor.brand} — {flavor.name}</strong>
-
-                      <span>
-                        Остаток: {total} пач.
-                        {packsText ? ` · ${packsText}` : ""}
-                      </span>
-                    </div>
-
-                    <button
-                      className="secondary-button dark"
-                      onClick={() => openFlavorFromAnalytics(flavor.id)}
-                    >
-                      Открыть вкус
-                    </button>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        </main>
-
-        {renderNotifications()}
-        {renderImportProgress()}
       </div>
     );
   }
@@ -7186,6 +7108,24 @@ if (currentView === "deadstock") {
             onClick={() => setSelectedTag("all")}
           >
             Все теги
+          </button>
+
+          <button
+            className={
+              selectedTag === "__NO_TAGS__"
+                ? "tag-filter-button active"
+                : "tag-filter-button"
+            }
+            onClick={() => {
+              setSelectedTag("__NO_TAGS__");
+              setSearchText("");
+              setStatusFilter("all");
+              setOpenBrandName("");
+              setOpenFlavorId(null);
+              clearSelectedFlavors();
+            }}
+          >
+            Без тегов
           </button>
 
           {quickTags.map((tag) => (
