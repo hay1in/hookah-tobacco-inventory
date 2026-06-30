@@ -121,6 +121,9 @@ function App() {
     minStock: 1,
   });
 
+  const [selectedDataQualityFlavorIds, setSelectedDataQualityFlavorIds] = useState([]);
+  const [bulkDataQualityTags, setBulkDataQualityTags] = useState("");
+
   const showNotification = (message, type = "success") => {
     const id =
       typeof crypto !== "undefined" && crypto.randomUUID
@@ -465,6 +468,112 @@ function App() {
     setOpenFlavorId(flavor.id);
     highlightFlavor(flavor.id);
     openEditForm(flavor);
+  };
+
+  const toggleDataQualityFlavorSelection = (flavorId) => {
+    const normalizedId = String(flavorId);
+
+    setSelectedDataQualityFlavorIds((currentIds) =>
+      currentIds.includes(normalizedId)
+        ? currentIds.filter((id) => id !== normalizedId)
+        : [...currentIds, normalizedId]
+    );
+  };
+
+  const selectVisibleDataQualityFlavors = (items) => {
+    setSelectedDataQualityFlavorIds(
+      items
+        .filter((item) => item.type === "flavor")
+        .slice(0, 20)
+        .map((item) => String(item.id))
+    );
+  };
+
+  const clearSelectedDataQualityFlavors = () => {
+    setSelectedDataQualityFlavorIds([]);
+  };
+
+  const handleDataQualityItemClick = (item, issueKey) => {
+    if (issueKey === "noTagsInStock" && item.type === "flavor") {
+      toggleDataQualityFlavorSelection(item.id);
+      return;
+    }
+
+    if (item.type === "flavor") {
+      openFlavorFromAnalytics(item.id);
+      return;
+    }
+
+    openSupplyLogFromAnalytics(item.id);
+  };
+
+  const addTagsToSelectedDataQualityFlavors = async () => {
+    const tagsToAdd = bulkDataQualityTags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    if (selectedDataQualityFlavorIds.length === 0) {
+      showNotification("Выбери вкусы для массового добавления тегов", "error");
+      return;
+    }
+
+    if (tagsToAdd.length === 0) {
+      showNotification("Введи хотя бы один тег", "error");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const selectedIds = new Set(selectedDataQualityFlavorIds);
+
+      const selectedFlavors = flavors.filter((flavor) =>
+        selectedIds.has(String(flavor.id))
+      );
+
+      for (const flavor of selectedFlavors) {
+        const currentTags = Array.isArray(flavor.tags) ? flavor.tags : [];
+        const mergedTags = Array.from(
+          new Set(
+            [...currentTags, ...tagsToAdd]
+              .map((tag) => String(tag || "").trim())
+              .filter(Boolean)
+          )
+        );
+
+        const response = await apiFetch(`/api/flavors/${flavor.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            brand: flavor.brand || "",
+            name: flavor.name || "",
+            packs: flavor.packs || [],
+            tags: mergedTags,
+            minStock: Number(flavor.minStock || flavor.min_stock || 1),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Не удалось обновить ${flavor.brand} — ${flavor.name}`);
+        }
+      }
+
+      await refreshFlavors();
+
+      setBulkDataQualityTags("");
+      setSelectedDataQualityFlavorIds([]);
+
+      showNotification(`Теги добавлены: ${selectedFlavors.length} поз.`, "success");
+    } catch (error) {
+      console.error(error);
+      showNotification(error.message || "Не удалось массово добавить теги", "error");
+      setErrorText(error.message || "Не удалось массово добавить теги");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const highlightFlavor = (flavorId) => {
@@ -6163,35 +6272,85 @@ if (currentView === "deadstock") {
 
                     {openDataQualityIssue === issue.key && (
                       <div className="data-quality-items">
+                        {issue.key === "noTagsInStock" && issue.items.length > 0 && (
+                          <div className="data-quality-bulk-tools">
+                            <div className="data-quality-bulk-actions">
+                              <button
+                                type="button"
+                                onClick={() => selectVisibleDataQualityFlavors(issue.items)}
+                              >
+                                Выбрать показанные
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={clearSelectedDataQualityFlavors}
+                              >
+                                Снять выбор
+                              </button>
+
+                              <strong>
+                                Выбрано: {selectedDataQualityFlavorIds.length}
+                              </strong>
+                            </div>
+
+                            <div className="data-quality-bulk-form">
+                              <input
+                                type="text"
+                                value={bulkDataQualityTags}
+                                onChange={(event) =>
+                                  setBulkDataQualityTags(event.target.value)
+                                }
+                                placeholder="Теги через запятую: десерт, сливочный"
+                              />
+
+                              <button
+                                type="button"
+                                onClick={addTagsToSelectedDataQualityFlavors}
+                              >
+                                Добавить теги выбранным
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
                         {issue.items.length === 0 ? (
                           <p>Проблем нет</p>
                         ) : (
-                          issue.items.slice(0, 20).map((item) => (
-                            <button
-                              className="data-quality-item"
-                              type="button"
-                              key={`${item.type}-${item.id}`}
-                              onClick={() => {
-                                if (item.type === "flavor") {
-                                  openFlavorFromAnalytics(item.id);
-                                  return;
+                          issue.items.slice(0, 20).map((item) => {
+                            const isSelected = selectedDataQualityFlavorIds.includes(
+                              String(item.id)
+                            );
+
+                            return (
+                              <button
+                                className={`data-quality-item ${
+                                  isSelected ? "selected" : ""
+                                }`}
+                                type="button"
+                                key={`${item.type}-${item.id}`}
+                                onClick={() =>
+                                  handleDataQualityItemClick(item, issue.key)
                                 }
+                              >
+                                <span className="data-quality-item-main">
+                                  <strong>{item.title}</strong>
+                                  <span>{item.meta}</span>
+                                </span>
 
-                                openSupplyLogFromAnalytics(item.id);
-                              }}
-                            >
-                              <span className="data-quality-item-main">
-                                <strong>{item.title}</strong>
-                                <span>{item.meta}</span>
-                              </span>
-
-                              <em className="data-quality-item-action">
-                                {item.type === "flavor"
-                                  ? "Открыть вкус"
-                                  : "Исправить поставку"}
-                              </em>
-                            </button>
-                          ))
+                                <em className="data-quality-item-action">
+                                  {issue.key === "noTagsInStock" &&
+                                  item.type === "flavor"
+                                    ? isSelected
+                                      ? "Выбрано"
+                                      : "Выбрать"
+                                    : item.type === "flavor"
+                                      ? "Открыть вкус"
+                                      : "Исправить поставку"}
+                                </em>
+                              </button>
+                            );
+                          })
                         )}
 
                         {issue.items.length > 20 && (

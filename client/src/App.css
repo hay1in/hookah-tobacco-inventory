@@ -3464,3 +3464,66 @@ button.data-quality-item:hover {
     flex-direction: column;
   }
 }
+
+/* Data quality bulk tools */
+.data-quality-bulk-tools {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #f7efe6;
+  border: 1px solid #eadbca;
+}
+
+.data-quality-bulk-actions,
+.data-quality-bulk-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.data-quality-bulk-actions button,
+.data-quality-bulk-form button {
+  border: none;
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: #3a2a22;
+  color: #fff7ed;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.data-quality-bulk-actions strong {
+  color: #6d4c38;
+}
+
+.data-quality-bulk-form input {
+  flex: 1 1 260px;
+  min-width: 0;
+  border: 1px solid #dfd2c5;
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #fffaf5;
+  color: #211b18;
+  outline: none;
+}
+
+.data-quality-item.selected {
+  outline: 3px solid #d8a45f;
+  background: #fff2df;
+}
+
+@media (max-width: 700px) {
+  .data-quality-bulk-actions,
+  .data-quality-bulk-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .data-quality-bulk-actions button,
+  .data-quality-bulk-form button,
+  .data-quality-bulk-form input {
+    width: 100%;
+  }
+}
