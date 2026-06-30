@@ -3284,21 +3284,30 @@ const titles = {
       });
     });
 
-    const supplyLogs = actionLogs
-      .filter((log) => {
-        const logFlavorId = log.flavorId || log.flavor_id;
-
-        return (
-          log.action === "supply" &&
-          !isCancelledSupplyLog(log) &&
-          logFlavorId &&
-          currentFlavorIds.has(String(logFlavorId))
-        );
-      })
+    const allSupplyLogs = actionLogs
+      .filter((log) => log.action === "supply" && !isCancelledSupplyLog(log))
       .map((log) => ({
         ...log,
         parsedDetails: parseActionDetails(log.details),
       }));
+
+    const supplyLogsWithoutFlavor = allSupplyLogs.filter((log) => {
+      const logFlavorId = log.flavorId || log.flavor_id;
+
+      return !logFlavorId;
+    });
+
+    const supplyLogsWithDeletedFlavor = allSupplyLogs.filter((log) => {
+      const logFlavorId = log.flavorId || log.flavor_id;
+
+      return logFlavorId && !currentFlavorIds.has(String(logFlavorId));
+    });
+
+    const supplyLogs = allSupplyLogs.filter((log) => {
+      const logFlavorId = log.flavorId || log.flavor_id;
+
+      return logFlavorId && currentFlavorIds.has(String(logFlavorId));
+    });
 
     const suppliesWithoutPrice = supplyLogs.filter((log) => {
       return !Number(log.parsedDetails.price || 0);
@@ -3319,13 +3328,17 @@ const titles = {
       suppliesWithoutPrice,
       suppliesWithoutSupplier,
       suppliesWithoutDate,
+      supplyLogsWithoutFlavor,
+      supplyLogsWithDeletedFlavor,
       totalIssues:
         flavorsWithoutTags.length +
         flavorsWithoutPacks.length +
         flavorsWithBrokenPurchasedQuantity.length +
         suppliesWithoutPrice.length +
         suppliesWithoutSupplier.length +
-        suppliesWithoutDate.length,
+        suppliesWithoutDate.length +
+        supplyLogsWithoutFlavor.length +
+        supplyLogsWithDeletedFlavor.length,
     };
   })();
 
@@ -3388,6 +3401,26 @@ const titles = {
         id: log.id,
         title: `${log.brand} — ${log.name}`,
         meta: "Дата поставки не указана",
+        type: "log",
+      })),
+    },
+    {
+      key: "supplyWithoutFlavor",
+      title: "Поставки без привязки к вкусу",
+      items: dataQualityData.supplyLogsWithoutFlavor.map((log) => ({
+        id: log.id,
+        title: `${log.brand || "Без бренда"} — ${log.name || "Без вкуса"}`,
+        meta: `${formatHistoryDate(log)} · нет flavorId`,
+        type: "log",
+      })),
+    },
+    {
+      key: "supplyWithDeletedFlavor",
+      title: "Поставки с удалённым вкусом",
+      items: dataQualityData.supplyLogsWithDeletedFlavor.map((log) => ({
+        id: log.id,
+        title: `${log.brand || "Без бренда"} — ${log.name || "Без вкуса"}`,
+        meta: `${formatHistoryDate(log)} · вкус удалён или объединён`,
         type: "log",
       })),
     },
