@@ -411,7 +411,7 @@ app.get("/api/action-logs", async (req, res) => {
         created_at AS "createdAt"
       FROM action_logs
       ORDER BY created_at DESC
-      LIMIT 150
+      
     `);
 
     res.json(result.rows);
