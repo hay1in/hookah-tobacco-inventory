@@ -2014,7 +2014,7 @@ function App() {
     }
 
     if (importMode !== "supply") {
-      showNotification("Импорт склада отключён. Используй импорт закупки.", "error");
+      showNotification("Доступен только импорт закупки.", "error");
       return;
     }
 
@@ -2322,7 +2322,7 @@ const titles = {
       purchase_confirmed_off: "Закупка снята",
       supply: "Поставка",
       import_excel: "Импорт Excel",
-      import_inventory: "Импорт склада",
+      import_inventory: "Старый импорт данных",
       merge_duplicates: "Объединение дублей",
       merge_tags: "Объединение тегов",
       bulk_action: "Массовое действие",
@@ -3949,7 +3949,7 @@ const titles = {
     purchase_confirmed_off: "Подтверждение закупки снято",
     supply: "Поставка",
     import_excel: "Импорт Excel",
-    import_inventory: "Импорт склада",
+    import_inventory: "Старый импорт данных",
     merge_duplicates: "Объединение дублей",
     merge_tags: "Объединение тегов",
     bulk_action: "Массовое действие",
