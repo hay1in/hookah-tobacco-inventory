@@ -3108,11 +3108,25 @@ const titles = {
   const purchaseFinanceData = (() => {
     const normalizeFinanceKey = (value) => {
       return String(value || "")
+        .normalize("NFKC")
         .toLowerCase()
         .replace(/ё/g, "е")
+        .replace(/[’‘`´ʼ]/g, "'")
+        .replace(/[‐-‒–—]/g, "-")
         .replace(/\s+/g, " ")
         .trim();
     };
+
+    const canonicalBrandByFinanceKey = flavors.reduce((map, flavor) => {
+      const brand = flavor.brand || "Без бренда";
+      const key = normalizeFinanceKey(brand);
+
+      if (!map.has(key)) {
+        map.set(key, brand);
+      }
+
+      return map;
+    }, new Map());
 
     const allSupplyRows = actionLogs
       .filter((log) => {
@@ -3190,13 +3204,21 @@ const titles = {
     const totalSpent = rowsWithPriceChanges.reduce((sum, row) => sum + row.total, 0);
     const totalPacks = rowsWithPriceChanges.reduce((sum, row) => sum + row.quantity, 0);
 
-    const groupBy = (field) => {
+    const groupBy = (field, options = {}) => {
       const map = new Map();
 
       rowsWithPriceChanges.forEach((row) => {
-        const key = row[field] || "Не указано";
+        const rawValue = row[field] || "Не указано";
+        const key = options.normalizeKey
+          ? options.normalizeKey(rawValue)
+          : rawValue;
+
+        const displayName = options.getDisplayName
+          ? options.getDisplayName(rawValue, key)
+          : rawValue;
+
         const previous = map.get(key) || {
-          name: key,
+          name: displayName,
           total: 0,
           quantity: 0,
           grams: 0,
@@ -3205,6 +3227,7 @@ const titles = {
 
         map.set(key, {
           ...previous,
+          name: previous.name || displayName,
           total: previous.total + row.total,
           quantity: previous.quantity + row.quantity,
           grams: previous.grams + row.totalGrams,
@@ -3232,7 +3255,11 @@ const titles = {
       totalSpent,
       totalPacks,
       averagePackPrice: totalPacks > 0 ? totalSpent / totalPacks : 0,
-      byBrand: groupBy("brand"),
+      byBrand: groupBy("brand", {
+        normalizeKey: normalizeFinanceKey,
+        getDisplayName: (brand, key) =>
+          canonicalBrandByFinanceKey.get(key) || brand || "Без бренда",
+      }),
       bySupplier: groupBy("supplier"),
       priceIncreases,
       priceDecreases,
