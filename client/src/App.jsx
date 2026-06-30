@@ -177,6 +177,40 @@ function App() {
     );
   };
 
+  const renderImportProgress = () => {
+    if (!importProgress) {
+      return null;
+    }
+
+    const total = Number(importProgress.total || 0);
+    const current = Number(importProgress.current || 0);
+    const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+
+    return (
+      <div className="import-progress-overlay">
+        <section className="import-progress-card">
+          <span className="import-progress-label">
+            {importProgress.stage || "Импортируем"}
+          </span>
+
+          <h2>{current.toLocaleString("ru-RU")} / {total.toLocaleString("ru-RU")}</h2>
+
+          <div className="import-progress-bar">
+            <span style={{ width: `${Math.min(100, Math.max(0, percent))}%` }} />
+          </div>
+
+          <strong>{percent}%</strong>
+
+          {importProgress.currentItem && (
+            <p>{importProgress.currentItem}</p>
+          )}
+
+          <em>Не закрывай страницу до завершения импорта</em>
+        </section>
+      </div>
+    );
+  };
+
   const apiFetch = (path, options = {}) => {
     return fetch(`${API_URL}${path}`, {
       ...options,
@@ -290,6 +324,7 @@ function App() {
       console.error(error);
       setAuthError(error.message || "Не удалось войти");
     } finally {
+      setImportProgress(null);
       setIsLoading(false);
     }
   };
@@ -2040,13 +2075,28 @@ function App() {
       setIsLoading(true);
       setErrorText("");
 
+      setImportProgress({
+        stage: "Подготовка backup",
+        current: 0,
+        total: pendingImportRows.length,
+        currentItem: pendingImportFileName,
+      });
+
       await createBackupExcel("before-import");
       await createFullBackupJson("before-import");
 
       let result = { importedCount: 0 };
 
       if (importMode === "supply") {
-        for (const row of pendingImportRows) {
+        for (let index = 0; index < pendingImportRows.length; index += 1) {
+          const row = pendingImportRows[index];
+
+          setImportProgress({
+            stage: "Импортируем закупку",
+            current: index,
+            total: pendingImportRows.length,
+            currentItem: `${row.brand} — ${row.name}`,
+          });
           const response = await apiFetch("/api/flavors/supply", {
             method: "POST",
             headers: {
@@ -2086,8 +2136,22 @@ function App() {
           });
 
           result.importedCount += 1;
+
+          setImportProgress({
+            stage: "Импортируем закупку",
+            current: index + 1,
+            total: pendingImportRows.length,
+            currentItem: `${row.brand} — ${row.name}`,
+          });
         }
       } else {
+        setImportProgress({
+          stage: "Импортируем склад",
+          current: 0,
+          total: pendingImportRows.length,
+          currentItem: pendingImportFileName,
+        });
+
         const response = await apiFetch("/api/flavors/import", {
           method: "POST",
           headers: {
@@ -2114,6 +2178,13 @@ function App() {
         }
 
         result = await response.json();
+
+        setImportProgress({
+          stage: "Импортируем склад",
+          current: pendingImportRows.length,
+          total: pendingImportRows.length,
+          currentItem: pendingImportFileName,
+        });
 
         await addActionLog({
           action: "import_inventory",
@@ -2186,6 +2257,7 @@ function App() {
   const [pendingImportRows, setPendingImportRows] = useState([]);
   const [pendingImportFileName, setPendingImportFileName] = useState("");
   const [showOnlyImportProblems, setShowOnlyImportProblems] = useState(false);
+  const [importProgress, setImportProgress] = useState(null);
 
   const quickTags = [
     "ягоды",
@@ -4724,6 +4796,7 @@ return "";
     return (
       <>
       {renderNotifications()}
+      {renderImportProgress()}
       {renderGlobalFileInput()}
       {renderChoiceModal()}
 

@@ -3527,3 +3527,72 @@ button.data-quality-item:hover {
     width: 100%;
   }
 }
+
+/* Import progress overlay */
+.import-progress-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(27, 20, 16, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.import-progress-card {
+  width: min(460px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 26px;
+  border-radius: 28px;
+  background: #fff7ed;
+  color: #2f241f;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  text-align: center;
+}
+
+.import-progress-label {
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a644d;
+}
+
+.import-progress-card h2 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.import-progress-bar {
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eadbca;
+}
+
+.import-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #3a2a22;
+  transition: width 0.2s ease;
+}
+
+.import-progress-card strong {
+  font-size: 22px;
+}
+
+.import-progress-card p {
+  margin: 0;
+  font-weight: 800;
+  color: #5b4335;
+}
+
+.import-progress-card em {
+  font-style: normal;
+  font-size: 13px;
+  color: #8a644d;
+}
