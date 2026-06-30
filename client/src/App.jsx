@@ -3330,6 +3330,7 @@ const titles = {
       suppliesWithoutDate,
       supplyLogsWithoutFlavor,
       supplyLogsWithDeletedFlavor,
+      duplicateFlavorGroups: duplicateGroups,
       totalIssues:
         flavorsWithoutTags.length +
         flavorsWithoutPacks.length +
@@ -3338,12 +3339,30 @@ const titles = {
         suppliesWithoutSupplier.length +
         suppliesWithoutDate.length +
         supplyLogsWithoutFlavor.length +
-        supplyLogsWithDeletedFlavor.length,
+        supplyLogsWithDeletedFlavor.length +
+        duplicateGroups.length,
     };
   })();
 
 
   const dataQualityIssues = [
+    {
+      key: "duplicateFlavors",
+      title: "Подозрительные дубли вкусов",
+      items: dataQualityData.duplicateFlavorGroups.map((group) => {
+        const firstFlavor = group.items[0];
+        const variants = group.items
+          .map((flavor) => `${flavor.brand} — ${flavor.name}`)
+          .join(" / ");
+
+        return {
+          id: firstFlavor.id,
+          title: `${firstFlavor.brand} — ${firstFlavor.name}`,
+          meta: `${group.items.length} записи · ${variants}`,
+          type: "flavor",
+        };
+      }),
+    },
     {
       key: "noTags",
       title: "Позиции без тегов",
