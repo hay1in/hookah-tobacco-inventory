@@ -2859,6 +2859,25 @@ const titles = {
     return total === 0 || isLowStock;
   });
 
+  const noTagFlavors = flavors
+    .filter((flavor) => {
+      const tags = Array.isArray(flavor.tags) ? flavor.tags : [];
+
+      return !flavor.archived && tags.length === 0;
+    })
+    .sort((a, b) => {
+      const brandCompare = String(a.brand || "").localeCompare(
+        String(b.brand || ""),
+        "ru"
+      );
+
+      if (brandCompare !== 0) {
+        return brandCompare;
+      }
+
+      return String(a.name || "").localeCompare(String(b.name || ""), "ru");
+    });
+
 
   const parseWeightGrams = (weight) => {
     const normalizedWeight = String(weight || "")
@@ -4818,6 +4837,10 @@ return "";
                   Теги
                 </button>
 
+                <button type="button" onClick={() => goToView("no-tags")}>
+                  Без тегов
+                </button>
+
                 <button
                   onClick={() => {
                     setSearchText("");
@@ -5434,6 +5457,83 @@ if (currentView === "deadstock") {
             ))}
           </section>
         </main>
+      </div>
+    );
+  }
+
+  if (currentView === "no-tags") {
+    return (
+      <div className="app">
+        {renderAppHeader({
+          title: "Без тегов",
+          subtitle: "Активные вкусы, которым нужно назначить вкусовые теги",
+        })}
+
+        <main className="content tags-page">
+          <section className="analytics-grid">
+            <article className="analytics-card">
+              <span>Вкусов без тегов</span>
+              <strong>{noTagFlavors.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>На складе</span>
+              <strong>
+                {noTagFlavors.filter((flavor) => getTotalQuantity(flavor.packs || []) > 0).length}
+              </strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Без остатка</span>
+              <strong>
+                {noTagFlavors.filter((flavor) => getTotalQuantity(flavor.packs || []) === 0).length}
+              </strong>
+            </article>
+          </section>
+
+          <section className="tags-table-panel">
+            <h2>Вкусы без тегов</h2>
+            <p className="form-hint">
+              Нажми на вкус, чтобы открыть его карточку на складе и добавить теги.
+            </p>
+
+            {noTagFlavors.length === 0 && (
+              <p className="info-message dark">Все активные вкусы уже размечены тегами.</p>
+            )}
+
+            <div className="tags-table">
+              {noTagFlavors.map((flavor) => {
+                const total = getTotalQuantity(flavor.packs || []);
+                const packsText = (flavor.packs || [])
+                  .map((pack) => `${pack.weight}: ${Number(pack.quantity || 0)} пач.`)
+                  .join(" · ");
+
+                return (
+                  <article className="tag-row-card" key={flavor.id}>
+                    <div>
+                      <strong>{flavor.brand} — {flavor.name}</strong>
+
+                      <span>
+                        Остаток: {total} пач.
+                        {packsText ? ` · ${packsText}` : ""}
+                      </span>
+                    </div>
+
+                    <button
+                      className="secondary-button dark"
+                      onClick={() => openFlavorFromAnalytics(flavor.id)}
+                    >
+                      Открыть вкус
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        </main>
+
+        {renderNotifications()}
+        {renderImportProgress()}
       </div>
     );
   }
