@@ -2860,6 +2860,27 @@ const titles = {
       .trim();
   };
 
+  const mainTasteTags = [
+    "ягоды",
+    "фрукт",
+    "алкоголь",
+    "десерт",
+    "специи",
+    "цитрус",
+    "напиток",
+    "гастрономия",
+    "травы",
+    "цветы",
+    "чай",
+    "орехи",
+  ];
+
+  const mainTasteTagKeys = new Set(mainTasteTags.map((tag) => normalizeTagKey(tag)));
+
+  const isMainTasteTag = (tag) => {
+    return mainTasteTagKeys.has(normalizeTagKey(tag));
+  };
+
   const tagRows = Array.from(
     flavors.reduce((map, flavor) => {
       const tags = flavor.tags || [];
@@ -2897,6 +2918,9 @@ const titles = {
   )
     .map(([, value]) => value)
     .sort((a, b) => b.flavorCount - a.flavorCount || a.tag.localeCompare(b.tag, "ru"));
+
+  const mainTasteTagRows = tagRows.filter((row) => isMainTasteTag(row.tag));
+  const otherTagRows = tagRows.filter((row) => !isMainTasteTag(row.tag));
 
   const tagDuplicateGroups = Array.from(
     tagRows.reduce((groups, row) => {
@@ -5568,6 +5592,86 @@ if (currentView === "deadstock") {
               </div>
             </section>
           )}
+
+          <section className="tags-table-panel">
+            <h2>Топ основных тегов</h2>
+            <p className="form-hint">
+              Основные вкусовые категории: #ягоды, #фрукт, #алкоголь, #десерт,
+              #специи, #цитрус, #напиток, #гастрономия, #травы, #цветы, #чай, #орехи.
+            </p>
+
+            <div className="tags-table">
+              {mainTasteTagRows.length === 0 && (
+                <p className="info-message dark">Основные теги пока не используются</p>
+              )}
+
+              {mainTasteTagRows.map((row) => (
+                <article className="tag-row-card" key={row.tag}>
+                  <div>
+                    <strong>#{row.tag}</strong>
+
+                    <span>
+                      {row.flavorCount} вкусов · активных:{" "}
+                      {row.activeFlavorCount} · архив:{" "}
+                      {row.archivedFlavorCount} · остаток: {row.totalPacks} пач.
+                    </span>
+                  </div>
+
+                  <button
+                    className="secondary-button dark"
+                    onClick={() => {
+                      setSearchText("");
+                      setStatusFilter("all");
+                      setSelectedTag(row.tag);
+                      setOpenBrandName("");
+                      setOpenFlavorId(null);
+                      setCurrentView("inventory");
+                    }}
+                  >
+                    Показать
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="tags-table-panel">
+            <h2>Топ остальных тегов</h2>
+
+            <div className="tags-table">
+              {otherTagRows.length === 0 && (
+                <p className="info-message dark">Дополнительные теги пока не используются</p>
+              )}
+
+              {otherTagRows.map((row) => (
+                <article className="tag-row-card" key={row.tag}>
+                  <div>
+                    <strong>#{row.tag}</strong>
+
+                    <span>
+                      {row.flavorCount} вкусов · активных:{" "}
+                      {row.activeFlavorCount} · архив:{" "}
+                      {row.archivedFlavorCount} · остаток: {row.totalPacks} пач.
+                    </span>
+                  </div>
+
+                  <button
+                    className="secondary-button dark"
+                    onClick={() => {
+                      setSearchText("");
+                      setStatusFilter("all");
+                      setSelectedTag(row.tag);
+                      setOpenBrandName("");
+                      setOpenFlavorId(null);
+                      setCurrentView("inventory");
+                    }}
+                  >
+                    Показать
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
 
           <section className="tags-table-panel">
             <h2>Все теги</h2>
