@@ -3430,3 +3430,37 @@ button.data-quality-item:hover {
     flex-direction: column;
   }
 }
+
+/* Data quality quick actions */
+.data-quality-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.data-quality-item-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  text-align: left;
+}
+
+.data-quality-item-action {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #3a2a22;
+  color: #fff7ed;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .data-quality-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
