@@ -77,6 +77,8 @@ function App() {
   const [currentView, setCurrentView] = useState("inventory");
   const [analyticsFilter, setAnalyticsFilter] = useState("all");
   const [deadstockFilter, setDeadstockFilter] = useState("all");
+  const [isMainTagsExpanded, setIsMainTagsExpanded] = useState(false);
+  const [isOtherTagsExpanded, setIsOtherTagsExpanded] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [accessRole, setAccessRole] = useState("admin");
   const [passwordInput, setPasswordInput] = useState("");
@@ -5596,8 +5598,7 @@ if (currentView === "deadstock") {
           <section className="tags-table-panel">
             <h2>Топ основных тегов</h2>
             <p className="form-hint">
-              Основные вкусовые категории: #ягоды, #фрукт, #алкоголь, #десерт,
-              #специи, #цитрус, #напиток, #гастрономия, #травы, #цветы, #чай, #орехи.
+              Сначала показан топ-3. Остальные основные вкусовые категории можно раскрыть списком.
             </p>
 
             <div className="tags-table">
@@ -5605,7 +5606,7 @@ if (currentView === "deadstock") {
                 <p className="info-message dark">Основные теги пока не используются</p>
               )}
 
-              {mainTasteTagRows.map((row) => (
+              {(isMainTagsExpanded ? mainTasteTagRows : mainTasteTagRows.slice(0, 3)).map((row) => (
                 <article className="tag-row-card" key={row.tag}>
                   <div>
                     <strong>#{row.tag}</strong>
@@ -5633,17 +5634,32 @@ if (currentView === "deadstock") {
                 </article>
               ))}
             </div>
+
+            {mainTasteTagRows.length > 3 && (
+              <button
+                type="button"
+                className="secondary-button dark"
+                onClick={() => setIsMainTagsExpanded((currentValue) => !currentValue)}
+              >
+                {isMainTagsExpanded
+                  ? "Свернуть"
+                  : `Показать все ${mainTasteTagRows.length}`}
+              </button>
+            )}
           </section>
 
           <section className="tags-table-panel">
             <h2>Топ остальных тегов</h2>
+            <p className="form-hint">
+              Сначала показан топ-3 дополнительных тегов. Остальные можно раскрыть списком.
+            </p>
 
             <div className="tags-table">
               {otherTagRows.length === 0 && (
                 <p className="info-message dark">Дополнительные теги пока не используются</p>
               )}
 
-              {otherTagRows.map((row) => (
+              {(isOtherTagsExpanded ? otherTagRows : otherTagRows.slice(0, 3)).map((row) => (
                 <article className="tag-row-card" key={row.tag}>
                   <div>
                     <strong>#{row.tag}</strong>
@@ -5671,40 +5687,18 @@ if (currentView === "deadstock") {
                 </article>
               ))}
             </div>
-          </section>
 
-          <section className="tags-table-panel">
-            <h2>Все теги</h2>
-
-            <div className="tags-table">
-              {tagRows.map((row) => (
-                <article className="tag-row-card" key={row.tag}>
-                  <div>
-                    <strong>#{row.tag}</strong>
-
-                    <span>
-                      {row.flavorCount} вкусов · активных:{" "}
-                      {row.activeFlavorCount} · архив:{" "}
-                      {row.archivedFlavorCount} · остаток: {row.totalPacks} пач.
-                    </span>
-                  </div>
-
-                  <button
-                    className="secondary-button dark"
-                    onClick={() => {
-                      setSearchText("");
-                      setStatusFilter("all");
-                      setSelectedTag(row.tag);
-                      setOpenBrandName("");
-                      setOpenFlavorId(null);
-                      setCurrentView("inventory");
-                    }}
-                  >
-                    Показать
-                  </button>
-                </article>
-              ))}
-            </div>
+            {otherTagRows.length > 3 && (
+              <button
+                type="button"
+                className="secondary-button dark"
+                onClick={() => setIsOtherTagsExpanded((currentValue) => !currentValue)}
+              >
+                {isOtherTagsExpanded
+                  ? "Свернуть"
+                  : `Показать все ${otherTagRows.length}`}
+              </button>
+            )}
           </section>
         </main>
       </div>
