@@ -458,21 +458,13 @@ function App() {
     }
 
     setCurrentView("inventory");
-
+    setSearchText(flavor.name || "");
+    setSelectedTag("all");
+    setStatusFilter("all");
     setOpenBrandName(flavor.brand || "");
-    setOpenFlavorId(flavorId);
-    highlightFlavor(flavorId);
-
-    window.setTimeout(() => {
-      const element = document.querySelector(
-        `[data-flavor-id="${flavorId}"]`
-      );
-
-      element?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, 250);
+    setOpenFlavorId(flavor.id);
+    highlightFlavor(flavor.id);
+    openEditForm(flavor);
   };
 
   const highlightFlavor = (flavorId) => {
@@ -776,7 +768,8 @@ function App() {
     setEditingFlavorId(flavor.id);
 
     
-    scrollToPageTop();setEditForm({
+    scrollToPageTop();
+    setEditForm({
       brand: flavor.brand || "",
       name: flavor.name || "",
       packsText: (flavor.packs || [])
