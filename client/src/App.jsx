@@ -6176,14 +6176,16 @@ if (currentView === "deadstock") {
                                 openSupplyLogFromAnalytics(item.id);
                               }}
                             >
-                              <strong>{item.title}</strong>
-                              <span>
-                                {item.meta}
-                                {" · "}
-                                {item.type === "flavor"
-                                  ? "открыть на складе"
-                                  : "исправить поставку"}
+                              <span className="data-quality-item-main">
+                                <strong>{item.title}</strong>
+                                <span>{item.meta}</span>
                               </span>
+
+                              <em className="data-quality-item-action">
+                                {item.type === "flavor"
+                                  ? "Открыть вкус"
+                                  : "Исправить поставку"}
+                              </em>
                             </button>
                           ))
                         )}
