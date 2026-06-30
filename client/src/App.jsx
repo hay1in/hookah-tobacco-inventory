@@ -4721,13 +4721,6 @@ return "";
                   {statusFilter === "Архив" ? "Склад" : "Архив"}
                 </button>
               </div>
-
-              <div className="dropdown-section">
-                <p>Вид</p>
-
-                
-              </div>
-
               <div className="dropdown-section">
                 <p>Данные</p>
 
