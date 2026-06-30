@@ -3210,14 +3210,7 @@ const titles = {
 
     const allSupplyRows = actionLogs
       .filter((log) => {
-        const logFlavorId = log.flavorId || log.flavor_id;
-
-        return (
-          log.action === "supply" &&
-          !isCancelledSupplyLog(log) &&
-          logFlavorId &&
-          currentFlavorIds.has(String(logFlavorId))
-        );
+        return log.action === "supply" && !isCancelledSupplyLog(log);
       })
       .map((log) => {
         const details = parseActionDetails(log.details);
