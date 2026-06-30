@@ -1319,7 +1319,15 @@ function App() {
 
     const dataQualityRows = [
       {
-        "Проблема": "Позиции без тегов",
+        "Проблема": "Без тегов, но есть на складе",
+        "Количество": dataQualityData.flavorsWithoutTagsInStock.length,
+      },
+      {
+        "Проблема": "Без тегов и без остатка",
+        "Количество": dataQualityData.flavorsWithoutTagsOutOfStock.length,
+      },
+      {
+        "Проблема": "Все позиции без тегов",
         "Количество": dataQualityData.flavorsWithoutTags.length,
       },
       {
