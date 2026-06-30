@@ -330,7 +330,7 @@ function App() {
   };
 
 
-  const addActionLog = async ({ action, flavor, details = {} }) => {
+  const addActionLog = async ({ action, flavor, details = {}, refreshLogs = true }) => {
     if (isDemoMode) {
       return;
     }
@@ -350,8 +350,10 @@ function App() {
         }),
       });
 
-      const updatedLogs = await loadActionLogsWithPassword(adminPassword);
-      setActionLogs(updatedLogs);
+      if (refreshLogs) {
+        const updatedLogs = await loadActionLogsWithPassword(adminPassword);
+        setActionLogs(updatedLogs);
+      }
     } catch (error) {
       console.error("Action log error:", error);
     }
@@ -412,6 +414,7 @@ function App() {
       console.error(error);
       setErrorText(error.message || "Не удалось подключиться к серверу");
     } finally {
+      setImportProgress(null);
       setIsLoading(false);
     }
   };
@@ -849,7 +852,7 @@ function App() {
       weight: supplyForm.weight,
       quantity: Number(supplyForm.quantity),
       supplyDate: supplyForm.supplyDate || getTodayInputDate(),
-      supplier: supplyForm.supplier.trim(),
+      supplier: normalizeSupplierName(supplyForm.supplier),
       price: supplyForm.price === "" ? null : Number(supplyForm.price),
       tags: supplyForm.tags
         .split(",")
@@ -1544,81 +1547,44 @@ function App() {
   };
 
 
-  const downloadImportTemplate = async (mode = "supply") => {
+  const downloadImportTemplate = async () => {
     const XLSX = await loadXlsx();
 
-    const isSupplyTemplate = mode === "supply";
-
-    const rows = isSupplyTemplate
-      ? [
-          {
-            "Бренд": "Musthave",
-            "Вкус": "Ванильный крем",
-            "Фасовка": "100 г",
-            "Количество": 2,
-            "Дата поставки": getTodayInputDate(),
-            "Поставщик": "Опт РФ",
-            "Цена за пачку": 850,
-            "Теги": "десерт, сливочный",
-            "Мало осталось": "нет",
-            "Не считать залежью": "нет",
-          },
-        ]
-      : [
-          {
-            "Бренд": "Musthave",
-            "Вкус": "Ванильный крем",
-            "Фасовка": "100 г",
-            "Количество": 2,
-            "Закуплено": 5,
-            "Теги": "десерт, сливочный",
-            "Мало осталось": "нет",
-            "Не считать залежью": "нет",
-            "Архив": "нет",
-          },
-        ];
+    const rows = [
+      {
+        "Бренд": "Musthave",
+        "Вкус": "Ванильный крем",
+        "Фасовка": "100 г",
+        "Количество": 2,
+        "Дата поставки": getTodayInputDate(),
+        "Поставщик": "Опт РФ",
+        "Цена за пачку": 850,
+        "Теги": "десерт, сливочный",
+        "Мало осталось": "нет",
+        "Не считать залежью": "нет",
+      },
+    ];
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
 
-    worksheet["!cols"] = isSupplyTemplate
-      ? [
-          { wch: 22 },
-          { wch: 30 },
-          { wch: 14 },
-          { wch: 14 },
-          { wch: 16 },
-          { wch: 22 },
-          { wch: 16 },
-          { wch: 34 },
-          { wch: 18 },
-          { wch: 24 },
-        ]
-      : [
-          { wch: 22 },
-          { wch: 30 },
-          { wch: 14 },
-          { wch: 14 },
-          { wch: 14 },
-          { wch: 34 },
-          { wch: 18 },
-          { wch: 24 },
-          { wch: 12 },
-        ];
+    worksheet["!cols"] = [
+      { wch: 22 },
+      { wch: 30 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 22 },
+      { wch: 16 },
+      { wch: 34 },
+      { wch: 18 },
+      { wch: 24 },
+    ];
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      isSupplyTemplate ? "Импорт закупки" : "Импорт склада"
-    );
-
-    XLSX.writeFile(
-      workbook,
-      isSupplyTemplate
-        ? "shablon-importa-zakupki.xlsx"
-        : "shablon-importa-sklada.xlsx"
-    );
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Импорт закупки");
+    XLSX.writeFile(workbook, "shablon-importa-zakupki.xlsx");
   };
+
 
   const openImportChoice = () => {
     setActiveChoiceModal("import");
@@ -1972,45 +1938,9 @@ function App() {
             0
           );
 
-          const purchasedQuantity =
-            importMode === "supply"
-              ? quantity
-              : parseExcelNumber(
-                  getExcelValue(row, [
-                    "Закуплено",
-                    "Закуп",
-                    "Поступило",
-                    "purchasedQuantity",
-                    "Purchased",
-                  ]),
-                  quantity
-                );
-
           const tags = String(
             getExcelValue(row, ["Теги", "tags", "Tags"])
           ).trim();
-
-          const lowStock = parseExcelBoolean(
-            getExcelValue(row, [
-              "Мало осталось",
-              "lowStock",
-              "Low stock",
-              "low_stock",
-            ])
-          );
-
-          const archived = parseExcelBoolean(
-            getExcelValue(row, ["Архив", "archived", "Archived"])
-          );
-
-          const excludedFromDeadstock = parseExcelBoolean(
-            getExcelValue(row, [
-              "Не считать залежью",
-              "Исключить из залежей",
-              "excludedFromDeadstock",
-              "excluded_from_deadstock",
-            ])
-          );
 
           const supplyDate = parseExcelDate(
             getExcelValue(row, [
@@ -2049,11 +1979,7 @@ function App() {
             originalName: rawName,
             weight,
             quantity,
-            purchasedQuantity,
             tags,
-            lowStock,
-            archived,
-            excludedFromDeadstock,
             supplyDate,
             supplier,
             price,
@@ -2087,12 +2013,15 @@ function App() {
       return;
     }
 
-    const hasInvalidSupplyQuantity =
-      importMode === "supply" &&
-      pendingImportRows.some((row) => {
-        const quantity = Number(row.quantity || 0);
-        return !Number.isFinite(quantity) || quantity <= 0;
-      });
+    if (importMode !== "supply") {
+      showNotification("Импорт склада отключён. Используй импорт закупки.", "error");
+      return;
+    }
+
+    const hasInvalidSupplyQuantity = pendingImportRows.some((row) => {
+      const quantity = Number(row.quantity || 0);
+      return !Number.isFinite(quantity) || quantity <= 0;
+    });
 
     if (hasInvalidSupplyQuantity) {
       showNotification(
@@ -2114,11 +2043,8 @@ function App() {
       }
     }
 
-    const importKindLabel =
-      importMode === "supply" ? "закупки/поставки" : "склада";
-
     const confirmationText = window.prompt(
-      `Импорт ${importKindLabel} изменит данные в базе. Строк к импорту: ${pendingImportRows.length}. Чтобы продолжить, введите: ИМПОРТ`
+      `Импорт закупки изменит данные в базе. Строк к импорту: ${pendingImportRows.length}. Чтобы продолжить, введите: ИМПОРТ`
     );
 
     if (confirmationText !== "ИМПОРТ") {
@@ -2140,117 +2066,69 @@ function App() {
       await createBackupExcel("before-import");
       await createFullBackupJson("before-import");
 
-      let result = { importedCount: 0 };
+      const result = { importedCount: 0 };
 
-      if (importMode === "supply") {
-        for (let index = 0; index < pendingImportRows.length; index += 1) {
-          const row = pendingImportRows[index];
+      for (let index = 0; index < pendingImportRows.length; index += 1) {
+        const row = pendingImportRows[index];
 
-          setImportProgress({
-            stage: "Импортируем закупку",
-            current: index,
-            total: pendingImportRows.length,
-            currentItem: `${row.brand} — ${row.name}`,
-          });
-          const response = await apiFetch("/api/flavors/supply", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              brand: row.brand,
-              name: row.name,
-              weight: row.weight,
-              quantity: row.quantity,
-              supplyDate: row.supplyDate || getTodayInputDate(),
-              supplier: row.supplier || "",
-              price: row.price || null,
-              tags: row.tags,
-              minStock: 0,
-            }),
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text().catch(() => "");
-            throw new Error(errorText || "Не удалось импортировать поставку");
-          }
-
-          const savedFlavor = await response.json();
-
-          await addActionLog({
-            action: "supply",
-            flavor: savedFlavor,
-            details: {
-              weight: row.weight,
-              quantity: row.quantity,
-              suppliedAt: row.supplyDate || getTodayInputDate(),
-              supplier: row.supplier || "",
-              price: row.price || null,
-              source: "Импорт закупки",
-            },
-          });
-
-          result.importedCount += 1;
-
-          setImportProgress({
-            stage: "Импортируем закупку",
-            current: index + 1,
-            total: pendingImportRows.length,
-            currentItem: `${row.brand} — ${row.name}`,
-          });
-        }
-      } else {
         setImportProgress({
-          stage: "Импортируем склад",
-          current: 0,
+          stage: "Импортируем закупку",
+          current: index,
           total: pendingImportRows.length,
-          currentItem: pendingImportFileName,
+          currentItem: `${row.brand} — ${row.name}`,
         });
 
-        const response = await apiFetch("/api/flavors/import", {
+        const response = await apiFetch("/api/flavors/supply", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ rows: pendingImportRows }),
+          body: JSON.stringify({
+            brand: row.brand,
+            name: row.name,
+            weight: row.weight,
+            quantity: row.quantity,
+            supplyDate: row.supplyDate || getTodayInputDate(),
+            supplier: row.supplier || "",
+            price: row.price || null,
+            tags: row.tags,
+            minStock: 0,
+          }),
         });
 
         if (!response.ok) {
           const errorText = await response.text().catch(() => "");
-          let errorData = null;
-
-          try {
-            errorData = errorText ? JSON.parse(errorText) : null;
-          } catch {
-            errorData = null;
-          }
-
-          throw new Error(
-            errorData?.message ||
-              errorText ||
-              "Не удалось импортировать Excel"
-          );
+          throw new Error(errorText || "Не удалось импортировать поставку");
         }
 
-        result = await response.json();
-
-        setImportProgress({
-          stage: "Импортируем склад",
-          current: pendingImportRows.length,
-          total: pendingImportRows.length,
-          currentItem: pendingImportFileName,
-        });
+        const savedFlavor = await response.json();
 
         await addActionLog({
-          action: "import_inventory",
+          action: "supply",
+          flavor: savedFlavor,
           details: {
-            importedCount: result.importedCount,
-            source: "Импорт склада",
+            weight: row.weight,
+            quantity: row.quantity,
+            suppliedAt: row.supplyDate || getTodayInputDate(),
+            supplier: row.supplier || "",
+            price: row.price || null,
+            source: "Импорт закупки",
           },
+          refreshLogs: false,
+        });
+
+        result.importedCount += 1;
+
+        setImportProgress({
+          stage: "Импортируем закупку",
+          current: index + 1,
+          total: pendingImportRows.length,
+          currentItem: `${row.brand} — ${row.name}`,
         });
       }
 
       await refreshFlavors();
+      await loadActionLogs();
 
       setPendingImportRows([]);
       setPendingImportFileName("");
@@ -2263,18 +2141,19 @@ function App() {
       setCurrentView("inventory");
 
       showNotification(
-        `${
-          importMode === "supply" ? "Закупка импортирована" : "Склад импортирован"
-        }. Обновлено вкусов: ${result.importedCount}`,
+        `Закупка импортирована. Обновлено вкусов: ${result.importedCount}`,
         "success"
       );
     } catch (error) {
       console.error(error);
       setErrorText(error.message || "Не удалось импортировать Excel");
+      showNotification(error.message || "Не удалось импортировать Excel", "error");
     } finally {
+      setImportProgress(null);
       setIsLoading(false);
     }
   };
+
 
   const cancelImportPreview = () => {
     setPendingImportRows([]);
@@ -4551,7 +4430,7 @@ return "";
         editingSupplyForm.suppliedAt.trim() ||
         details.suppliedAt ||
         getTodayInputDate(),
-      supplier: editingSupplyForm.supplier.trim(),
+      supplier: normalizeSupplierName(editingSupplyForm.supplier),
       price: nextPrice,
       quantity: nextQuantity,
     };
