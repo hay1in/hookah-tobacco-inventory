@@ -1309,7 +1309,7 @@ function App() {
         : "первая цена",
     }));
 
-    const dataQualityRows = dataQualityIssues.map((issue) => ({
+    const dataQualityRows = visibleDataQualityIssues.map((issue) => ({
       "Проблема": issue.title,
       "Количество": issue.items.length,
     }));
@@ -3441,7 +3441,11 @@ const titles = {
   ];
 
 
-  const dataQualityTotalIssues = dataQualityIssues.reduce(
+  const visibleDataQualityIssues = dataQualityIssues.filter(
+    (issue) => issue.items.length > 0
+  );
+
+  const dataQualityTotalIssues = visibleDataQualityIssues.reduce(
     (sum, issue) => sum + issue.items.length,
     0
   );
@@ -6140,7 +6144,7 @@ if (currentView === "deadstock") {
               </p>
             ) : (
               <div className="data-quality-list">
-                {dataQualityIssues.map((issue) => (
+                {visibleDataQualityIssues.map((issue) => (
                   <article className="data-quality-issue" key={issue.key}>
                     <button
                       type="button"
