@@ -767,7 +767,6 @@ function App() {
   const openEditForm = (flavor) => {
     setEditingFlavorId(flavor.id);
 
-    
     scrollToPageTop();
     setEditForm({
       brand: flavor.brand || "",
@@ -1310,40 +1309,10 @@ function App() {
         : "первая цена",
     }));
 
-    const dataQualityRows = [
-      {
-        "Проблема": "Без тегов, но есть на складе",
-        "Количество": dataQualityData.flavorsWithoutTagsInStock.length,
-      },
-      {
-        "Проблема": "Без тегов и без остатка",
-        "Количество": dataQualityData.flavorsWithoutTagsOutOfStock.length,
-      },
-      {
-        "Проблема": "Все позиции без тегов",
-        "Количество": dataQualityData.flavorsWithoutTags.length,
-      },
-      {
-        "Проблема": "Позиции без фасовки",
-        "Количество": dataQualityData.flavorsWithoutPacks.length,
-      },
-      {
-        "Проблема": "Позиции с ошибкой закуплено",
-        "Количество": dataQualityData.flavorsWithBrokenPurchasedQuantity.length,
-      },
-      {
-        "Проблема": "Поставки без цены",
-        "Количество": dataQualityData.suppliesWithoutPrice.length,
-      },
-      {
-        "Проблема": "Поставки без поставщика",
-        "Количество": dataQualityData.suppliesWithoutSupplier.length,
-      },
-      {
-        "Проблема": "Поставки без даты",
-        "Количество": dataQualityData.suppliesWithoutDate.length,
-      },
-    ];
+    const dataQualityRows = dataQualityIssues.map((issue) => ({
+      "Проблема": issue.title,
+      "Количество": issue.items.length,
+    }));
 
     const sheets = [
       ["Финансы по брендам", brandRows],
@@ -3266,6 +3235,14 @@ const titles = {
       return !Array.isArray(flavor.tags) || flavor.tags.length === 0;
     });
 
+    const flavorsWithoutTagsInStock = flavorsWithoutTags.filter((flavor) => {
+      return getTotalQuantity(flavor) > 0;
+    });
+
+    const flavorsWithoutTagsOutOfStock = flavorsWithoutTags.filter((flavor) => {
+      return getTotalQuantity(flavor) === 0;
+    });
+
     const flavorsWithoutPacks = activeFlavors.filter((flavor) => {
       return !Array.isArray(flavor.packs) || flavor.packs.length === 0;
     });
@@ -3323,6 +3300,8 @@ const titles = {
 
     return {
       flavorsWithoutTags,
+      flavorsWithoutTagsInStock,
+      flavorsWithoutTagsOutOfStock,
       flavorsWithoutPacks,
       flavorsWithBrokenPurchasedQuantity,
       suppliesWithoutPrice,
@@ -3332,17 +3311,6 @@ const titles = {
       supplyLogsWithDeletedFlavor,
       duplicateFlavorGroups: duplicateGroups,
       brandVariantGroups: brandDuplicateGroups,
-      totalIssues:
-        flavorsWithoutTags.length +
-        flavorsWithoutPacks.length +
-        flavorsWithBrokenPurchasedQuantity.length +
-        suppliesWithoutPrice.length +
-        suppliesWithoutSupplier.length +
-        suppliesWithoutDate.length +
-        supplyLogsWithoutFlavor.length +
-        supplyLogsWithDeletedFlavor.length +
-        duplicateGroups.length +
-        brandDuplicateGroups.length,
     };
   })();
 
@@ -3381,12 +3349,22 @@ const titles = {
       }).filter((item) => item.id),
     },
     {
-      key: "noTags",
-      title: "Позиции без тегов",
-      items: dataQualityData.flavorsWithoutTags.map((flavor) => ({
+      key: "noTagsInStock",
+      title: "Без тегов, но есть на складе",
+      items: dataQualityData.flavorsWithoutTagsInStock.map((flavor) => ({
         id: flavor.id,
         title: `${flavor.brand} — ${flavor.name}`,
-        meta: `${getTotalQuantity(flavor)} пач. на складе`,
+        meta: `${getTotalQuantity(flavor)} пач. на складе · добавить теги`,
+        type: "flavor",
+      })),
+    },
+    {
+      key: "noTagsOutOfStock",
+      title: "Без тегов и без остатка",
+      items: dataQualityData.flavorsWithoutTagsOutOfStock.map((flavor) => ({
+        id: flavor.id,
+        title: `${flavor.brand} — ${flavor.name}`,
+        meta: "0 пач. на складе · можно разобрать позже",
         type: "flavor",
       })),
     },
@@ -3462,6 +3440,11 @@ const titles = {
     },
   ];
 
+
+  const dataQualityTotalIssues = dataQualityIssues.reduce(
+    (sum, issue) => sum + issue.items.length,
+    0
+  );
 
   const groupedAnalyticsRowsByBrand = Array.from(
     analyticsRows.reduce((groups, row) => {
@@ -6145,13 +6128,13 @@ if (currentView === "deadstock") {
               </div>
 
               <strong>
-                {dataQualityData.totalIssues === 0
+                {dataQualityTotalIssues === 0
                   ? "всё ок"
-                  : `${dataQualityData.totalIssues} замеч.`}
+                  : `${dataQualityTotalIssues} замеч.`}
               </strong>
             </div>
 
-            {dataQualityData.totalIssues === 0 ? (
+            {dataQualityTotalIssues === 0 ? (
               <p className="info-message dark">
                 Критичных проблем в данных не найдено.
               </p>
