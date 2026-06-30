@@ -3387,3 +3387,12 @@ button.data-quality-item:hover {
     justify-content: flex-start !important;
   }
 }
+
+/* Data quality readability fix */
+.data-quality-item span {
+  color: #6d4c38 !important;
+}
+
+.data-quality-item strong {
+  color: #50661b !important;
+}
