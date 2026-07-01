@@ -2417,9 +2417,98 @@ const titles = {
     return score;
   };
 
+  const getFlavorSupplyPriceChangeMap = (flavor) => {
+    const previousPriceByWeight = new Map();
+    const priceChangeByLogId = new Map();
+
+    getFlavorHistory(flavor)
+      .filter((log) => log.action === "supply" && !isCancelledSupplyLog(log))
+      .map((log) => {
+        const details = parseActionDetails(log.details);
+
+        const rawPrice = Number(details.price || 0);
+        const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+
+        const weight = String(
+          details.packWeight ||
+            details.weight ||
+            details.pack?.weight ||
+            details.payload?.weight ||
+            "без фасовки"
+        ).trim();
+
+        const rawDate =
+          details.suppliedAt ||
+          details.supplied_at ||
+          log.createdAt ||
+          log.created_at;
+
+        const date = rawDate ? new Date(rawDate) : new Date(0);
+
+        return {
+          log,
+          price,
+          weight,
+          date,
+        };
+      })
+      .filter((item) => item.price > 0)
+      .sort((a, b) => a.date - b.date)
+      .forEach((item) => {
+        const previousPrice = previousPriceByWeight.get(item.weight);
+
+        if (previousPrice && previousPrice > 0) {
+          const difference = item.price - previousPrice;
+          const percent = (difference / previousPrice) * 100;
+
+          priceChangeByLogId.set(item.log.id, {
+            previousPrice,
+            currentPrice: item.price,
+            difference,
+            percent,
+            direction:
+              difference > 0 ? "up" : difference < 0 ? "down" : "same",
+          });
+        } else {
+          priceChangeByLogId.set(item.log.id, {
+            previousPrice: null,
+            currentPrice: item.price,
+            difference: null,
+            percent: null,
+            direction: "first",
+          });
+        }
+
+        previousPriceByWeight.set(item.weight, item.price);
+      });
+
+    return priceChangeByLogId;
+  };
+
+  const formatFlavorPriceChange = (priceChange) => {
+    if (!priceChange) {
+      return "";
+    }
+
+    if (priceChange.direction === "first") {
+      return "первая цена";
+    }
+
+    if (priceChange.direction === "same") {
+      return "без изменений";
+    }
+
+    const roundedDifference = Math.round(priceChange.difference);
+    const roundedPercent = Math.round(priceChange.percent);
+    const sign = roundedDifference > 0 ? "+" : "";
+
+    return `${sign}${roundedDifference.toLocaleString("ru-RU")} ₽ / ${sign}${roundedPercent}%`;
+  };
+
   const renderFlavorHistory = (flavor) => {
     const historyItems = getFlavorHistory(flavor);
     const isHistoryOpen = openFlavorHistoryIds.includes(flavor.id);
+    const supplyPriceChangeByLogId = getFlavorSupplyPriceChangeMap(flavor);
 
     return (
       <div className="flavor-history-block">
@@ -2445,28 +2534,46 @@ const titles = {
                 По этому вкусу пока нет записей в истории.
               </p>
             ) : (
-              historyItems.map((log) => (
-                <div className="flavor-history-item" key={log.id}>
-                  <div>
-                    <strong>{getHistoryActionTitle(log.action, log)}</strong>
-                    {getHistoryActionMeta(log) && (
-                      <span>{getHistoryActionMeta(log)}</span>
-                    )}
+              historyItems.map((log) => {
+                const priceChange = supplyPriceChangeByLogId.get(log.id);
+                const priceChangeText = formatFlavorPriceChange(priceChange);
 
-                    {!isDemoMode && log.action === "supply" && !isCancelledSupplyLog(log) && (
-                      <button
-                        className="secondary-button small"
-                        type="button"
-                        onClick={() => editSupplyLog(log)}
-                      >
-                        Исправить
-                      </button>
-                    )}
+                return (
+                  <div className="flavor-history-item" key={log.id}>
+                    <div>
+                      <div className="flavor-history-title-row">
+                        <strong>{getHistoryActionTitle(log.action, log)}</strong>
+
+                        {log.action === "supply" && priceChangeText && (
+                          <span
+                            className={`flavor-price-change-badge ${
+                              priceChange?.direction || "first"
+                            }`}
+                          >
+                            {priceChangeText}
+                          </span>
+                        )}
+                      </div>
+
+                      {getHistoryActionMeta(log) && (
+                        <span>{getHistoryActionMeta(log)}</span>
+                      )}
+
+                      {!isDemoMode && log.action === "supply" && !isCancelledSupplyLog(log) && (
+                        <button
+                          className="secondary-button small"
+                          type="button"
+                          onClick={() => editSupplyLog(log)}
+                        >
+                          Исправить
+                        </button>
+                      )}
+                    </div>
+
+                    <time>{formatHistoryDate(log)}</time>
                   </div>
-
-                  <time>{formatHistoryDate(log)}</time>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
