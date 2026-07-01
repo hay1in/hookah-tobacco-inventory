@@ -7070,23 +7070,6 @@ if (currentView === "deadstock") {
             )}
           </div>
 
-          <select
-            className="filter-select"
-            value={statusFilter}
-            onChange={(event) => {
-              setStatusFilter(event.target.value);
-              setOpenBrandName("");
-              setOpenFlavorId(null);
-              clearSelectedFlavors();
-            }}
-          >
-            <option value="all">Все статусы</option>
-            <option value="В наличии">В наличии</option>
-            <option value="Мало осталось">Мало осталось</option>
-            <option value="Отсутствует">Отсутствует</option>
-            <option value="Архив">Архив</option>
-          </select>
-
           {!isDemoMode && filteredFlavors.length > 0 && (
             <button
               className="secondary-button bulk-select-button"
