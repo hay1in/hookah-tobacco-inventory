@@ -3647,458 +3647,152 @@ button.data-quality-item:hover {
   color: #ffffff;
 }
 
-/* === DARK RED THEME START === */
+/* === MAIN APP THEME START === */
 
 :root {
   color-scheme: dark;
 
-  --color-bg: #080808;
-  --color-bg-soft: #111111;
-  --color-surface: #171717;
-  --color-surface-soft: #222222;
-  --color-surface-light: #2d2d2d;
+  --app-bg: #0b0809;
+  --app-bg-soft: #130d0f;
 
-  --color-text: #f5f5f5;
-  --color-text-soft: #d4d4d4;
-  --color-muted: #9b9b9b;
+  --app-surface: #1b1416;
+  --app-surface-soft: #24191d;
+  --app-surface-light: #322226;
+  --app-surface-hover: #43232a;
 
-  --color-border: #3a3a3a;
-  --color-border-soft: #2a2a2a;
+  --app-border: rgba(255, 232, 228, 0.12);
+  --app-border-strong: rgba(255, 123, 132, 0.34);
 
-  --color-accent: #d71920;
-  --color-accent-dark: #a80f14;
-  --color-accent-soft: rgba(215, 25, 32, 0.16);
+  --app-text: #fff7f4;
+  --app-text-soft: #e8d0cc;
+  --app-text-muted: #b89a96;
 
-  --color-danger: #ff3b3b;
-  --color-success: #f5f5f5;
-  --color-warning: #d71920;
+  --app-red: #d92d38;
+  --app-red-hover: #ff4d59;
+  --app-red-dark: #851820;
+  --app-wine: #4a1d25;
+  --app-wine-soft: #622834;
+
+  --app-cream: #f7e2dc;
+  --app-green: #9be3ad;
+  --app-yellow: #ffd58f;
+  --app-blue: #a9c7ff;
+
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--app-text);
+  background: var(--app-bg);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
+  margin: 0;
+  color: var(--app-text) !important;
   background:
-    radial-gradient(circle at top left, rgba(215, 25, 32, 0.14), transparent 34rem),
-    linear-gradient(135deg, #050505 0%, #111111 45%, #1b1b1b 100%) !important;
-  color: var(--color-text) !important;
-}
-
-.app,
-.content,
-.page,
-main {
-  color: var(--color-text) !important;
-}
-
-.app-header,
-.header,
-.topbar,
-.card,
-.analytics-card,
-.inventory-card,
-.brand-group,
-.flavor-card,
-.purchase-card,
-.purchase-item,
-.purchase-smart-section,
-.purchase-panel,
-.supply-form,
-.edit-form,
-.modal,
-.choice-modal,
-.bulk-action-panel,
-.tag-filter-panel,
-.inventory-quick-filter-panel,
-.toolbar,
-.brand-row,
-.data-quality-card,
-.history-card,
-.deadstock-card {
-  background: var(--color-surface) !important;
-  color: var(--color-text) !important;
-  border-color: var(--color-border) !important;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34) !important;
-}
-
-.brand-row,
-.flavor-row,
-.history-row,
-.supply-row,
-.analytics-row,
-.purchase-analog-item {
-  border-color: var(--color-border-soft) !important;
-}
-
-h1,
-h2,
-h3,
-h4,
-p,
-span,
-strong,
-label,
-small,
-.eyebrow,
-.brand,
-.purchase-meta,
-.info-message {
-  color: inherit;
-}
-
-.eyebrow,
-.brand,
-.muted,
-small,
-.purchase-meta,
-.card-subtitle,
-.analytics-card span,
-.tag-filter-panel span {
-  color: var(--color-muted) !important;
-}
-
-input,
-textarea,
-select,
-.search-input,
-.filter-select {
-  background: #0d0d0d !important;
-  color: var(--color-text) !important;
-  border-color: var(--color-border) !important;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #777777 !important;
+    radial-gradient(circle at top left, rgba(217, 45, 56, 0.2), transparent 32%),
+    radial-gradient(circle at top right, rgba(255, 77, 89, 0.1), transparent 36%),
+    linear-gradient(135deg, #080606 0%, #130d0f 48%, #1a0e12 100%) !important;
 }
 
 button,
-.submit-button,
-.secondary-button,
-.collapse-button,
-.inventory-quick-filter-button,
-.tag-filter-button {
-  background: var(--color-surface-soft) !important;
-  color: var(--color-text) !important;
-  border-color: var(--color-border) !important;
-}
-
-button:hover,
-.submit-button:hover,
-.secondary-button:hover,
-.collapse-button:hover,
-.inventory-quick-filter-button:hover,
-.tag-filter-button:hover {
-  background: var(--color-accent-soft) !important;
-  border-color: var(--color-accent) !important;
-  color: #ffffff !important;
-}
-
-.submit-button,
-.primary-button,
-button.primary,
-.inventory-quick-filter-button.active,
-.tag-filter-button.active {
-  background: var(--color-accent) !important;
-  border-color: var(--color-accent) !important;
-  color: #ffffff !important;
-}
-
-.submit-button:hover,
-.primary-button:hover,
-button.primary:hover,
-.inventory-quick-filter-button.active:hover,
-.tag-filter-button.active:hover {
-  background: var(--color-accent-dark) !important;
-  border-color: var(--color-accent-dark) !important;
-}
-
-button.danger,
-.danger,
-.error-message {
-  background: rgba(215, 25, 32, 0.14) !important;
-  border-color: var(--color-accent) !important;
-  color: #ffdddd !important;
-}
-
-.status,
-.badge,
-.purchase-count {
-  background: var(--color-surface-soft) !important;
-  color: var(--color-text) !important;
-  border-color: var(--color-border) !important;
-}
-
-.status.in-stock {
-  background: #1f1f1f !important;
-  color: #ffffff !important;
-  border-color: #5a5a5a !important;
-}
-
-.status.low-stock,
-.status.need-buy,
-.status.archived,
-.purchase-confirmed-badge,
-.purchase-no-analogs {
-  background: var(--color-accent-soft) !important;
-  color: #ffffff !important;
-  border-color: var(--color-accent) !important;
-}
-
-.notification-toast {
-  background: #121212 !important;
-  color: var(--color-text) !important;
-  border-color: var(--color-accent) !important;
-}
-
-a {
-  color: #ff4a50 !important;
-}
-
-/* === DARK RED THEME END === */
-
-/* === DARK RED MENU OVERRIDE START === */
-
-.menu-toggle-button {
-  background: #171717 !important;
-  color: #f5f5f5 !important;
-  border-color: #3a3a3a !important;
-}
-
-.menu-toggle-button:hover {
-  background: rgba(215, 25, 32, 0.16) !important;
-  border-color: #d71920 !important;
-  color: #ffffff !important;
-}
-
-.header-dropdown {
-  background: #111111 !important;
-  color: #f5f5f5 !important;
-  border: 1px solid #3a3a3a !important;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55) !important;
-}
-
-.dropdown-section {
-  border-color: #2a2a2a !important;
-}
-
-.dropdown-section p {
-  color: #9b9b9b !important;
-}
-
-.dropdown-section button,
-.dropdown-file-button {
-  background: transparent !important;
-  color: #f5f5f5 !important;
-  border-color: transparent !important;
-}
-
-.dropdown-section button:hover,
-.dropdown-file-button:hover {
-  background: rgba(215, 25, 32, 0.16) !important;
-  color: #ffffff !important;
-}
-
-.dropdown-section .dropdown-danger {
-  color: #ff6b6b !important;
-}
-
-.dropdown-section .dropdown-danger:hover {
-  background: rgba(215, 25, 32, 0.22) !important;
-  color: #ffffff !important;
-}
-
-/* === DARK RED MENU OVERRIDE END === */
-
-/* === DARK RED SECTION PANELS OVERRIDE START === */
-
-.analytics-panel,
-.analytics-card,
-.analytics-brand-group,
-.analytics-flavor-accordion-row,
-.analytics-flavor-details,
-.history-panel,
-.history-item,
-.duplicates-panel,
-.duplicate-group,
-.duplicate-item,
-.tags-page,
-.tag-duplicates-panel,
-.tags-table-panel,
-.tag-duplicate-group,
-.tag-row-card,
-.purchase-smart-section,
-.purchase-smart-card,
-.purchase-analogs,
-.deadstock-panel,
-.deadstock-card,
-.deadstock-stats,
-.data-quality-panel,
-.data-quality-grid article,
-.data-quality-issue,
-.choice-modal,
-.modal {
-  background: #171717 !important;
-  color: #f5f5f5 !important;
-  border-color: #3a3a3a !important;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34) !important;
-}
-
-.analytics-panel h2,
-.analytics-panel h3,
-.analytics-card strong,
-.analytics-brand-row strong,
-.analytics-flavor-button strong,
-.history-panel h2,
-.history-item strong,
-.duplicates-panel h2,
-.duplicate-group h3,
-.tags-table-panel h2,
-.tag-duplicates-panel h2,
-.tag-row-card strong,
-.purchase-smart-section-top h2,
-.purchase-smart-card h3,
-.deadstock-panel-top h2,
-.deadstock-card h3,
-.data-quality-header h2,
-.data-quality-grid strong {
-  color: #ffffff !important;
-}
-
-.analytics-note,
-.analytics-card span,
-.analytics-row,
-.analytics-row span,
-.analytics-row strong,
-.analytics-brand-row span,
-.analytics-flavor-button span,
-.history-item p,
-.history-item small,
-.duplicate-group p,
-.duplicate-item span,
-.duplicate-item small,
-.tag-row-card span,
-.purchase-smart-section-top p,
-.purchase-specific-tags,
-.purchase-no-analogs,
-.purchase-analog-item small,
-.deadstock-panel-top p,
-.deadstock-stats,
-.data-quality-grid span,
-.data-quality-issue > button {
-  color: #d4d4d4 !important;
-}
-
-.analytics-brand-row,
-.analytics-flavor-button,
-.brand-row,
-.flavor-row-button,
-.tag-row-card,
-.tag-duplicate-group,
-.duplicate-group,
-.purchase-smart-card,
-.deadstock-card,
-.history-item {
-  background: #222222 !important;
-  color: #f5f5f5 !important;
-  border-color: #3a3a3a !important;
-}
-
-.analytics-brand-row:hover,
-.analytics-brand-row.open,
-.brand-row:hover,
-.brand-row.open,
-.flavor-row-group.open,
-.analytics-flavor-accordion-row:hover,
-.purchase-smart-card:hover,
-.deadstock-card:hover {
-  background: #2a1112 !important;
-  border-color: #d71920 !important;
-}
-
-.analytics-brand-meta > span:not(.brand-alert):not(.brand-warning),
-.analytics-brand-meta em,
-.analytics-flavor-button-meta em,
-.brand-arrow,
-.flavor-row-arrow,
-.purchase-smart-section-top > span,
-.deadstock-panel-top > span,
-.purchase-count {
-  background: #d71920 !important;
-  color: #ffffff !important;
-}
-
-.analytics-flavor-tags span,
-.analytics-flavor-button-meta span,
-.flavor-row-tags-preview em,
-.purchase-specific-tags strong,
-.tag-filter-button,
-.inventory-quick-filter-button {
-  background: #222222 !important;
-  color: #f5f5f5 !important;
-  border-color: #3a3a3a !important;
-}
-
-.tag-filter-button.active,
-.inventory-quick-filter-button.active {
-  background: #d71920 !important;
-  color: #ffffff !important;
-  border-color: #d71920 !important;
-}
-
-/* === DARK RED SECTION PANELS OVERRIDE END === */
-
-/* === PRETTY DARK RED THEME START === */
-
-:root {
-  --pretty-bg: #0b090a;
-  --pretty-bg-soft: #120d0f;
-  --pretty-surface: #1a1416;
-  --pretty-surface-2: #24191c;
-  --pretty-surface-3: #312125;
-  --pretty-border: rgba(255, 231, 231, 0.12);
-  --pretty-border-strong: rgba(255, 128, 128, 0.34);
-
-  --pretty-text: #fff7f4;
-  --pretty-text-soft: #e4c9c6;
-  --pretty-muted: #b49491;
-
-  --pretty-red: #d92832;
-  --pretty-red-soft: #ff5a63;
-  --pretty-red-dark: #7f151c;
-  --pretty-wine: #43171d;
-  --pretty-wine-soft: #5a2028;
-
-  --pretty-cream: #f4ded8;
-  --pretty-cream-dark: #d8b9b2;
-  --pretty-shadow: rgba(0, 0, 0, 0.46);
-}
-
-body {
-  background:
-    radial-gradient(circle at top left, rgba(217, 40, 50, 0.18), transparent 32%),
-    radial-gradient(circle at top right, rgba(255, 90, 99, 0.08), transparent 34%),
-    linear-gradient(135deg, #080707 0%, #120d0f 48%, #180d10 100%) !important;
-  color: var(--pretty-text) !important;
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 .app {
+  min-height: 100vh;
   background: transparent !important;
+  color: var(--app-text) !important;
 }
+
+/* AUTH / PASSWORD PAGE */
+
+.auth-page {
+  min-height: 100vh;
+  display: grid !important;
+  place-items: center !important;
+  padding: 32px !important;
+  background:
+    radial-gradient(circle at top left, rgba(217, 45, 56, 0.22), transparent 34%),
+    linear-gradient(135deg, #090707 0%, #171012 100%) !important;
+}
+
+.auth-card {
+  width: min(100%, 460px) !important;
+  padding: 32px !important;
+  border-radius: 30px !important;
+  background:
+    linear-gradient(135deg, rgba(36, 25, 29, 0.98), rgba(25, 17, 20, 0.98)) !important;
+  border: 1px solid var(--app-border-strong) !important;
+  color: var(--app-text) !important;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55) !important;
+}
+
+.auth-card h1 {
+  color: #ffffff !important;
+}
+
+.auth-card .subtitle,
+.subtitle.dark {
+  color: var(--app-text-soft) !important;
+}
+
+.auth-form {
+  display: grid !important;
+  gap: 14px !important;
+  margin-top: 22px !important;
+}
+
+.auth-form input {
+  width: 100% !important;
+  background: rgba(255, 247, 244, 0.09) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--app-border) !important;
+  border-radius: 18px !important;
+  padding: 15px 16px !important;
+  outline: none !important;
+}
+
+.auth-form input::placeholder {
+  color: rgba(247, 226, 220, 0.46) !important;
+}
+
+.auth-form input:focus {
+  background: rgba(255, 247, 244, 0.13) !important;
+  border-color: var(--app-red-hover) !important;
+  box-shadow: 0 0 0 4px rgba(217, 45, 56, 0.2) !important;
+}
+
+.auth-form button {
+  background: linear-gradient(135deg, var(--app-red), var(--app-red-dark)) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 123, 132, 0.26) !important;
+  box-shadow: 0 16px 36px rgba(217, 45, 56, 0.25) !important;
+}
+
+/* LAYOUT */
 
 .header {
   background:
-    radial-gradient(circle at top right, rgba(255, 90, 99, 0.18), transparent 36%),
-    linear-gradient(135deg, #1d1215 0%, #2a151a 52%, #130d0f 100%) !important;
-  border: 1px solid var(--pretty-border) !important;
-  box-shadow: 0 24px 70px var(--pretty-shadow) !important;
+    radial-gradient(circle at top right, rgba(255, 77, 89, 0.18), transparent 36%),
+    linear-gradient(135deg, #211519 0%, #30181e 52%, #120d0f 100%) !important;
+  color: var(--app-text) !important;
+  border: 1px solid var(--app-border) !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.44) !important;
 }
 
 .header h1,
-.header .subtitle,
-.header .eyebrow {
-  color: var(--pretty-text) !important;
+.header .subtitle {
+  color: var(--app-text) !important;
 }
 
-.header .eyebrow {
-  color: var(--pretty-red-soft) !important;
+.header .eyebrow,
+.eyebrow {
+  color: var(--app-red-hover) !important;
 }
 
 .content,
@@ -4107,10 +3801,11 @@ body {
 .analytics-page,
 .deadstock-page,
 .tags-page {
-  color: var(--pretty-text) !important;
+  color: var(--app-text) !important;
 }
 
-/* Main panels */
+/* MAIN SURFACES */
+
 .toolbar,
 .tag-filter-panel,
 .inventory-quick-filter-panel,
@@ -4142,33 +3837,35 @@ body {
 .data-quality-issue,
 .choice-modal,
 .modal,
-.bulk-action-panel {
+.bulk-action-panel,
+.supply-panel,
+.edit-panel {
   background:
-    linear-gradient(135deg, rgba(36, 25, 28, 0.98), rgba(26, 20, 22, 0.98)) !important;
-  color: var(--pretty-text) !important;
-  border: 1px solid var(--pretty-border) !important;
-  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.32) !important;
+    linear-gradient(135deg, rgba(36, 25, 29, 0.96), rgba(26, 20, 22, 0.98)) !important;
+  color: var(--app-text) !important;
+  border: 1px solid var(--app-border) !important;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34) !important;
 }
 
-/* Inner cards / rows */
+/* INNER ROWS / CARDS */
+
 .brand-row,
 .flavor-row-button,
 .flavor-row-group,
 .analytics-brand-row,
 .analytics-flavor-button,
 .analytics-row,
-.purchase-smart-card,
 .purchase-analog-item,
-.deadstock-card,
+.deadstock-stats,
 .history-item,
 .duplicate-group,
 .duplicate-item,
 .tag-row-card,
 .tag-duplicate-group {
   background:
-    linear-gradient(135deg, rgba(49, 33, 37, 0.98), rgba(32, 23, 26, 0.98)) !important;
-  color: var(--pretty-text) !important;
-  border-color: var(--pretty-border) !important;
+    linear-gradient(135deg, rgba(50, 34, 38, 0.98), rgba(32, 23, 26, 0.98)) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
 }
 
 .brand-row:hover,
@@ -4182,11 +3879,12 @@ body {
 .tag-row-card:hover,
 .history-item:hover {
   background:
-    linear-gradient(135deg, rgba(90, 32, 40, 0.98), rgba(49, 24, 29, 0.98)) !important;
-  border-color: var(--pretty-border-strong) !important;
+    linear-gradient(135deg, rgba(98, 40, 52, 0.98), rgba(54, 26, 32, 0.98)) !important;
+  border-color: var(--app-border-strong) !important;
 }
 
-/* Text visibility */
+/* TEXT */
+
 h1,
 h2,
 h3,
@@ -4210,13 +3908,14 @@ strong,
 .deadstock-card h3,
 .data-quality-header h2,
 .data-quality-grid strong {
-  color: var(--pretty-text) !important;
+  color: #ffffff !important;
 }
 
 p,
 span,
 small,
 em,
+.subtitle,
 .analytics-note,
 .analytics-card span,
 .analytics-row,
@@ -4239,21 +3938,52 @@ em,
 .deadstock-stats,
 .data-quality-grid span,
 .data-quality-issue > button {
-  color: var(--pretty-text-soft) !important;
+  color: var(--app-text-soft) !important;
 }
 
-/* Buttons */
+/* FORMS */
+
+input,
+select,
+textarea,
+.search-input,
+.filter-select,
+.supply-form input,
+.supply-form textarea,
+.auth-form input {
+  background: rgba(255, 247, 244, 0.09) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--app-border) !important;
+}
+
+input::placeholder,
+textarea::placeholder,
+.search-input::placeholder {
+  color: rgba(247, 226, 220, 0.46) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.search-input:focus {
+  background: rgba(255, 247, 244, 0.13) !important;
+  border-color: var(--app-red-hover) !important;
+  box-shadow: 0 0 0 4px rgba(217, 45, 56, 0.18) !important;
+}
+
+/* BUTTONS */
+
 .primary-button,
 .submit-button,
 .purchase-smart-actions button,
 .deadstock-actions button,
 .actions button,
-.pack-counter button {
-  background:
-    linear-gradient(135deg, var(--pretty-red) 0%, var(--pretty-red-dark) 100%) !important;
+.pack-counter button,
+.auth-form button {
+  background: linear-gradient(135deg, var(--app-red), var(--app-red-dark)) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 128, 128, 0.24) !important;
-  box-shadow: 0 12px 28px rgba(217, 40, 50, 0.22) !important;
+  border: 1px solid rgba(255, 123, 132, 0.26) !important;
+  box-shadow: 0 12px 28px rgba(217, 45, 56, 0.22) !important;
 }
 
 .primary-button:hover,
@@ -4261,9 +3991,9 @@ em,
 .purchase-smart-actions button:hover,
 .deadstock-actions button:hover,
 .actions button:hover,
-.pack-counter button:hover:not(:disabled) {
-  background:
-    linear-gradient(135deg, #ff4650 0%, #a71922 100%) !important;
+.pack-counter button:hover:not(:disabled),
+.auth-form button:hover {
+  background: linear-gradient(135deg, var(--app-red-hover), var(--app-red-dark)) !important;
   transform: translateY(-1px);
 }
 
@@ -4272,19 +4002,20 @@ em,
 .collapse-button,
 .danger-top-button {
   background: rgba(255, 247, 244, 0.08) !important;
-  color: var(--pretty-text) !important;
-  border: 1px solid var(--pretty-border) !important;
+  color: var(--app-text) !important;
+  border: 1px solid var(--app-border) !important;
 }
 
 .secondary-button:hover,
 .close-button:hover,
 .collapse-button:hover,
 .danger-top-button:hover {
-  background: rgba(217, 40, 50, 0.18) !important;
-  border-color: var(--pretty-border-strong) !important;
+  background: rgba(217, 45, 56, 0.18) !important;
+  border-color: var(--app-border-strong) !important;
 }
 
-/* Chips / filters */
+/* CHIPS / FILTERS */
+
 .tag-filter-button,
 .inventory-quick-filter-button,
 .analytics-flavor-tags span,
@@ -4294,26 +4025,26 @@ em,
 .flavor-card .tags span,
 .tags span {
   background: rgba(255, 247, 244, 0.08) !important;
-  color: var(--pretty-cream) !important;
-  border: 1px solid var(--pretty-border) !important;
+  color: var(--app-cream) !important;
+  border: 1px solid var(--app-border) !important;
 }
 
 .tag-filter-button:hover,
 .inventory-quick-filter-button:hover {
-  background: rgba(255, 90, 99, 0.16) !important;
+  background: rgba(255, 77, 89, 0.16) !important;
   color: #ffffff !important;
-  border-color: var(--pretty-border-strong) !important;
+  border-color: var(--app-border-strong) !important;
 }
 
 .tag-filter-button.active,
 .inventory-quick-filter-button.active {
-  background:
-    linear-gradient(135deg, var(--pretty-red) 0%, var(--pretty-wine-soft) 100%) !important;
+  background: linear-gradient(135deg, var(--app-red), var(--app-wine-soft)) !important;
   color: #ffffff !important;
-  border-color: var(--pretty-red-soft) !important;
+  border-color: var(--app-red-hover) !important;
 }
 
-/* Badges / counters */
+/* BADGES */
+
 .analytics-brand-meta > span:not(.brand-alert):not(.brand-warning),
 .analytics-brand-meta em,
 .analytics-flavor-button-meta em,
@@ -4324,127 +4055,102 @@ em,
 .purchase-count,
 .demo-badge,
 .purchase-confirmed-badge {
-  background: rgba(217, 40, 50, 0.22) !important;
+  background: rgba(217, 45, 56, 0.24) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 128, 128, 0.22) !important;
+  border: 1px solid rgba(255, 123, 132, 0.24) !important;
 }
 
-/* Statuses */
+/* STATUSES */
+
 .status.in-stock,
 .in-stock {
-  background: rgba(91, 168, 116, 0.16) !important;
-  color: #b9f5ca !important;
-  border: 1px solid rgba(91, 168, 116, 0.28) !important;
+  background: rgba(86, 168, 116, 0.16) !important;
+  color: var(--app-green) !important;
+  border: 1px solid rgba(86, 168, 116, 0.28) !important;
 }
 
 .status.low-stock,
 .low-stock {
   background: rgba(255, 185, 89, 0.16) !important;
-  color: #ffd99a !important;
+  color: var(--app-yellow) !important;
   border: 1px solid rgba(255, 185, 89, 0.28) !important;
 }
 
 .status.need-buy,
 .need-buy {
-  background: rgba(255, 90, 99, 0.18) !important;
-  color: #ffb2b7 !important;
-  border: 1px solid rgba(255, 90, 99, 0.32) !important;
+  background: rgba(255, 77, 89, 0.18) !important;
+  color: #ffb5ba !important;
+  border: 1px solid rgba(255, 77, 89, 0.32) !important;
 }
 
 .status.archived,
 .archived {
-  background: rgba(180, 148, 145, 0.16) !important;
-  color: #d8c4c1 !important;
-  border: 1px solid rgba(180, 148, 145, 0.24) !important;
+  background: rgba(184, 154, 150, 0.16) !important;
+  color: #dcc9c5 !important;
+  border: 1px solid rgba(184, 154, 150, 0.24) !important;
 }
 
-/* Inputs */
-input,
-select,
-textarea,
-.search-input,
-.filter-select,
-.supply-form input,
-.supply-form textarea,
-.auth-form input {
-  background: rgba(255, 247, 244, 0.08) !important;
-  color: var(--pretty-text) !important;
-  border: 1px solid var(--pretty-border) !important;
-}
+/* DROPDOWN MENU */
 
-input::placeholder,
-textarea::placeholder,
-.search-input::placeholder {
-  color: rgba(244, 222, 216, 0.48) !important;
-}
-
-input:focus,
-select:focus,
-textarea:focus,
-.search-input:focus {
-  border-color: var(--pretty-red-soft) !important;
-  box-shadow: 0 0 0 4px rgba(217, 40, 50, 0.16) !important;
-}
-
-/* Dropdown menu */
 .menu-toggle-button {
   background: rgba(255, 247, 244, 0.08) !important;
-  color: var(--pretty-text) !important;
-  border-color: var(--pretty-border) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
 }
 
 .header-dropdown {
   background:
-    linear-gradient(135deg, rgba(36, 25, 28, 0.98), rgba(18, 13, 15, 0.98)) !important;
-  color: var(--pretty-text) !important;
-  border: 1px solid var(--pretty-border-strong) !important;
+    linear-gradient(135deg, rgba(36, 25, 29, 0.98), rgba(18, 13, 15, 0.98)) !important;
+  color: var(--app-text) !important;
+  border: 1px solid var(--app-border-strong) !important;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58) !important;
 }
 
 .dropdown-section {
-  border-color: var(--pretty-border) !important;
+  border-color: var(--app-border) !important;
 }
 
 .dropdown-section p {
-  color: var(--pretty-muted) !important;
+  color: var(--app-text-muted) !important;
 }
 
 .dropdown-section button,
 .dropdown-file-button {
   background: transparent !important;
-  color: var(--pretty-text) !important;
+  color: var(--app-text) !important;
   border-color: transparent !important;
 }
 
 .dropdown-section button:hover,
 .dropdown-file-button:hover {
-  background: rgba(217, 40, 50, 0.18) !important;
+  background: rgba(217, 45, 56, 0.18) !important;
   color: #ffffff !important;
-  border-color: var(--pretty-border-strong) !important;
+  border-color: var(--app-border-strong) !important;
 }
 
 .dropdown-section .dropdown-danger {
-  color: #ff8b91 !important;
+  color: #ff9aa0 !important;
 }
 
 .dropdown-section .dropdown-danger:hover {
-  background: rgba(217, 40, 50, 0.26) !important;
+  background: rgba(217, 45, 56, 0.26) !important;
   color: #ffffff !important;
 }
 
-/* Warnings / info */
+/* MESSAGES */
+
 .info-message,
 .error-message,
 .readonly-note,
 .form-hint {
   background: rgba(255, 247, 244, 0.08) !important;
-  color: var(--pretty-text-soft) !important;
-  border: 1px solid var(--pretty-border) !important;
+  color: var(--app-text-soft) !important;
+  border: 1px solid var(--app-border) !important;
 }
 
 .error-message {
-  color: #ffb2b7 !important;
-  border-color: rgba(255, 90, 99, 0.34) !important;
+  color: #ffb5ba !important;
+  border-color: rgba(255, 77, 89, 0.34) !important;
 }
 
-/* === PRETTY DARK RED THEME END === */
+/* === MAIN APP THEME END === */
