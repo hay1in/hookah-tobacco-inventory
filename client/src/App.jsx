@@ -4877,21 +4877,6 @@ return "";
                   Теги
                 </button>
 
-                <button
-                  onClick={() => {
-                    setSearchText("");
-                    setSelectedTag("all");
-                    setStatusFilter(
-                      statusFilter === "Архив" ? "all" : "Архив"
-                    );
-                    setOpenBrandName("");
-                    setOpenFlavorId(null);
-                    setCurrentView("inventory");
-                    closeMenu();
-                  }}
-                >
-                  {statusFilter === "Архив" ? "Склад" : "Архив"}
-                </button>
               </div>
               <div className="dropdown-section">
                 <p>Данные</p>
