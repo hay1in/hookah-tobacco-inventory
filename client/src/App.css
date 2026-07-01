@@ -3596,3 +3596,22 @@ button.data-quality-item:hover {
   font-size: 13px;
   color: #8a644d;
 }
+
+.brand-stock,
+.brand-muted {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.brand-stock {
+  background: rgba(90, 140, 70, 0.14);
+  color: #4f7b32;
+}
+
+.brand-muted {
+  background: rgba(80, 80, 80, 0.08);
+  color: rgba(50, 50, 50, 0.55);
+}

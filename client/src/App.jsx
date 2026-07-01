@@ -2741,19 +2741,49 @@ const titles = {
       return groups;
     }, new Map())
   )
-    .map(([brand, items]) => ({
-      brand,
-      items: items.sort((a, b) => a.name.localeCompare(b.name, "ru")),
-      totalPacks: items.reduce(
-        (sum, flavor) => sum + getTotalQuantity(flavor.packs || []),
-        0
-      ),
-      absentCount: items.filter((flavor) => getTotalQuantity(flavor.packs || []) === 0)
-        .length,
-      lowStockCount: items.filter((flavor) =>
-        Boolean(flavor.lowStock || flavor.low_stock)
-      ).length,
-    }))
+    .map(([brand, items]) => {
+      const sortedItems = items.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+
+      const stockSummary = sortedItems.reduce(
+        (summary, flavor) => {
+          const quantity = getTotalQuantity(flavor.packs || []);
+          const isLowStock = Boolean(flavor.lowStock || flavor.low_stock);
+
+          if (quantity === 0) {
+            return {
+              ...summary,
+              absentCount: summary.absentCount + 1,
+            };
+          }
+
+          if (isLowStock) {
+            return {
+              ...summary,
+              lowStockCount: summary.lowStockCount + 1,
+              totalPacks: summary.totalPacks + quantity,
+            };
+          }
+
+          return {
+            ...summary,
+            inStockCount: summary.inStockCount + 1,
+            totalPacks: summary.totalPacks + quantity,
+          };
+        },
+        {
+          inStockCount: 0,
+          lowStockCount: 0,
+          absentCount: 0,
+          totalPacks: 0,
+        }
+      );
+
+      return {
+        brand,
+        items: sortedItems,
+        ...stockSummary,
+      };
+    })
     .sort((a, b) => a.brand.localeCompare(b.brand, "ru"));
 
 
@@ -7168,22 +7198,22 @@ if (currentView === "deadstock") {
                     <div>
                       <strong>{group.brand}</strong>
                       <span>
-                        {group.items.length} вкусов · {group.totalPacks} пач.
+                        {group.items.length} вкусов · {group.totalPacks} пач. в наличии
                       </span>
                     </div>
 
                     <div className="brand-row-meta">
-                      {group.absentCount > 0 && (
-                        <span className="brand-alert">
-                          отсутствует: {group.absentCount}
-                        </span>
-                      )}
+                      <span className="brand-stock">
+                        в наличии: {group.inStockCount}
+                      </span>
 
-                      {group.lowStockCount > 0 && (
-                        <span className="brand-warning">
-                          мало: {group.lowStockCount}
-                        </span>
-                      )}
+                      <span className={group.lowStockCount > 0 ? "brand-warning" : "brand-muted"}>
+                        мало: {group.lowStockCount}
+                      </span>
+
+                      <span className={group.absentCount > 0 ? "brand-alert" : "brand-muted"}>
+                        нет: {group.absentCount}
+                      </span>
 
                       <span className="brand-arrow">{isOpen ? "↑" : "↓"}</span>
                     </div>
