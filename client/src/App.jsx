@@ -2066,6 +2066,14 @@ function App() {
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const applyInventoryQuickFilter = (nextStatus, nextTag = "all") => {
+  setStatusFilter(nextStatus);
+  setSelectedTag(nextTag);
+  setSearchText("");
+  setOpenBrandName("");
+  setOpenFlavorId(null);
+  clearSelectedFlavors();
+};
   const [selectedTag, setSelectedTag] = useState("all");
   const [isPurchasePanelOpen, setIsPurchasePanelOpen] = useState(false);
   const [openBrandName, setOpenBrandName] = useState("");
@@ -7127,7 +7135,73 @@ if (currentView === "deadstock") {
             </div>
           </section>
         )}
+<section className="inventory-quick-filter-panel">
+  <button
+    className={
+      statusFilter === "all" && selectedTag === "all"
+        ? "inventory-quick-filter-button active"
+        : "inventory-quick-filter-button"
+    }
+    onClick={() => applyInventoryQuickFilter("all")}
+  >
+    Все
+  </button>
 
+  <button
+    className={
+      statusFilter === "В наличии" && selectedTag === "all"
+        ? "inventory-quick-filter-button active"
+        : "inventory-quick-filter-button"
+    }
+    onClick={() => applyInventoryQuickFilter("В наличии")}
+  >
+    В наличии
+  </button>
+
+  <button
+    className={
+      statusFilter === "Мало осталось" && selectedTag === "all"
+        ? "inventory-quick-filter-button active"
+        : "inventory-quick-filter-button"
+    }
+    onClick={() => applyInventoryQuickFilter("Мало осталось")}
+  >
+    Мало
+  </button>
+
+  <button
+    className={
+      statusFilter === "Отсутствует" && selectedTag === "all"
+        ? "inventory-quick-filter-button active"
+        : "inventory-quick-filter-button"
+    }
+    onClick={() => applyInventoryQuickFilter("Отсутствует")}
+  >
+    Нет
+  </button>
+
+  <button
+    className={
+      statusFilter === "all" && selectedTag === "__NO_TAGS__"
+        ? "inventory-quick-filter-button active"
+        : "inventory-quick-filter-button"
+    }
+    onClick={() => applyInventoryQuickFilter("all", "__NO_TAGS__")}
+  >
+    Без тегов
+  </button>
+
+  <button
+    className={
+      statusFilter === "Архив" && selectedTag === "all"
+        ? "inventory-quick-filter-button active"
+        : "inventory-quick-filter-button"
+    }
+    onClick={() => applyInventoryQuickFilter("Архив")}
+  >
+    Архив
+  </button>
+</section>
         <section className="tag-filter-panel">
           <button
             className={
@@ -7135,7 +7209,7 @@ if (currentView === "deadstock") {
                 ? "tag-filter-button active"
                 : "tag-filter-button"
             }
-            onClick={() => setSelectedTag("all")}
+            onClick={() => applyInventoryQuickFilter("all")}
           >
             Все теги
           </button>
@@ -7146,14 +7220,7 @@ if (currentView === "deadstock") {
                 ? "tag-filter-button active"
                 : "tag-filter-button"
             }
-            onClick={() => {
-              setSelectedTag("__NO_TAGS__");
-              setSearchText("");
-              setStatusFilter("all");
-              setOpenBrandName("");
-              setOpenFlavorId(null);
-              clearSelectedFlavors();
-            }}
+            onClick={() => applyInventoryQuickFilter("all", "__NO_TAGS__")}
           >
             Без тегов
           </button>

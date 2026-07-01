@@ -3615,3 +3615,34 @@ button.data-quality-item:hover {
   background: rgba(80, 80, 80, 0.08);
   color: rgba(50, 50, 50, 0.55);
 }
+
+.inventory-quick-filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.inventory-quick-filter-button {
+  border: 1px solid rgba(102, 126, 32, 0.28);
+  background: rgba(255, 255, 255, 0.8);
+  color: #50661b;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.inventory-quick-filter-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(102, 126, 32, 0.5);
+  background: rgba(231, 236, 215, 0.9);
+}
+
+.inventory-quick-filter-button.active {
+  background: #667e20;
+  border-color: #667e20;
+  color: #ffffff;
+}
