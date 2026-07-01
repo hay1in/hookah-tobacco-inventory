@@ -3615,34 +3615,3 @@ button.data-quality-item:hover {
   background: rgba(80, 80, 80, 0.08);
   color: rgba(50, 50, 50, 0.55);
 }
-
-.flavor-history-title-row {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.flavor-price-change-badge {
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 3px 8px;
-  white-space: nowrap;
-}
-
-.flavor-price-change-badge.up {
-  background: rgba(170, 60, 45, 0.14);
-  color: #9a3326;
-}
-
-.flavor-price-change-badge.down {
-  background: rgba(65, 130, 75, 0.14);
-  color: #3f7f47;
-}
-
-.flavor-price-change-badge.same,
-.flavor-price-change-badge.first {
-  background: rgba(80, 80, 80, 0.08);
-  color: rgba(50, 50, 50, 0.62);
-}
