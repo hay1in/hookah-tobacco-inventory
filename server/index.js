@@ -42,6 +42,13 @@ function requireAdminPassword(req, res, next) {
   });
 }
 
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    message: "Hookah Tobacco Inventory API is running",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use("/api", requireAdminPassword);
 
 const PORT = process.env.PORT || 3000;
@@ -56,6 +63,8 @@ const pool = new Pool({
   ssl: process.env.DATABASE_URL.includes("localhost")
     ? false
     : { rejectUnauthorized: false },
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
 });
 
 const defaultFlavors = [
