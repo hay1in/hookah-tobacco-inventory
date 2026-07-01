@@ -4154,3 +4154,50 @@ textarea:focus,
 }
 
 /* === MAIN APP THEME END === */
+
+/* === ANALYTICS STATUS TAGS CONTRAST FIX START === */
+
+.analytics-page .status.low-stock,
+.analytics-page .low-stock,
+.analytics-page .brand-warning,
+.analytics-page .analytics-brand-meta .brand-warning,
+.analytics-page .analytics-flavor-button-meta .low-stock {
+  background: #ffd58f !important;
+  color: #3a2206 !important;
+  border: 1px solid rgba(255, 213, 143, 0.72) !important;
+  box-shadow: 0 8px 20px rgba(255, 185, 89, 0.12) !important;
+}
+
+.analytics-page .status.need-buy,
+.analytics-page .need-buy,
+.analytics-page .brand-alert,
+.analytics-page .analytics-brand-meta .brand-alert,
+.analytics-page .analytics-flavor-button-meta .need-buy {
+  background: #ffb5ba !important;
+  color: #3d080d !important;
+  border: 1px solid rgba(255, 181, 186, 0.72) !important;
+  box-shadow: 0 8px 20px rgba(255, 77, 89, 0.12) !important;
+}
+
+.analytics-page .status.in-stock,
+.analytics-page .in-stock {
+  background: #9be3ad !important;
+  color: #062713 !important;
+  border: 1px solid rgba(155, 227, 173, 0.72) !important;
+}
+
+.analytics-page .status.archived,
+.analytics-page .archived {
+  background: #dcc9c5 !important;
+  color: #251817 !important;
+  border: 1px solid rgba(220, 201, 197, 0.72) !important;
+}
+
+.analytics-page .analytics-brand-meta span,
+.analytics-page .analytics-flavor-button-meta span,
+.analytics-page .brand-alert,
+.analytics-page .brand-warning {
+  font-weight: 950 !important;
+}
+
+/* === ANALYTICS STATUS TAGS CONTRAST FIX END === */
