@@ -2075,7 +2075,6 @@ function App() {
   clearSelectedFlavors();
 };
   const [selectedTag, setSelectedTag] = useState("all");
-  const [isPurchasePanelOpen, setIsPurchasePanelOpen] = useState(false);
   const [openBrandName, setOpenBrandName] = useState("");
   const [openFlavorId, setOpenFlavorId] = useState(null);
   const [openFlavorHistoryIds, setOpenFlavorHistoryIds] = useState([]);
@@ -6922,121 +6921,6 @@ if (currentView === "deadstock") {
                 Сохранить изменения
               </button>
             </form>
-          </section>
-        )}
-
-        {purchaseFlavors.length > 0 && statusFilter !== "Архив" && (
-          <section className="purchase-panel">
-            <div className="purchase-panel-top">
-              <div>
-                <p className="eyebrow dark">Закупка</p>
-                <h2>Требуется к закупу</h2>
-              </div>
-
-              <div className="purchase-header-actions">
-                <span className="purchase-count">{purchaseFlavors.length} поз.</span>
-
-                <button
-                  className="collapse-button"
-                  onClick={() => setIsPurchasePanelOpen(!isPurchasePanelOpen)}
-                >
-                  {isPurchasePanelOpen ? "Свернуть" : "Показать"}
-                </button>
-              </div>
-            </div>
-
-            {isPurchasePanelOpen && (
-              <div className="purchase-list">
-                {purchaseFlavors.map((flavor) => {
-                const total = getTotalQuantity(flavor.packs || []);
-                const status = getStatus(flavor);
-                const specificTags = getSpecificTags(flavor);
-                const analogs = getAnalogFlavors(flavor);
-                const isPurchaseConfirmed = Boolean(
-                  flavor.purchaseConfirmed || flavor.purchase_confirmed
-                );
-
-                return (
-                  <div className="purchase-item" key={flavor.id}>
-                    <div>
-                      <p className="brand">{flavor.brand}</p>
-                      <h3>{flavor.name}</h3>
-                      <p className="purchase-meta">
-                        Остаток: {total} пач.
-                      </p>
-
-                      {isPurchaseConfirmed && (
-                        <p className="purchase-confirmed-badge">
-                          Закупка подтверждена
-                        </p>
-                      )}
-
-                      {specificTags.length > 0 && (
-                        <div className="purchase-specific-tags">
-                          <span>Ищем аналоги по:</span>
-                          {specificTags.map((tag) => (
-                            <strong key={tag}>#{tag}</strong>
-                          ))}
-                        </div>
-                      )}
-
-                      {analogs.length > 0 && (
-                        <div className="purchase-analogs">
-                          <p>Аналоги:</p>
-
-                          {analogs.map(({ flavor: analog, matchedTags, totalQuantity }) => (
-                            <div className="purchase-analog-item" key={analog.id}>
-                              <span>
-                                {analog.brand} — {analog.name}
-                              </span>
-
-                              <small>
-                                Остаток: {totalQuantity} пач. ·{" "}
-                                {matchedTags.map((tag) => `#${tag}`).join(", ")}
-                              </small>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {specificTags.length > 0 && analogs.length === 0 && (
-                        <p className="purchase-no-analogs">
-                          Аналоги по специфичным тегам не найдены
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="purchase-actions">
-                      <span className={status.className}>{status.text}</span>
-
-                      {!isDemoMode && (
-                        <button onClick={() => togglePurchaseConfirmed(flavor)}>
-                          {isPurchaseConfirmed
-                            ? "Снять подтверждение"
-                            : "Подтвердить закупку"}
-                        </button>
-                      )}
-
-                      {!isDemoMode && (
-                        <button
-                          className="danger"
-                          onClick={() => archiveFlavor(flavor.id)}
-                        >
-                          В архив
-                        </button>
-                      )}
-
-                      {!isDemoMode && (
-                        <button onClick={() => startSupplyForFlavor(flavor)}>
-                          Добавить поставку
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-                })}
-              </div>
-            )}
           </section>
         )}
 
