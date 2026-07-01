@@ -3906,3 +3906,141 @@ a {
 }
 
 /* === DARK RED MENU OVERRIDE END === */
+
+/* === DARK RED SECTION PANELS OVERRIDE START === */
+
+.analytics-panel,
+.analytics-card,
+.analytics-brand-group,
+.analytics-flavor-accordion-row,
+.analytics-flavor-details,
+.history-panel,
+.history-item,
+.duplicates-panel,
+.duplicate-group,
+.duplicate-item,
+.tags-page,
+.tag-duplicates-panel,
+.tags-table-panel,
+.tag-duplicate-group,
+.tag-row-card,
+.purchase-smart-section,
+.purchase-smart-card,
+.purchase-analogs,
+.deadstock-panel,
+.deadstock-card,
+.deadstock-stats,
+.data-quality-panel,
+.data-quality-grid article,
+.data-quality-issue,
+.choice-modal,
+.modal {
+  background: #171717 !important;
+  color: #f5f5f5 !important;
+  border-color: #3a3a3a !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34) !important;
+}
+
+.analytics-panel h2,
+.analytics-panel h3,
+.analytics-card strong,
+.analytics-brand-row strong,
+.analytics-flavor-button strong,
+.history-panel h2,
+.history-item strong,
+.duplicates-panel h2,
+.duplicate-group h3,
+.tags-table-panel h2,
+.tag-duplicates-panel h2,
+.tag-row-card strong,
+.purchase-smart-section-top h2,
+.purchase-smart-card h3,
+.deadstock-panel-top h2,
+.deadstock-card h3,
+.data-quality-header h2,
+.data-quality-grid strong {
+  color: #ffffff !important;
+}
+
+.analytics-note,
+.analytics-card span,
+.analytics-row,
+.analytics-row span,
+.analytics-row strong,
+.analytics-brand-row span,
+.analytics-flavor-button span,
+.history-item p,
+.history-item small,
+.duplicate-group p,
+.duplicate-item span,
+.duplicate-item small,
+.tag-row-card span,
+.purchase-smart-section-top p,
+.purchase-specific-tags,
+.purchase-no-analogs,
+.purchase-analog-item small,
+.deadstock-panel-top p,
+.deadstock-stats,
+.data-quality-grid span,
+.data-quality-issue > button {
+  color: #d4d4d4 !important;
+}
+
+.analytics-brand-row,
+.analytics-flavor-button,
+.brand-row,
+.flavor-row-button,
+.tag-row-card,
+.tag-duplicate-group,
+.duplicate-group,
+.purchase-smart-card,
+.deadstock-card,
+.history-item {
+  background: #222222 !important;
+  color: #f5f5f5 !important;
+  border-color: #3a3a3a !important;
+}
+
+.analytics-brand-row:hover,
+.analytics-brand-row.open,
+.brand-row:hover,
+.brand-row.open,
+.flavor-row-group.open,
+.analytics-flavor-accordion-row:hover,
+.purchase-smart-card:hover,
+.deadstock-card:hover {
+  background: #2a1112 !important;
+  border-color: #d71920 !important;
+}
+
+.analytics-brand-meta > span:not(.brand-alert):not(.brand-warning),
+.analytics-brand-meta em,
+.analytics-flavor-button-meta em,
+.brand-arrow,
+.flavor-row-arrow,
+.purchase-smart-section-top > span,
+.deadstock-panel-top > span,
+.purchase-count {
+  background: #d71920 !important;
+  color: #ffffff !important;
+}
+
+.analytics-flavor-tags span,
+.analytics-flavor-button-meta span,
+.flavor-row-tags-preview em,
+.purchase-specific-tags strong,
+.tag-filter-button,
+.inventory-quick-filter-button {
+  background: #222222 !important;
+  color: #f5f5f5 !important;
+  border-color: #3a3a3a !important;
+}
+
+.tag-filter-button.active,
+.inventory-quick-filter-button.active {
+  background: #d71920 !important;
+  color: #ffffff !important;
+  border-color: #d71920 !important;
+}
+
+/* === DARK RED SECTION PANELS OVERRIDE END === */
