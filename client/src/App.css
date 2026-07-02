@@ -2621,7 +2621,7 @@ h1 {
   justify-content: space-between !important;
   gap: 16px !important;
   padding: 12px 0 !important;
-  border-bottom: 1px solid rgba(80, 102, 27, 0.14) !important;
+  border-bottom: 1px solid rgba(255, 232, 228, 0.12) !important;
 }
 
 .finance-history-row div {
@@ -2691,8 +2691,8 @@ h1 {
 
 .price-change-badge.same,
 .price-change-badge.first {
-  background: rgba(80, 102, 27, 0.10) !important;
-  color: #50661b !important;
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: #e8d0cc !important;
 }
 
 .crash-screen {
@@ -2702,8 +2702,8 @@ h1 {
   padding: 24px !important;
   background:
     radial-gradient(circle at top left, rgba(229, 198, 31, 0.18), transparent 34%),
-    linear-gradient(135deg, #e7ecd7, #dce5bc) !important;
-  color: #50661b !important;
+    linear-gradient(135deg, #1b1416, #24191d) !important;
+  color: #e8d0cc !important;
 }
 
 .crash-card {
@@ -2711,8 +2711,8 @@ h1 {
   padding: 28px !important;
   border-radius: 28px !important;
   background: rgba(255, 255, 255, 0.72) !important;
-  border: 1px solid rgba(80, 102, 27, 0.18) !important;
-  box-shadow: 0 24px 70px rgba(80, 102, 27, 0.18) !important;
+  border: 1px solid rgba(255, 232, 228, 0.14) !important;
+  box-shadow: 0 24px 70px rgba(255, 232, 228, 0.14) !important;
   display: grid !important;
   gap: 14px !important;
 }
@@ -2749,8 +2749,8 @@ h1 {
   margin: 0 !important;
   padding: 14px !important;
   border-radius: 16px !important;
-  background: rgba(80, 102, 27, 0.09) !important;
-  border: 1px solid rgba(80, 102, 27, 0.12) !important;
+  background: rgba(255, 247, 244, 0.08) !important;
+  border: 1px solid rgba(255, 247, 244, 0.1) !important;
   color: #33440f !important;
   font-size: 13px !important;
 }
@@ -2765,15 +2765,15 @@ h1 {
   border: 0 !important;
   border-radius: 999px !important;
   padding: 11px 16px !important;
-  background: #50661b !important;
+  background: #e8d0cc !important;
   color: #fff !important;
   font-weight: 900 !important;
   cursor: pointer !important;
 }
 
 .crash-actions button:last-child {
-  background: rgba(80, 102, 27, 0.12) !important;
-  color: #50661b !important;
+  background: rgba(255, 247, 244, 0.1) !important;
+  color: #e8d0cc !important;
 }
 
 .choice-modal-backdrop {
@@ -2793,7 +2793,7 @@ h1 {
   padding: 24px !important;
   border-radius: 26px !important;
   background: rgba(255, 255, 255, 0.94) !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
   box-shadow: 0 24px 80px rgba(30, 41, 10, 0.28) !important;
   display: grid !important;
   gap: 14px !important;
@@ -2807,8 +2807,8 @@ h1 {
   height: 34px !important;
   border: 0 !important;
   border-radius: 999px !important;
-  background: rgba(80, 102, 27, 0.1) !important;
-  color: #50661b !important;
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: #e8d0cc !important;
   font-size: 22px !important;
   font-weight: 900 !important;
   cursor: pointer !important;
@@ -2819,7 +2819,7 @@ h1 {
   padding: 6px 10px !important;
   border-radius: 999px !important;
   background: rgba(229, 198, 31, 0.22) !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
   font-size: 12px !important;
   font-weight: 950 !important;
   text-transform: uppercase !important;
@@ -2844,7 +2844,7 @@ h1 {
   border: 0 !important;
   border-radius: 18px !important;
   padding: 14px 16px !important;
-  background: #50661b !important;
+  background: #e8d0cc !important;
   color: #fff !important;
   font-weight: 950 !important;
   cursor: pointer !important;
@@ -2852,8 +2852,8 @@ h1 {
 }
 
 .choice-modal-actions button:nth-child(2) {
-  background: rgba(80, 102, 27, 0.12) !important;
-  color: #50661b !important;
+  background: rgba(255, 247, 244, 0.1) !important;
+  color: #e8d0cc !important;
 }
 
 .choice-modal-actions button:hover,
@@ -2870,12 +2870,12 @@ h1 {
   gap: 7px !important;
   font-size: 13px !important;
   font-weight: 900 !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
 }
 
 .supply-edit-modal input {
   width: 100% !important;
-  border: 1px solid rgba(80, 102, 27, 0.18) !important;
+  border: 1px solid rgba(255, 232, 228, 0.14) !important;
   border-radius: 15px !important;
   padding: 12px 13px !important;
   background: rgba(255, 255, 255, 0.78) !important;
@@ -2886,15 +2886,15 @@ h1 {
 }
 
 .supply-edit-modal input:focus {
-  border-color: rgba(80, 102, 27, 0.48) !important;
+  border-color: rgba(255, 123, 132, 0.34) !important;
   box-shadow: 0 0 0 3px rgba(229, 198, 31, 0.18) !important;
 }
 
 .supply-edit-info {
   padding: 10px 12px !important;
   border-radius: 16px !important;
-  background: rgba(80, 102, 27, 0.08) !important;
-  color: #50661b !important;
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: #e8d0cc !important;
 }
 
 .choice-modal-actions.horizontal {
@@ -2921,8 +2921,8 @@ h1 {
   white-space: nowrap !important;
   padding: 7px 11px !important;
   border-radius: 999px !important;
-  background: rgba(80, 102, 27, 0.1) !important;
-  color: #50661b !important;
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: #e8d0cc !important;
   font-size: 13px !important;
 }
 
@@ -2935,7 +2935,7 @@ h1 {
 .data-quality-grid article {
   padding: 13px !important;
   border-radius: 18px !important;
-  background: rgba(80, 102, 27, 0.08) !important;
+  background: rgba(255, 247, 244, 0.08) !important;
   display: grid !important;
   gap: 4px !important;
 }
@@ -2943,7 +2943,7 @@ h1 {
 .data-quality-grid strong {
   font-size: 24px !important;
   line-height: 1 !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
 }
 
 .data-quality-grid span {
@@ -2981,7 +2981,7 @@ h1 {
   padding: 14px !important;
   border-radius: 22px !important;
   background: rgba(255, 255, 255, 0.64) !important;
-  border: 1px solid rgba(80, 102, 27, 0.12) !important;
+  border: 1px solid rgba(255, 247, 244, 0.1) !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
@@ -2992,7 +2992,7 @@ h1 {
 .analytics-period-panel > span {
   font-size: 13px !important;
   font-weight: 950 !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
   opacity: 0.8 !important;
 }
 
@@ -3003,25 +3003,25 @@ h1 {
 }
 
 .analytics-period-panel button {
-  border: 1px solid rgba(80, 102, 27, 0.16) !important;
+  border: 1px solid rgba(255, 232, 228, 0.12) !important;
   border-radius: 999px !important;
   padding: 8px 11px !important;
   background: rgba(255, 255, 255, 0.72) !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
   font-size: 12px !important;
   font-weight: 900 !important;
   cursor: pointer !important;
 }
 
 .analytics-period-panel button.active {
-  background: #50661b !important;
+  background: #e8d0cc !important;
   color: #fff !important;
-  border-color: #50661b !important;
+  border-color: #e8d0cc !important;
 }
 
 .choice-modal-actions button:nth-child(3) {
   background: rgba(229, 198, 31, 0.24) !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
 }
 
 .data-quality-list {
@@ -3031,7 +3031,7 @@ h1 {
 
 .data-quality-issue {
   border-radius: 18px !important;
-  background: rgba(80, 102, 27, 0.08) !important;
+  background: rgba(255, 247, 244, 0.08) !important;
   overflow: hidden !important;
 }
 
@@ -3039,7 +3039,7 @@ h1 {
   width: 100% !important;
   border: 0 !important;
   background: transparent !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
   padding: 13px !important;
   display: flex !important;
   justify-content: space-between !important;
@@ -3074,7 +3074,7 @@ h1 {
 
 .data-quality-item strong {
   font-size: 13px !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
 }
 
 .data-quality-item span,
@@ -3107,12 +3107,12 @@ button.data-quality-item:hover {
   gap: 7px !important;
   font-size: 13px !important;
   font-weight: 900 !important;
-  color: #50661b !important;
+  color: #e8d0cc !important;
 }
 
 .supply-edit-modal input {
   width: 100% !important;
-  border: 1px solid rgba(80, 102, 27, 0.18) !important;
+  border: 1px solid rgba(255, 232, 228, 0.14) !important;
   border-radius: 15px !important;
   padding: 12px 13px !important;
   background: rgba(255, 255, 255, 0.78) !important;
@@ -3123,15 +3123,15 @@ button.data-quality-item:hover {
 }
 
 .supply-edit-modal input:focus {
-  border-color: rgba(80, 102, 27, 0.48) !important;
+  border-color: rgba(255, 123, 132, 0.34) !important;
   box-shadow: 0 0 0 3px rgba(229, 198, 31, 0.18) !important;
 }
 
 .supply-edit-info {
   padding: 10px 12px !important;
   border-radius: 16px !important;
-  background: rgba(80, 102, 27, 0.08) !important;
-  color: #50661b !important;
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: #e8d0cc !important;
 }
 
 .choice-modal-actions.horizontal {
@@ -3149,7 +3149,7 @@ button.data-quality-item:hover {
   align-items: center;
   border-radius: 999px;
   padding: 4px 8px;
-  background: rgba(80, 102, 27, 0.1);
+  background: rgba(255, 247, 244, 0.08);
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
@@ -3394,7 +3394,7 @@ button.data-quality-item:hover {
 }
 
 .data-quality-item strong {
-  color: #50661b !important;
+  color: #e8d0cc !important;
 }
 
 /* Data quality quick actions */
@@ -3607,8 +3607,8 @@ button.data-quality-item:hover {
 }
 
 .brand-stock {
-  background: rgba(90, 140, 70, 0.14);
-  color: #4f7b32;
+  background: rgba(255, 247, 244, 0.08);
+  color: #e8d0cc;
 }
 
 .brand-muted {
@@ -3624,9 +3624,9 @@ button.data-quality-item:hover {
 }
 
 .inventory-quick-filter-button {
-  border: 1px solid rgba(102, 126, 32, 0.28);
+  border: 1px solid rgba(255, 123, 132, 0.22);
   background: rgba(255, 255, 255, 0.8);
-  color: #50661b;
+  color: #e8d0cc;
   border-radius: 999px;
   padding: 8px 14px;
   font-size: 14px;
@@ -3637,13 +3637,13 @@ button.data-quality-item:hover {
 
 .inventory-quick-filter-button:hover {
   transform: translateY(-1px);
-  border-color: rgba(102, 126, 32, 0.5);
+  border-color: rgba(255, 123, 132, 0.34);
   background: rgba(231, 236, 215, 0.9);
 }
 
 .inventory-quick-filter-button.active {
-  background: #667e20;
-  border-color: #667e20;
+  background: #d92d38;
+  border-color: #d92d38;
   color: #ffffff;
 }
 
