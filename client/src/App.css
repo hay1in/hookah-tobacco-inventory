@@ -1,10 +1,3 @@
-:root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  color: #221f1f;
-  background: #f5f0ea;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -3647,7 +3640,7 @@ button.data-quality-item:hover {
   color: #ffffff;
 }
 
-/* === MAIN APP THEME START === */
+/* === BASE APP THEME START === */
 
 :root {
   color-scheme: dark;
@@ -4153,7 +4146,7 @@ textarea:focus,
   border-color: rgba(255, 77, 89, 0.34) !important;
 }
 
-/* === MAIN APP THEME END === */
+/* === BASE APP THEME END === */
 
 /* === ANALYTICS STATUS TAGS CONTRAST FIX START === */
 
