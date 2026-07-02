@@ -4311,3 +4311,149 @@ textarea:focus,
 }
 
 /* === LIGHT BADGES CONTRAST FIX END === */
+
+/* === DATA QUALITY CONTRAST FIX START === */
+
+/* Вся проверка базы — тёмная поверхность со светлым текстом */
+.data-quality-panel,
+.data-quality-list,
+.data-quality-items,
+.data-quality-issue,
+.data-quality-grid article,
+.data-quality-item {
+  background:
+    linear-gradient(135deg, rgba(36, 25, 29, 0.98), rgba(26, 20, 22, 0.98)) !important;
+  color: var(--app-text) !important;
+  border: 1px solid var(--app-border) !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* Заголовки и цифры */
+.data-quality-panel h2,
+.data-quality-panel h3,
+.data-quality-header h2,
+.data-quality-grid strong,
+.data-quality-item strong,
+.data-quality-issue > button strong {
+  color: #ffffff !important;
+}
+
+/* Описания, подписи, мета-информация */
+.data-quality-panel p,
+.data-quality-panel span,
+.data-quality-panel small,
+.data-quality-panel em,
+.data-quality-grid span,
+.data-quality-item span,
+.data-quality-items p,
+.data-quality-issue > button,
+.data-quality-issue > button span,
+.data-quality-issue > button small {
+  color: var(--app-text-soft) !important;
+}
+
+/* Верхний счётчик/бейдж проверки базы */
+.data-quality-header > strong {
+  background: rgba(217, 45, 56, 0.22) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 123, 132, 0.28) !important;
+}
+
+/* Карточки проблем внутри проверки базы */
+.data-quality-issue {
+  overflow: hidden !important;
+  border-radius: 18px !important;
+}
+
+.data-quality-issue > button {
+  width: 100% !important;
+  background: transparent !important;
+  color: var(--app-text) !important;
+  border: 0 !important;
+}
+
+.data-quality-issue > button:hover {
+  background: rgba(217, 45, 56, 0.14) !important;
+}
+
+/* Раскрытый список вкусов внутри "Без тегов, но есть на складе" */
+.data-quality-items {
+  padding: 10px !important;
+  border-top: 1px solid var(--app-border) !important;
+}
+
+.data-quality-item {
+  border-radius: 14px !important;
+  padding: 10px 12px !important;
+  margin-bottom: 8px !important;
+}
+
+.data-quality-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+.data-quality-item:hover {
+  background:
+    linear-gradient(135deg, rgba(74, 29, 37, 0.98), rgba(45, 24, 29, 0.98)) !important;
+  border-color: var(--app-border-strong) !important;
+}
+
+/* Кнопки действий внутри проверки базы */
+.data-quality-item button,
+.data-quality-issue button,
+.data-quality-panel button:not(.tag-filter-button):not(.inventory-quick-filter-button) {
+  color: #ffffff !important;
+}
+
+.data-quality-item .secondary-button,
+.data-quality-panel .secondary-button {
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: var(--app-text) !important;
+  border: 1px solid var(--app-border) !important;
+}
+
+.data-quality-item .secondary-button:hover,
+.data-quality-panel .secondary-button:hover {
+  background: rgba(217, 45, 56, 0.18) !important;
+  color: #ffffff !important;
+  border-color: var(--app-border-strong) !important;
+}
+
+/* На случай, если прошлый фикс принудительно сделал текст тёмным */
+.data-quality-panel *,
+.data-quality-list *,
+.data-quality-items *,
+.data-quality-issue *,
+.data-quality-grid *,
+.data-quality-item * {
+  color: inherit;
+}
+
+.data-quality-panel strong,
+.data-quality-list strong,
+.data-quality-items strong,
+.data-quality-issue strong,
+.data-quality-grid strong,
+.data-quality-item strong {
+  color: #ffffff !important;
+}
+
+.data-quality-panel span,
+.data-quality-panel small,
+.data-quality-panel p,
+.data-quality-list span,
+.data-quality-list small,
+.data-quality-list p,
+.data-quality-items span,
+.data-quality-items small,
+.data-quality-items p,
+.data-quality-issue span,
+.data-quality-issue small,
+.data-quality-issue p,
+.data-quality-item span,
+.data-quality-item small,
+.data-quality-item p {
+  color: var(--app-text-soft) !important;
+}
+
+/* === DATA QUALITY CONTRAST FIX END === */
