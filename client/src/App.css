@@ -4201,3 +4201,113 @@ textarea:focus,
 }
 
 /* === ANALYTICS STATUS TAGS CONTRAST FIX END === */
+
+/* === LIGHT BADGES CONTRAST FIX START === */
+
+/* Светлые бейджи/плашки: делаем текст тёмным */
+.price-change-badge.same,
+.price-change-badge.first,
+.crash-actions button:last-child,
+.choice-modal-close,
+.choice-modal-eyebrow,
+.choice-modal-actions button:nth-child(2),
+.choice-modal-actions button:nth-child(3),
+.supply-edit-info,
+.data-quality-header > strong,
+.data-quality-grid article,
+.data-quality-issue,
+.import-warning-badge,
+.brand-stock,
+.brand-muted {
+  background: rgba(255, 247, 244, 0.12) !important;
+  color: #2a171b !important;
+  border-color: rgba(255, 232, 228, 0.18) !important;
+}
+
+/* Если плашка всё ещё светлая — текст внутри тоже тёмный */
+.price-change-badge.same *,
+.price-change-badge.first *,
+.choice-modal-eyebrow *,
+.supply-edit-info *,
+.data-quality-header > strong *,
+.data-quality-grid article *,
+.data-quality-issue *,
+.data-quality-issue * {
+  color: #2a171b !important;
+}
+
+/* Период аналитики оставляем тёмным, чтобы не было светлого на светлом */
+.analytics-period-panel {
+  background:
+    linear-gradient(135deg, rgba(36, 25, 29, 0.98), rgba(26, 20, 22, 0.98)) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+.analytics-period-panel > span {
+  color: var(--app-text-soft) !important;
+}
+
+.analytics-period-panel button {
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: var(--app-cream) !important;
+  border-color: var(--app-border) !important;
+}
+
+.analytics-period-panel button:hover {
+  background: rgba(255, 77, 89, 0.16) !important;
+  color: #ffffff !important;
+  border-color: var(--app-border-strong) !important;
+}
+
+.analytics-period-panel button.active {
+  background: linear-gradient(135deg, var(--app-red), var(--app-wine-soft)) !important;
+  color: #ffffff !important;
+  border-color: var(--app-red-hover) !important;
+}
+
+/* Модалки и карточки качества данных делаем тёмными, чтобы не спорили с основной темой */
+.choice-modal,
+.supply-edit-modal,
+.data-quality-panel,
+.data-quality-list,
+.data-quality-items {
+  background:
+    linear-gradient(135deg, rgba(36, 25, 29, 0.98), rgba(26, 20, 22, 0.98)) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+.choice-modal h2,
+.supply-edit-modal label,
+.data-quality-item strong {
+  color: #ffffff !important;
+}
+
+.choice-modal p,
+.supply-edit-modal p,
+.data-quality-item span,
+.data-quality-items p {
+  color: var(--app-text-soft) !important;
+}
+
+/* Поля в модалках */
+.supply-edit-modal input {
+  background: rgba(255, 247, 244, 0.09) !important;
+  color: #ffffff !important;
+  border-color: var(--app-border) !important;
+}
+
+.supply-edit-modal input:focus {
+  border-color: var(--app-red-hover) !important;
+  box-shadow: 0 0 0 3px rgba(217, 45, 56, 0.18) !important;
+}
+
+/* Акцентные кнопки в модалках */
+.choice-modal-actions button:first-child,
+.crash-actions button:first-child {
+  background: linear-gradient(135deg, var(--app-red), var(--app-red-dark)) !important;
+  color: #ffffff !important;
+}
+
+/* === LIGHT BADGES CONTRAST FIX END === */
