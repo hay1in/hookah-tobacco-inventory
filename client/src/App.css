@@ -4805,3 +4805,13 @@ textarea:focus,
 }
 
 /* === MUTED DATA QUALITY CARDS END === */
+
+/* === RETURN PANEL START === */
+
+.return-panel {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
+
+/* === RETURN PANEL END === */
