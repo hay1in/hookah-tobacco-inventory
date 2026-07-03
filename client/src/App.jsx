@@ -514,6 +514,12 @@ function App() {
       return;
     }
 
+    if (issueKey === "brandVariants") {
+      setCurrentView("tags");
+      scrollToPageTop();
+      return;
+    }
+
     if (item.type === "flavor") {
       openFlavorFromAnalytics(item.id);
       return;
