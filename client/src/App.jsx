@@ -4868,7 +4868,7 @@ return "";
               <div className="dropdown-section">
                 <p>Порядок в базе</p>
 
-                <button type="button" onClick={() => goToView("analytics")}>
+                <button type="button" onClick={() => goToView("dataQuality")}>
                   Проверка базы
                 </button><button type="button" onClick={() => goToView("tags")}>
                   Теги
@@ -5296,7 +5296,93 @@ if (currentView === "deadstock") {
     );
   }
 
-  if (currentView === "purchase") {
+  
+  if (currentView === "dataQuality") {
+    return (
+      <div className="app">
+        {renderAppHeader({
+          title: "Проверка базы",
+          subtitle: "Проблемные данные, дубли, пустые теги и ошибки поставок",
+        })}
+
+        <main className="content data-quality-page">
+          <section className="analytics-panel wide data-quality-panel">
+            <div className="data-quality-header">
+              <div>
+                <span className="choice-modal-eyebrow">Проверка базы</span>
+                <h2>Проблемные данные</h2>
+              </div>
+
+              <strong>
+                {dataQualityTotalIssues === 0
+                  ? "всё ок"
+                  : `${dataQualityTotalIssues} замеч.`}
+              </strong>
+            </div>
+
+            {dataQualityTotalIssues === 0 ? (
+              <p className="info-message dark">
+                Критичных проблем в данных не найдено.
+              </p>
+            ) : (
+              <div className="data-quality-list">
+                {visibleDataQualityIssues.map((issue) => (
+                  <article className="data-quality-issue" key={issue.key}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenDataQualityIssue(
+                          openDataQualityIssue === issue.key ? null : issue.key
+                        );
+                      }}
+                    >
+                      <span>{issue.title}</span>
+                      <strong>
+                        {issue.items.length}
+                        {openDataQualityIssue === issue.key ? " ↑" : " ↓"}
+                      </strong>
+                    </button>
+
+                    {openDataQualityIssue === issue.key && (
+                      <div className="data-quality-items">
+                        {issue.items.length === 0 ? (
+                          <p>Проблем нет</p>
+                        ) : (
+                          issue.items.slice(0, 20).map((item) => (
+                            <button
+                              className="data-quality-item"
+                              type="button"
+                              key={`${item.type}-${item.id}`}
+                              onClick={() => handleDataQualityItemClick(item)}
+                            >
+                              <span className="data-quality-item-main">
+                                <strong>{item.title}</strong>
+                                <span>{item.meta}</span>
+                              </span>
+
+                              <em className="data-quality-item-action">
+                                {item.type === "flavor" ? "Открыть вкус" : "Исправить поставку"}
+                              </em>
+                            </button>
+                          ))
+                        )}
+
+                        {issue.items.length > 20 && (
+                          <p>Показаны первые 20 из {issue.items.length}</p>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+if (currentView === "purchase") {
     const purchaseRows = purchaseFlavors.map((flavor) => {
       const total = getTotalQuantity(flavor.packs || []);
       const status = getStatus(flavor);
