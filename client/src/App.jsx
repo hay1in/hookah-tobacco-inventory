@@ -4870,13 +4870,7 @@ return "";
 
                 <button type="button" onClick={() => goToView("analytics")}>
                   Проверка базы
-                </button>
-
-                <button type="button" onClick={() => goToView("duplicates")}>
-                  Дубли
-                </button>
-
-                <button type="button" onClick={() => goToView("tags")}>
+                </button><button type="button" onClick={() => goToView("tags")}>
                   Теги
                 </button>
               </div>
