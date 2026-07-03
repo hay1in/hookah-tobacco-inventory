@@ -4851,19 +4851,6 @@ return "";
                 <button type="button" onClick={() => goToView("purchase")}>
                   Закупка
                 </button>
-
-                {!isDemoMode && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCurrentView("inventory");
-                      setIsSupplyFormOpen(true);
-                      closeMenu();
-                    }}
-                  >
-                    Добавить поставку
-                  </button>
-                )}
               </div>
 
               <div className="dropdown-section">
