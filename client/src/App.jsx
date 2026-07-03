@@ -4849,7 +4849,7 @@ return "";
                 </button>
 
                 <button type="button" onClick={() => goToView("purchase")}>
-                  Закупка
+                  Закупка{purchaseFlavors.length > 0 ? ` (${purchaseFlavors.length})` : ""}
                 </button>
               </div>
 
@@ -4869,7 +4869,7 @@ return "";
                 <p>Порядок в базе</p>
 
                 <button type="button" onClick={() => goToView("dataQuality")}>
-                  Проверка базы
+                  Проверка базы{dataQualityTotalIssues > 0 ? ` (${dataQualityTotalIssues})` : ""}
                 </button><button type="button" onClick={() => goToView("tags")}>
                   Теги
                 </button>
