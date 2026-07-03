@@ -4842,7 +4842,7 @@ return "";
           {isHeaderMenuOpen && (
             <div className="header-dropdown">
               <div className="dropdown-section">
-                <p>Разделы</p>
+                <p>Работа</p>
 
                 <button type="button" onClick={() => goToView("inventory")}>
                   Склад
@@ -4852,21 +4852,37 @@ return "";
                   Закупка
                 </button>
 
+                {!isDemoMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentView("inventory");
+                      setIsSupplyFormOpen(true);
+                      closeMenu();
+                    }}
+                  >
+                    Добавить поставку
+                  </button>
+                )}
+              </div>
+
+              <div className="dropdown-section">
+                <p>Аналитика</p>
+
                 <button type="button" onClick={() => goToView("analytics")}>
-                  Аналитика
+                  Общая аналитика
                 </button>
 
                 <button type="button" onClick={() => goToView("deadstock")}>
                   Залежи
                 </button>
+              </div>
 
-                <button
-                  onClick={() => {
-                    openHistory();
-                    closeMenu();
-                  }}
-                >
-                  История
+              <div className="dropdown-section">
+                <p>Порядок в базе</p>
+
+                <button type="button" onClick={() => goToView("analytics")}>
+                  Проверка базы
                 </button>
 
                 <button type="button" onClick={() => goToView("duplicates")}>
@@ -4876,19 +4892,10 @@ return "";
                 <button type="button" onClick={() => goToView("tags")}>
                   Теги
                 </button>
-
               </div>
+
               <div className="dropdown-section">
                 <p>Данные</p>
-
-                <button
-                  onClick={() => {
-                    openExportChoice();
-                    closeMenu();
-                  }}
-                >
-                  Экспорт
-                </button>
 
                 {!isDemoMode && (
                   <button
@@ -4900,6 +4907,24 @@ return "";
                     Импорт
                   </button>
                 )}
+
+                <button
+                  onClick={() => {
+                    openExportChoice();
+                    closeMenu();
+                  }}
+                >
+                  Экспорт
+                </button>
+
+                <button
+                  onClick={() => {
+                    openHistory();
+                    closeMenu();
+                  }}
+                >
+                  История
+                </button>
 
                 {!isDemoMode && (
                   <button
