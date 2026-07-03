@@ -509,12 +509,14 @@ function App() {
 
   const handleDataQualityItemClick = (item, issueKey = "") => {
     if (issueKey === "duplicateFlavors") {
+      setDataQualityReturnTarget("duplicates");
       setCurrentView("duplicates");
       scrollToPageTop();
       return;
     }
 
     if (issueKey === "brandVariants") {
+      setDataQualityReturnTarget("tags");
       setCurrentView("tags");
       scrollToPageTop();
       return;
@@ -2097,6 +2099,7 @@ const [selectedTag, setSelectedTag] = useState("all");
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all");
   const [openDataQualityIssue, setOpenDataQualityIssue] = useState(null);
+  const [dataQualityReturnTarget, setDataQualityReturnTarget] = useState(null);
   const [activeChoiceModal, setActiveChoiceModal] = useState(null);
   const [importMode, setImportMode] = useState("supply");
   const [editingSupplyLog, setEditingSupplyLog] = useState(null);
@@ -5719,18 +5722,21 @@ if (currentView === "purchase") {
         })}
 
         <main className="content tags-page">
-          <section className="return-panel">
-            <button
-              type="button"
-              className="secondary-button dark"
-              onClick={() => {
-                setCurrentView("dataQuality");
-                scrollToPageTop();
-              }}
-            >
-              ← Вернуться в проверку базы
-            </button>
-          </section>
+          {dataQualityReturnTarget === "duplicates" && (
+            <section className="return-panel">
+              <button
+                type="button"
+                className="secondary-button dark"
+                onClick={() => {
+                  setDataQualityReturnTarget(null);
+                  setCurrentView("dataQuality");
+                  scrollToPageTop();
+                }}
+              >
+                ← Вернуться в проверку базы
+              </button>
+            </section>
+          )}
           <section className="analytics-grid">
             <article className="analytics-card">
               <span>Всего тегов</span>
