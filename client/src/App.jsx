@@ -7347,17 +7347,6 @@ if (currentView === "purchase") {
             Все теги
           </button>
 
-          <button
-            className={
-              selectedTag === "__NO_TAGS__"
-                ? "tag-filter-button active"
-                : "tag-filter-button"
-            }
-            onClick={() => applyInventoryQuickFilter("all", "__NO_TAGS__")}
-          >
-            Без тегов
-          </button>
-
           {quickTags.map((tag) => (
             <button
               key={tag}
