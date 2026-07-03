@@ -115,6 +115,7 @@ function App() {
   });
 
   const [editingFlavorId, setEditingFlavorId] = useState(null);
+  const [editReturnTarget, setEditReturnTarget] = useState(null);
   const [editForm, setEditForm] = useState({
     brand: "",
     name: "",
@@ -504,7 +505,7 @@ function App() {
     setOpenBrandName(flavor.brand || "");
     setOpenFlavorId(flavor.id);
     highlightFlavor(flavor.id);
-    openEditForm(flavor);
+    openEditForm(flavor, "dataQuality");
   };
 
   const handleDataQualityItemClick = (item, issueKey = "") => {
@@ -827,8 +828,9 @@ function App() {
     }
   };
 
-  const openEditForm = (flavor) => {
+  const openEditForm = (flavor, returnTarget = null) => {
     setEditingFlavorId(flavor.id);
+    setEditReturnTarget(returnTarget);
 
     scrollToPageTop();
     setEditForm({
@@ -844,6 +846,7 @@ function App() {
 
   const closeEditForm = () => {
     setEditingFlavorId(null);
+    setEditReturnTarget(null);
 
     setEditForm({
       brand: "",
@@ -924,8 +927,16 @@ function App() {
         throw new Error("Не удалось сохранить изменения");
       }
 
+      const shouldReturnToDataQuality = editReturnTarget === "dataQuality";
+
       closeEditForm();
       await refreshFlavors();
+
+      if (shouldReturnToDataQuality) {
+        setCurrentView("dataQuality");
+        setOpenDataQualityIssue(null);
+        scrollToPageTop();
+      }
     } catch (error) {
       console.error(error);
       setErrorText(error.message || "Не удалось сохранить изменения");
