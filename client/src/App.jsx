@@ -5422,7 +5422,26 @@ if (currentView === "deadstock") {
                               </span>
 
                               <em className="data-quality-item-action">
-                                {item.type === "flavor" ? "Открыть вкус" : "Исправить поставку"}
+                                {issue.key === "duplicateFlavors"
+                                  ? "Проверить дубли"
+                                  : issue.key === "brandVariants"
+                                    ? "Исправить бренд"
+                                    : issue.key === "noTagsInStock" ||
+                                        issue.key === "noTagsOutOfStock"
+                                      ? "Добавить теги"
+                                      : issue.key === "noPacks"
+                                        ? "Добавить фасовку"
+                                        : issue.key === "brokenPurchased"
+                                          ? "Проверить фасовки"
+                                          : issue.key === "noPrice"
+                                            ? "Указать цену"
+                                            : issue.key === "noSupplier"
+                                              ? "Указать поставщика"
+                                              : issue.key === "noDate"
+                                                ? "Указать дату"
+                                                : item.type === "flavor"
+                                                  ? "Открыть вкус"
+                                                  : "Исправить поставку"}
                               </em>
                             </button>
                           ))
