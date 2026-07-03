@@ -4790,3 +4790,18 @@ textarea:focus,
 }
 
 /* === BRAND META CHIPS CONTRAST FIX END === */
+
+/* === MUTED DATA QUALITY CARDS START === */
+
+.data-quality-summary-grid .analytics-card.muted {
+  opacity: 0.46 !important;
+  cursor: default !important;
+  transform: none !important;
+}
+
+.data-quality-summary-grid .analytics-card.muted:hover {
+  transform: none !important;
+  box-shadow: inherit !important;
+}
+
+/* === MUTED DATA QUALITY CARDS END === */

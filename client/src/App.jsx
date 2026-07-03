@@ -5308,30 +5308,58 @@ if (currentView === "deadstock") {
         <main className="content data-quality-page">
           <section className="analytics-grid data-quality-summary-grid">
             <article
-              className="analytics-card clickable"
-              onClick={() => setOpenDataQualityIssue(visibleDataQualityIssues[0]?.key || null)}
+              className={
+                dataQualityTotalIssues > 0
+                  ? "analytics-card clickable"
+                  : "analytics-card muted"
+              }
+              onClick={() => {
+                if (dataQualityTotalIssues > 0) {
+                  setOpenDataQualityIssue(visibleDataQualityIssues[0]?.key || null);
+                }
+              }}
             >
               <span>Всего замечаний</span>
               <strong>{dataQualityTotalIssues}</strong>
             </article>
 
             <article
-              className="analytics-card clickable"
-              onClick={() => setOpenDataQualityIssue("duplicateFlavors")}
+              className={
+                dataQualityData.duplicateFlavorGroups.length > 0
+                  ? "analytics-card clickable"
+                  : "analytics-card muted"
+              }
+              onClick={() => {
+                if (dataQualityData.duplicateFlavorGroups.length > 0) {
+                  setOpenDataQualityIssue("duplicateFlavors");
+                }
+              }}
             >
               <span>Дубли вкусов</span>
               <strong>{dataQualityData.duplicateFlavorGroups.length}</strong>
             </article>
 
             <article
-              className="analytics-card clickable"
-              onClick={() =>
-                setOpenDataQualityIssue(
-                  dataQualityData.flavorsWithoutTagsInStock.length > 0
-                    ? "noTagsInStock"
-                    : "noTagsOutOfStock"
-                )
+              className={
+                dataQualityData.flavorsWithoutTagsInStock.length +
+                  dataQualityData.flavorsWithoutTagsOutOfStock.length >
+                0
+                  ? "analytics-card clickable"
+                  : "analytics-card muted"
               }
+              onClick={() => {
+                const noTagsTotal =
+                  dataQualityData.flavorsWithoutTagsInStock.length +
+                  dataQualityData.flavorsWithoutTagsOutOfStock.length;
+
+                if (noTagsTotal > 0) {
+                  setOpenDataQualityIssue(
+                    dataQualityData.flavorsWithoutTagsInStock.length > 0
+                      ? "noTagsInStock"
+                      : "noTagsOutOfStock"
+                  );
+                }
+              }}
             >
               <span>Без тегов</span>
               <strong>
@@ -5341,20 +5369,38 @@ if (currentView === "deadstock") {
             </article>
 
             <article
-              className="analytics-card clickable"
-              onClick={() =>
-                setOpenDataQualityIssue(
-                  dataQualityData.suppliesWithoutPrice.length > 0
-                    ? "noPrice"
-                    : dataQualityData.suppliesWithoutSupplier.length > 0
-                      ? "noSupplier"
-                      : dataQualityData.suppliesWithoutDate.length > 0
-                        ? "noDate"
-                        : dataQualityData.supplyLogsWithoutFlavor.length > 0
-                          ? "supplyWithoutFlavor"
-                          : "supplyWithDeletedFlavor"
-                )
+              className={
+                dataQualityData.suppliesWithoutPrice.length +
+                  dataQualityData.suppliesWithoutSupplier.length +
+                  dataQualityData.suppliesWithoutDate.length +
+                  dataQualityData.supplyLogsWithoutFlavor.length +
+                  dataQualityData.supplyLogsWithDeletedFlavor.length >
+                0
+                  ? "analytics-card clickable"
+                  : "analytics-card muted"
               }
+              onClick={() => {
+                const supplyProblemsTotal =
+                  dataQualityData.suppliesWithoutPrice.length +
+                  dataQualityData.suppliesWithoutSupplier.length +
+                  dataQualityData.suppliesWithoutDate.length +
+                  dataQualityData.supplyLogsWithoutFlavor.length +
+                  dataQualityData.supplyLogsWithDeletedFlavor.length;
+
+                if (supplyProblemsTotal > 0) {
+                  setOpenDataQualityIssue(
+                    dataQualityData.suppliesWithoutPrice.length > 0
+                      ? "noPrice"
+                      : dataQualityData.suppliesWithoutSupplier.length > 0
+                        ? "noSupplier"
+                        : dataQualityData.suppliesWithoutDate.length > 0
+                          ? "noDate"
+                          : dataQualityData.supplyLogsWithoutFlavor.length > 0
+                            ? "supplyWithoutFlavor"
+                            : "supplyWithDeletedFlavor"
+                  );
+                }
+              }}
             >
               <span>Проблемные поставки</span>
               <strong>
