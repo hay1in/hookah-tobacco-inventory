@@ -5719,6 +5719,18 @@ if (currentView === "purchase") {
         })}
 
         <main className="content tags-page">
+          <section className="return-panel">
+            <button
+              type="button"
+              className="secondary-button dark"
+              onClick={() => {
+                setCurrentView("dataQuality");
+                scrollToPageTop();
+              }}
+            >
+              ← Вернуться в проверку базы
+            </button>
+          </section>
           <section className="analytics-grid">
             <article className="analytics-card">
               <span>Всего тегов</span>
