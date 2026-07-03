@@ -5588,6 +5588,36 @@ if (currentView === "purchase") {
       (row) => !row.isPurchaseConfirmed && row.analogs.length > 0
     );
 
+    const missingNoAnalogTagRows = Array.from(
+      urgentRows
+        .flatMap((row) => row.missingSpecificTags || [])
+        .reduce((tagMap, tag) => {
+          const normalizedTag = String(tag || "").trim();
+
+          if (!normalizedTag) {
+            return tagMap;
+          }
+
+          const key = normalizedTag.toLowerCase();
+          const currentRow = tagMap.get(key) || {
+            tag: normalizedTag,
+            count: 0,
+          };
+
+          currentRow.count += 1;
+          tagMap.set(key, currentRow);
+
+          return tagMap;
+        }, new Map())
+        .values()
+    ).sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
+
+      return a.tag.localeCompare(b.tag, "ru");
+    });
+
     const purchaseSections = [
       {
         title: "Подтверждённые позиции",
@@ -5641,6 +5671,39 @@ if (currentView === "purchase") {
             <p className="info-message">
               Сейчас нет позиций, которые требуется закупить.
             </p>
+          )}
+
+          {missingNoAnalogTagRows.length > 0 && (
+            <section className="purchase-missing-tags-summary">
+              <div>
+                <span>Полностью отсутствуют без аналогов</span>
+                <h2>Что особенно важно докупить</h2>
+                <p>
+                  Эти дополнительные вкусовые теги сейчас не закрываются ни одной позицией на полке.
+                </p>
+              </div>
+
+              <div className="purchase-missing-tags-summary-list">
+                {missingNoAnalogTagRows.map((row) => (
+                  <button
+                    type="button"
+                    key={row.tag}
+                    onClick={() => {
+                      setSearchText("");
+                      setStatusFilter("all");
+                      setSelectedTag(row.tag);
+                      setOpenBrandName("");
+                      setOpenFlavorId(null);
+                      setCurrentView("inventory");
+                      scrollToPageTop();
+                    }}
+                  >
+                    <strong>#{row.tag}</strong>
+                    <small>{row.count} поз.</small>
+                  </button>
+                ))}
+              </div>
+            </section>
           )}
 
           <section className="purchase-smart-sections">

@@ -4857,3 +4857,85 @@ textarea:focus,
 }
 
 /* === PURCHASE MISSING TAGS ALERT END === */
+
+/* === PURCHASE MISSING TAGS SUMMARY START === */
+
+.purchase-missing-tags-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+  gap: 18px;
+  align-items: start;
+  margin: 0 0 18px;
+  padding: 20px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 211, 157, 0.22), transparent 38%),
+    rgba(24, 18, 15, 0.92);
+  border: 1px solid rgba(255, 211, 157, 0.28);
+  color: #fff7ed;
+  box-shadow: 0 18px 44px rgba(20, 14, 10, 0.2);
+}
+
+.purchase-missing-tags-summary span {
+  display: block;
+  margin-bottom: 7px;
+  color: #ffd39d;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.purchase-missing-tags-summary h2 {
+  margin: 0 0 8px;
+  color: #fff7ed;
+  font-size: 24px;
+}
+
+.purchase-missing-tags-summary p {
+  margin: 0;
+  color: #d8cec2;
+  font-weight: 750;
+}
+
+.purchase-missing-tags-summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.purchase-missing-tags-summary-list button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 211, 157, 0.45);
+  border-radius: 999px;
+  padding: 10px 13px;
+  background: rgba(255, 211, 157, 0.14);
+  color: #fff7ed;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.purchase-missing-tags-summary-list button:hover {
+  background: rgba(255, 211, 157, 0.24);
+  transform: translateY(-1px);
+}
+
+.purchase-missing-tags-summary-list strong {
+  color: #ffd39d;
+}
+
+.purchase-missing-tags-summary-list small {
+  color: #fff7ed;
+  opacity: 0.82;
+  font-weight: 850;
+}
+
+@media (max-width: 760px) {
+  .purchase-missing-tags-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === PURCHASE MISSING TAGS SUMMARY END === */
