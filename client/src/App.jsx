@@ -2074,7 +2074,7 @@ function App() {
   setOpenFlavorId(null);
   clearSelectedFlavors();
 };
-  const [selectedTag, setSelectedTag] = useState("all");
+const [selectedTag, setSelectedTag] = useState("all");
   const [openBrandName, setOpenBrandName] = useState("");
   const [openFlavorId, setOpenFlavorId] = useState(null);
   const [openFlavorHistoryIds, setOpenFlavorHistoryIds] = useState([]);
@@ -4844,10 +4844,6 @@ return "";
               <div className="dropdown-section">
                 <p>Работа</p>
 
-                <button type="button" onClick={() => goToView("overview")}>
-                  Обзор
-                </button>
-
                 <button type="button" onClick={() => goToView("inventory")}>
                   Склад
                 </button>
@@ -5299,89 +5295,7 @@ if (currentView === "deadstock") {
       </div>
     );
   }
-
-  
-  
-  if (currentView === "overview") {
-    return (
-      <div className="app">
-        {renderAppHeader({
-          title: "Обзор",
-          subtitle: "Короткая сводка по складу, закупке и состоянию базы",
-        })}
-
-        <main className="content overview-page">
-          <section className="analytics-grid">
-            <article className="analytics-card clickable" onClick={() => goToView("inventory")}>
-              <span>Всего вкусов</span>
-              <strong>{flavors.filter((flavor) => !flavor.archived).length}</strong>
-            </article>
-
-            <article className="analytics-card clickable" onClick={() => goToView("inventory")}>
-              <span>В наличии</span>
-              <strong>{analyticsData.inStockCount}</strong>
-            </article>
-
-            <article className="analytics-card clickable" onClick={() => goToView("inventory")}>
-              <span>Мало осталось</span>
-              <strong>{analyticsData.lowStockCount}</strong>
-            </article>
-
-            <article className="analytics-card clickable" onClick={() => goToView("inventory")}>
-              <span>Отсутствует</span>
-              <strong>{analyticsData.absentCount}</strong>
-            </article>
-
-            <article className="analytics-card clickable" onClick={() => goToView("purchase")}>
-              <span>К закупке</span>
-              <strong>{purchaseFlavors.length}</strong>
-            </article>
-
-            <article className="analytics-card clickable" onClick={() => goToView("dataQuality")}>
-              <span>Замечаний в базе</span>
-              <strong>{dataQualityTotalIssues}</strong>
-            </article>
-          </section>
-
-          <section className="analytics-panel wide overview-actions-panel">
-            <div className="data-quality-header">
-              <div>
-                <span className="choice-modal-eyebrow">Быстрые действия</span>
-                <h2>Что открыть?</h2>
-              </div>
-            </div>
-
-            <div className="purchase-smart-actions overview-actions">
-              <button type="button" onClick={() => goToView("inventory")}>
-                Открыть склад
-              </button>
-
-              <button type="button" onClick={() => goToView("purchase")}>
-                Открыть закупку
-              </button>
-
-              <button type="button" onClick={() => goToView("dataQuality")}>
-                Проверить базу
-              </button>
-
-              {!isDemoMode && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    openImportChoice();
-                  }}
-                >
-                  Импорт Excel
-                </button>
-              )}
-            </div>
-          </section>
-        </main>
-      </div>
-    );
-  }
-
-if (currentView === "dataQuality") {
+  if (currentView === "dataQuality") {
     return (
       <div className="app">
         {renderAppHeader({
