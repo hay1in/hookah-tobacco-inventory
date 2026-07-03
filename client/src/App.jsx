@@ -1257,6 +1257,7 @@ function App() {
       const status = getStatus(flavor).text;
       const specificTags = getSpecificTags(flavor);
       const analogs = getAnalogFlavors(flavor);
+      const missingSpecificTags = getMissingSpecificTagsOnShelf(flavor);
       const isPurchaseConfirmed = Boolean(
         flavor.purchaseConfirmed || flavor.purchase_confirmed
       );
@@ -3656,6 +3657,26 @@ const titles = {
       .slice(0, 5);
   };
 
+  const getMissingSpecificTagsOnShelf = (targetFlavor) => {
+    return getSpecificTags(targetFlavor).filter((targetTag) => {
+      const normalizedTargetTag = targetTag.toLowerCase();
+
+      return !flavors.some((flavor) => {
+        if (flavor.archived) {
+          return false;
+        }
+
+        if (getTotalQuantity(flavor.packs || []) <= 0) {
+          return false;
+        }
+
+        return getSpecificTags(flavor).some(
+          (tag) => tag.toLowerCase() === normalizedTargetTag
+        );
+      });
+    });
+  };
+
   const toggleDeadstockExcluded = async (flavor) => {
     const currentValue = Boolean(
       flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
@@ -5539,6 +5560,7 @@ if (currentView === "purchase") {
       const status = getStatus(flavor);
       const specificTags = getSpecificTags(flavor);
       const analogs = getAnalogFlavors(flavor);
+      const missingSpecificTags = getMissingSpecificTagsOnShelf(flavor);
       const isPurchaseConfirmed = Boolean(
         flavor.purchaseConfirmed || flavor.purchase_confirmed
       );
@@ -5549,6 +5571,7 @@ if (currentView === "purchase") {
         status,
         specificTags,
         analogs,
+        missingSpecificTags,
         isPurchaseConfirmed,
       };
     });
@@ -5640,6 +5663,7 @@ if (currentView === "purchase") {
                       status,
                       specificTags,
                       analogs,
+                      missingSpecificTags,
                       isPurchaseConfirmed,
                     }) => (
                       <article className="purchase-smart-card" key={flavor.id}>
@@ -5662,6 +5686,15 @@ if (currentView === "purchase") {
                             {specificTags.map((tag) => (
                               <strong key={tag}>#{tag}</strong>
                             ))}
+                          </div>
+                        )}
+
+                        {(missingSpecificTags || []).length > 0 && (
+                          <div className="purchase-missing-tags-alert">
+                            <strong>Нет на полке:</strong>
+                            <span>
+                              {(missingSpecificTags || []).map((tag) => `#${tag}`).join(", ")}
+                            </span>
                           </div>
                         )}
 
@@ -7423,19 +7456,6 @@ if (currentView === "purchase") {
                                           </button>
 
                                           <strong>{pack.quantity} пач.</strong>
-
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              adjustPackQuantity(
-                                                flavor.id,
-                                                packIndex,
-                                                1
-                                              )
-                                            }
-                                          >
-                                            +
-                                          </button>
                                         </div>
                                       ) : (
                                         <strong>{pack.quantity} пач.</strong>

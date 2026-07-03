@@ -4831,3 +4831,29 @@ textarea:focus,
 }
 
 /* === DATA QUALITY HEADER ACTIONS END === */
+
+/* === PURCHASE MISSING TAGS ALERT START === */
+
+.purchase-missing-tags-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: 16px;
+  background: rgba(255, 211, 157, 0.18);
+  border: 1px solid rgba(255, 211, 157, 0.45);
+  color: #fff7ed;
+  font-weight: 850;
+}
+
+.purchase-missing-tags-alert strong {
+  color: #ffd39d;
+}
+
+.purchase-missing-tags-alert span {
+  color: #fff7ed;
+}
+
+/* === PURCHASE MISSING TAGS ALERT END === */
