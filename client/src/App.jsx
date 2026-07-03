@@ -507,7 +507,13 @@ function App() {
     openEditForm(flavor);
   };
 
-  const handleDataQualityItemClick = (item) => {
+  const handleDataQualityItemClick = (item, issueKey = "") => {
+    if (issueKey === "duplicateFlavors") {
+      setCurrentView("duplicates");
+      scrollToPageTop();
+      return;
+    }
+
     if (item.type === "flavor") {
       openFlavorFromAnalytics(item.id);
       return;
@@ -5458,7 +5464,7 @@ if (currentView === "deadstock") {
                               className="data-quality-item"
                               type="button"
                               key={`${item.type}-${item.id}`}
-                              onClick={() => handleDataQualityItemClick(item)}
+                              onClick={() => handleDataQualityItemClick(item, issue.key)}
                             >
                               <span className="data-quality-item-main">
                                 <strong>{item.title}</strong>
