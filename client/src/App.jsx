@@ -5307,17 +5307,32 @@ if (currentView === "deadstock") {
 
         <main className="content data-quality-page">
           <section className="analytics-grid data-quality-summary-grid">
-            <article className="analytics-card">
+            <article
+              className="analytics-card clickable"
+              onClick={() => setOpenDataQualityIssue(visibleDataQualityIssues[0]?.key || null)}
+            >
               <span>Всего замечаний</span>
               <strong>{dataQualityTotalIssues}</strong>
             </article>
 
-            <article className="analytics-card">
+            <article
+              className="analytics-card clickable"
+              onClick={() => setOpenDataQualityIssue("duplicateFlavors")}
+            >
               <span>Дубли вкусов</span>
               <strong>{dataQualityData.duplicateFlavorGroups.length}</strong>
             </article>
 
-            <article className="analytics-card">
+            <article
+              className="analytics-card clickable"
+              onClick={() =>
+                setOpenDataQualityIssue(
+                  dataQualityData.flavorsWithoutTagsInStock.length > 0
+                    ? "noTagsInStock"
+                    : "noTagsOutOfStock"
+                )
+              }
+            >
               <span>Без тегов</span>
               <strong>
                 {dataQualityData.flavorsWithoutTagsInStock.length +
@@ -5325,7 +5340,22 @@ if (currentView === "deadstock") {
               </strong>
             </article>
 
-            <article className="analytics-card">
+            <article
+              className="analytics-card clickable"
+              onClick={() =>
+                setOpenDataQualityIssue(
+                  dataQualityData.suppliesWithoutPrice.length > 0
+                    ? "noPrice"
+                    : dataQualityData.suppliesWithoutSupplier.length > 0
+                      ? "noSupplier"
+                      : dataQualityData.suppliesWithoutDate.length > 0
+                        ? "noDate"
+                        : dataQualityData.supplyLogsWithoutFlavor.length > 0
+                          ? "supplyWithoutFlavor"
+                          : "supplyWithDeletedFlavor"
+                )
+              }
+            >
               <span>Проблемные поставки</span>
               <strong>
                 {dataQualityData.suppliesWithoutPrice.length +
