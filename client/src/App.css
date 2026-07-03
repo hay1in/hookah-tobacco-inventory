@@ -4593,3 +4593,200 @@ textarea:focus,
 }
 
 /* === FLAVOR CARD CONTRAST FIX END === */
+
+/* === EDIT PANEL CONTRAST FIX START === */
+
+/* Панель редактирования вкуса */
+.edit-panel,
+.flavor-card.edit-panel,
+.supply-panel.edit-panel {
+  background:
+    linear-gradient(135deg, rgba(36, 25, 29, 0.98), rgba(26, 20, 22, 0.98)) !important;
+  color: var(--app-text) !important;
+  border: 1px solid var(--app-border-strong) !important;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.32) !important;
+}
+
+/* Заголовки в редактировании */
+.edit-panel h2,
+.edit-panel h3,
+.edit-panel strong,
+.edit-panel .brand,
+.edit-panel .eyebrow,
+.edit-panel .eyebrow.dark {
+  color: #ffffff !important;
+}
+
+/* Подписи и вторичный текст */
+.edit-panel p,
+.edit-panel span,
+.edit-panel small,
+.edit-panel em,
+.edit-panel label,
+.edit-panel .form-hint,
+.edit-panel .section-label {
+  color: var(--app-text-soft) !important;
+}
+
+/* Поля ввода и textarea */
+.edit-panel input,
+.edit-panel textarea,
+.edit-panel select,
+.supply-panel.edit-panel input,
+.supply-panel.edit-panel textarea,
+.supply-panel.edit-panel select {
+  background: rgba(255, 247, 244, 0.09) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--app-border) !important;
+  box-shadow: none !important;
+}
+
+/* Placeholder тоже делаем видимым */
+.edit-panel input::placeholder,
+.edit-panel textarea::placeholder,
+.supply-panel.edit-panel input::placeholder,
+.supply-panel.edit-panel textarea::placeholder {
+  color: rgba(232, 208, 204, 0.62) !important;
+}
+
+/* Фокус в полях */
+.edit-panel input:focus,
+.edit-panel textarea:focus,
+.edit-panel select:focus,
+.supply-panel.edit-panel input:focus,
+.supply-panel.edit-panel textarea:focus,
+.supply-panel.edit-panel select:focus {
+  background: rgba(255, 247, 244, 0.12) !important;
+  color: #ffffff !important;
+  border-color: var(--app-red-hover) !important;
+  box-shadow: 0 0 0 3px rgba(217, 45, 56, 0.18) !important;
+  outline: none !important;
+}
+
+/* Обёртки label внутри формы */
+.edit-panel .supply-form label,
+.edit-panel label,
+.supply-panel.edit-panel .supply-form label {
+  background: rgba(255, 247, 244, 0.06) !important;
+  color: var(--app-text-soft) !important;
+  border: 1px solid var(--app-border) !important;
+}
+
+/* Подсказки тегов в редактировании */
+.edit-panel .tag-suggestion-list button,
+.supply-panel.edit-panel .tag-suggestion-list button {
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: var(--app-cream) !important;
+  border: 1px solid var(--app-border) !important;
+}
+
+.edit-panel .tag-suggestion-list button:hover,
+.supply-panel.edit-panel .tag-suggestion-list button:hover {
+  background: rgba(217, 45, 56, 0.18) !important;
+  color: #ffffff !important;
+  border-color: var(--app-border-strong) !important;
+}
+
+/* Кнопки формы */
+.edit-panel .submit-button,
+.edit-panel button[type="submit"],
+.supply-panel.edit-panel .submit-button,
+.supply-panel.edit-panel button[type="submit"] {
+  background: linear-gradient(135deg, var(--app-red), var(--app-red-dark)) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 123, 132, 0.34) !important;
+}
+
+.edit-panel .close-button,
+.edit-panel .secondary-button,
+.supply-panel.edit-panel .close-button,
+.supply-panel.edit-panel .secondary-button {
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--app-border) !important;
+}
+
+.edit-panel .close-button:hover,
+.edit-panel .secondary-button:hover,
+.supply-panel.edit-panel .close-button:hover,
+.supply-panel.edit-panel .secondary-button:hover {
+  background: rgba(217, 45, 56, 0.18) !important;
+  color: #ffffff !important;
+  border-color: var(--app-border-strong) !important;
+}
+
+/* === EDIT PANEL CONTRAST FIX END === */
+
+/* === BRAND META CHIPS CONTRAST FIX START === */
+
+/* Плашки-счётчики у бренда: в наличии / мало / нет */
+.brand-row-meta span,
+.brand-row-meta .brand-stock,
+.brand-row-meta .brand-warning,
+.brand-row-meta .brand-alert,
+.brand-row-meta .brand-muted,
+.analytics-brand-meta span,
+.analytics-brand-meta .brand-warning,
+.analytics-brand-meta .brand-alert {
+  border-radius: 999px !important;
+  padding: 7px 10px !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+
+/* В наличии */
+.brand-row-meta .brand-stock {
+  background: rgba(32, 108, 58, 0.72) !important;
+  color: #ffffff !important;
+  border-color: rgba(155, 227, 173, 0.42) !important;
+}
+
+/* Мало */
+.brand-row-meta .brand-warning,
+.analytics-brand-meta .brand-warning {
+  background: rgba(151, 88, 18, 0.82) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 213, 143, 0.48) !important;
+}
+
+/* Нет / отсутствует */
+.brand-row-meta .brand-alert,
+.analytics-brand-meta .brand-alert {
+  background: rgba(157, 41, 32, 0.86) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 181, 186, 0.5) !important;
+}
+
+/* Нулевые значения — нейтральная тёмная плашка */
+.brand-row-meta .brand-muted {
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: var(--app-text-soft) !important;
+  border-color: var(--app-border) !important;
+}
+
+/* Стрелку не превращаем в яркую плашку */
+.brand-row-meta .brand-arrow {
+  background: transparent !important;
+  color: var(--app-text-soft) !important;
+  border-color: transparent !important;
+  padding: 0 0 0 4px !important;
+}
+
+/* На случай вложенного текста */
+.brand-row-meta .brand-stock *,
+.brand-row-meta .brand-warning *,
+.brand-row-meta .brand-alert *,
+.analytics-brand-meta .brand-warning *,
+.analytics-brand-meta .brand-alert * {
+  color: #ffffff !important;
+}
+
+.brand-row-meta .brand-muted * {
+  color: var(--app-text-soft) !important;
+}
+
+/* === BRAND META CHIPS CONTRAST FIX END === */
