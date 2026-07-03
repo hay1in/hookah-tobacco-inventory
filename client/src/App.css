@@ -4944,15 +4944,19 @@ textarea:focus,
 
 .supply-panel:not(.edit-panel) {
   background:
-    radial-gradient(circle at top right, rgba(255, 211, 157, 0.18), transparent 36%),
-    #18120f !important;
-  border: 1px solid rgba(255, 211, 157, 0.24) !important;
+    radial-gradient(circle at top right, rgba(154, 42, 35, 0.34), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(255, 128, 89, 0.16), transparent 38%),
+    linear-gradient(135deg, #18120f 0%, #25110f 48%, #120d0b 100%) !important;
+  border: 1px solid rgba(255, 128, 89, 0.34) !important;
   color: #fff7ed !important;
+  box-shadow:
+    0 24px 70px rgba(20, 14, 10, 0.34),
+    0 0 42px rgba(154, 42, 35, 0.16) !important;
 }
 
 .supply-panel:not(.edit-panel) .eyebrow,
 .supply-panel:not(.edit-panel) .eyebrow.dark {
-  color: #ffd39d !important;
+  color: #ff9b7a !important;
 }
 
 .supply-panel:not(.edit-panel) h2,
@@ -4976,7 +4980,7 @@ textarea:focus,
 .supply-panel:not(.edit-panel) .supply-form input,
 .supply-panel:not(.edit-panel) .supply-form textarea {
   background: #fff7ed !important;
-  border: 1px solid rgba(255, 211, 157, 0.42) !important;
+  border: 1px solid rgba(255, 128, 89, 0.42) !important;
   color: #211b18 !important;
 }
 
@@ -4986,13 +4990,13 @@ textarea:focus,
 }
 
 .supply-panel:not(.edit-panel) .tag-suggestion-list button {
-  background: rgba(255, 211, 157, 0.14) !important;
-  border: 1px solid rgba(255, 211, 157, 0.36) !important;
+  background: rgba(154, 42, 35, 0.22) !important;
+  border: 1px solid rgba(255, 128, 89, 0.36) !important;
   color: #fff7ed !important;
 }
 
 .supply-panel:not(.edit-panel) .tag-suggestion-list button:hover {
-  background: rgba(255, 211, 157, 0.24) !important;
+  background: rgba(154, 42, 35, 0.34) !important;
 }
 
 .supply-panel:not(.edit-panel) .close-button {
