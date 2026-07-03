@@ -4858,14 +4858,7 @@ return "";
 
         <div className="header-actions">
           {isInventory ? (
-            !isDemoMode && (
-              <button
-                className="primary-button"
-                onClick={() => setIsSupplyFormOpen(true)}
-              >
-                + Поставка
-              </button>
-            )
+            null
           ) : (
             <button
               className="secondary-button"
@@ -5813,10 +5806,6 @@ if (currentView === "purchase") {
                               onClick={() => archiveFlavor(flavor.id)}
                             >
                               В архив
-                            </button>
-
-                            <button onClick={() => startSupplyForFlavor(flavor)}>
-                              Добавить поставку
                             </button>
                           </div>
                         )}
