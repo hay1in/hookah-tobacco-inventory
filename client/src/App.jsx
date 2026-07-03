@@ -5306,6 +5306,37 @@ if (currentView === "deadstock") {
         })}
 
         <main className="content data-quality-page">
+          <section className="analytics-grid data-quality-summary-grid">
+            <article className="analytics-card">
+              <span>Всего замечаний</span>
+              <strong>{dataQualityTotalIssues}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Дубли вкусов</span>
+              <strong>{dataQualityData.duplicateFlavorGroups.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Без тегов</span>
+              <strong>
+                {dataQualityData.flavorsWithoutTagsInStock.length +
+                  dataQualityData.flavorsWithoutTagsOutOfStock.length}
+              </strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Проблемные поставки</span>
+              <strong>
+                {dataQualityData.suppliesWithoutPrice.length +
+                  dataQualityData.suppliesWithoutSupplier.length +
+                  dataQualityData.suppliesWithoutDate.length +
+                  dataQualityData.supplyLogsWithoutFlavor.length +
+                  dataQualityData.supplyLogsWithDeletedFlavor.length}
+              </strong>
+            </article>
+          </section>
+
           <section className="analytics-panel wide data-quality-panel">
             <div className="data-quality-header">
               <div>
