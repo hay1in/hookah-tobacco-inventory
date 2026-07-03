@@ -4815,3 +4815,19 @@ textarea:focus,
 }
 
 /* === RETURN PANEL END === */
+
+/* === DATA QUALITY HEADER ACTIONS START === */
+
+.data-quality-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.data-quality-header-actions .secondary-button {
+  padding: 9px 13px;
+}
+
+/* === DATA QUALITY HEADER ACTIONS END === */

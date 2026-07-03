@@ -5433,11 +5433,23 @@ if (currentView === "deadstock") {
                 <h2>Проблемные данные</h2>
               </div>
 
-              <strong>
-                {dataQualityTotalIssues === 0
-                  ? "всё ок"
-                  : `${dataQualityTotalIssues} замеч.`}
-              </strong>
+              <div className="data-quality-header-actions">
+                <strong>
+                  {dataQualityTotalIssues === 0
+                    ? "всё ок"
+                    : `${dataQualityTotalIssues} замеч.`}
+                </strong>
+
+                {openDataQualityIssue && (
+                  <button
+                    type="button"
+                    className="secondary-button dark"
+                    onClick={() => setOpenDataQualityIssue(null)}
+                  >
+                    Свернуть всё
+                  </button>
+                )}
+              </div>
             </div>
 
             {dataQualityTotalIssues === 0 ? (
