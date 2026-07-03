@@ -4450,3 +4450,146 @@ textarea:focus,
 }
 
 /* === DATA QUALITY CONTRAST FIX END === */
+
+/* === FLAVOR CARD CONTRAST FIX START === */
+
+/* Основные карточки вкусов делаем тёмными */
+.flavor-card,
+.brand-group,
+.brand-row,
+.flavor-row-group,
+.flavor-details-card,
+.packs,
+.pack-row,
+.flavor-history,
+.flavor-history-item {
+  background:
+    linear-gradient(135deg, rgba(36, 25, 29, 0.98), rgba(26, 20, 22, 0.98)) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+/* Заголовки внутри карточек */
+.flavor-card h2,
+.flavor-card h3,
+.flavor-card strong,
+.brand-row strong,
+.flavor-row-main strong,
+.flavor-details-card strong,
+.pack-row strong,
+.flavor-history-item strong {
+  color: #ffffff !important;
+}
+
+/* Вторичный текст внутри карточек */
+.flavor-card p,
+.flavor-card span,
+.flavor-card small,
+.flavor-card em,
+.brand,
+.brand-row span,
+.flavor-row-main span,
+.flavor-details-card span,
+.flavor-details-card p,
+.pack-row span,
+.pack-row small,
+.section-label,
+.flavor-history-item span,
+.flavor-history-item small,
+.flavor-history-item p {
+  color: var(--app-text-soft) !important;
+}
+
+/* Теги внутри карточек — тёмные плашки со светлым текстом */
+.flavor-card .tags span,
+.flavor-row-tags-preview em,
+.tags span,
+.deadstock-excluded-badge {
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: var(--app-cream) !important;
+  border: 1px solid var(--app-border) !important;
+}
+
+/* Hover/open состояния */
+.brand-row:hover,
+.brand-row.open,
+.flavor-row-group:hover,
+.flavor-row-group.open,
+.flavor-card:hover {
+  background:
+    linear-gradient(135deg, rgba(74, 29, 37, 0.98), rgba(45, 24, 29, 0.98)) !important;
+  border-color: var(--app-border-strong) !important;
+}
+
+/* Блок фасовок внутри карточки */
+.packs {
+  border-radius: 18px !important;
+  padding: 14px !important;
+}
+
+.pack-row {
+  border-bottom: 1px solid var(--app-border) !important;
+}
+
+.pack-row:last-child {
+  border-bottom: none !important;
+}
+
+/* Кнопки действий в карточках */
+.flavor-card .actions button,
+.flavor-details-card .actions button,
+.actions button {
+  background: rgba(255, 247, 244, 0.08) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--app-border) !important;
+}
+
+.flavor-card .actions button:hover,
+.flavor-details-card .actions button:hover,
+.actions button:hover {
+  background: rgba(217, 45, 56, 0.18) !important;
+  border-color: var(--app-border-strong) !important;
+}
+
+.flavor-card .actions .danger,
+.flavor-details-card .actions .danger,
+.actions .danger {
+  background: rgba(217, 45, 56, 0.28) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 123, 132, 0.34) !important;
+}
+
+/* Статусы оставляем читаемыми */
+.flavor-card .status.in-stock,
+.flavor-row-group .status.in-stock,
+.flavor-details-card .status.in-stock {
+  background: rgba(155, 227, 173, 0.16) !important;
+  color: #9be3ad !important;
+  border: 1px solid rgba(155, 227, 173, 0.28) !important;
+}
+
+.flavor-card .status.low-stock,
+.flavor-row-group .status.low-stock,
+.flavor-details-card .status.low-stock {
+  background: rgba(255, 213, 143, 0.16) !important;
+  color: #ffd58f !important;
+  border: 1px solid rgba(255, 213, 143, 0.28) !important;
+}
+
+.flavor-card .status.need-buy,
+.flavor-row-group .status.need-buy,
+.flavor-details-card .status.need-buy {
+  background: rgba(255, 181, 186, 0.16) !important;
+  color: #ffb5ba !important;
+  border: 1px solid rgba(255, 181, 186, 0.28) !important;
+}
+
+.flavor-card .status.archived,
+.flavor-row-group .status.archived,
+.flavor-details-card .status.archived {
+  background: rgba(220, 201, 197, 0.14) !important;
+  color: #dcc9c5 !important;
+  border: 1px solid rgba(220, 201, 197, 0.22) !important;
+}
+
+/* === FLAVOR CARD CONTRAST FIX END === */
