@@ -4939,3 +4939,66 @@ textarea:focus,
 }
 
 /* === PURCHASE MISSING TAGS SUMMARY END === */
+
+/* === MANUAL SUPPLY PANEL CONTRAST FIX START === */
+
+.supply-panel:not(.edit-panel) {
+  background:
+    radial-gradient(circle at top right, rgba(255, 211, 157, 0.18), transparent 36%),
+    #18120f !important;
+  border: 1px solid rgba(255, 211, 157, 0.24) !important;
+  color: #fff7ed !important;
+}
+
+.supply-panel:not(.edit-panel) .eyebrow,
+.supply-panel:not(.edit-panel) .eyebrow.dark {
+  color: #ffd39d !important;
+}
+
+.supply-panel:not(.edit-panel) h2,
+.supply-panel:not(.edit-panel) h3,
+.supply-panel:not(.edit-panel) p,
+.supply-panel:not(.edit-panel) span,
+.supply-panel:not(.edit-panel) strong {
+  color: #fff7ed !important;
+}
+
+.supply-panel:not(.edit-panel) .form-hint {
+  color: #f4dcc4 !important;
+}
+
+.supply-panel:not(.edit-panel) .supply-form label {
+  background: rgba(255, 247, 237, 0.08) !important;
+  border: 1px solid rgba(255, 247, 237, 0.14) !important;
+  color: #fff7ed !important;
+}
+
+.supply-panel:not(.edit-panel) .supply-form input,
+.supply-panel:not(.edit-panel) .supply-form textarea {
+  background: #fff7ed !important;
+  border: 1px solid rgba(255, 211, 157, 0.42) !important;
+  color: #211b18 !important;
+}
+
+.supply-panel:not(.edit-panel) .supply-form input::placeholder,
+.supply-panel:not(.edit-panel) .supply-form textarea::placeholder {
+  color: rgba(33, 27, 24, 0.52) !important;
+}
+
+.supply-panel:not(.edit-panel) .tag-suggestion-list button {
+  background: rgba(255, 211, 157, 0.14) !important;
+  border: 1px solid rgba(255, 211, 157, 0.36) !important;
+  color: #fff7ed !important;
+}
+
+.supply-panel:not(.edit-panel) .tag-suggestion-list button:hover {
+  background: rgba(255, 211, 157, 0.24) !important;
+}
+
+.supply-panel:not(.edit-panel) .close-button {
+  background: rgba(255, 247, 237, 0.1) !important;
+  border: 1px solid rgba(255, 247, 237, 0.18) !important;
+  color: #fff7ed !important;
+}
+
+/* === MANUAL SUPPLY PANEL CONTRAST FIX END === */
