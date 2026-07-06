@@ -1268,7 +1268,6 @@ function App() {
       const status = getStatus(flavor).text;
       const specificTags = getSpecificTags(flavor);
       const analogs = getAnalogFlavors(flavor);
-      const missingSpecificTags = getMissingSpecificTagsOnShelf(flavor);
       const isPurchaseConfirmed = Boolean(
         flavor.purchaseConfirmed || flavor.purchase_confirmed
       );
@@ -3637,6 +3636,13 @@ const titles = {
           return false;
         }
 
+        const analogTotalQuantity = getTotalQuantity(flavor.packs || []);
+        const analogIsLowStock = Boolean(flavor.lowStock || flavor.low_stock);
+
+        if (analogTotalQuantity <= 0 || analogIsLowStock) {
+          return false;
+        }
+
         const flavorSpecificTags = getSpecificTags(flavor).map((tag) =>
           tag.toLowerCase()
         );
@@ -4729,6 +4735,7 @@ return "";
     const closeMenu = () => setIsHeaderMenuOpen(false);
 
     const goToView = (view) => {
+      setDataQualityReturnTarget(null);
       setCurrentView(view);
       closeMenu();
     };
@@ -5601,7 +5608,16 @@ if (currentView === "purchase") {
 
     const missingNoAnalogTagRows = Array.from(
       urgentRows
-        .flatMap((row) => row.missingSpecificTags || [])
+        .flatMap((row) => {
+          const missingTags = row.missingSpecificTags || [];
+          const isLowStockRow = row.status?.className === "status low-stock";
+
+          if (!isLowStockRow) {
+            return missingTags;
+          }
+
+          return Array.from(new Set([...missingTags, ...(row.specificTags || [])]));
+        })
         .reduce((tagMap, tag) => {
           const normalizedTag = String(tag || "").trim();
 
@@ -5687,10 +5703,10 @@ if (currentView === "purchase") {
           {missingNoAnalogTagRows.length > 0 && (
             <section className="purchase-missing-tags-summary">
               <div>
-                <span>Полностью отсутствуют без аналогов</span>
+                <span>Отсутствуют или заканчиваются без аналогов</span>
                 <h2>Что особенно важно докупить</h2>
                 <p>
-                  Эти дополнительные вкусовые теги сейчас не закрываются ни одной позицией на полке.
+                  Эти дополнительные вкусовые теги сейчас отсутствуют или держатся на минимальном остатке без нормальной замены на полке.
                 </p>
               </div>
 
@@ -5841,7 +5857,7 @@ if (currentView === "purchase") {
         })}
 
         <main className="content tags-page">
-          {dataQualityReturnTarget === "duplicates" && (
+          {dataQualityReturnTarget === "tags" && (
             <section className="return-panel">
               <button
                 type="button"
@@ -6023,6 +6039,22 @@ if (currentView === "purchase") {
         })}
 
         <main className="content">
+          {dataQualityReturnTarget === "duplicates" && (
+            <section className="return-panel">
+              <button
+                type="button"
+                className="secondary-button dark"
+                onClick={() => {
+                  setDataQualityReturnTarget(null);
+                  setCurrentView("dataQuality");
+                  scrollToPageTop();
+                }}
+              >
+                ← Вернуться в проверку базы
+              </button>
+            </section>
+          )}
+
           <section className="duplicates-panel">
             <div className="history-panel-top">
               <div>
