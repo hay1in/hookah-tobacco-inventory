@@ -116,6 +116,7 @@ function App() {
 
   const [editingFlavorId, setEditingFlavorId] = useState(null);
   const [editReturnTarget, setEditReturnTarget] = useState(null);
+  const [editReturnIssueKey, setEditReturnIssueKey] = useState(null);
   const [editForm, setEditForm] = useState({
     brand: "",
     name: "",
@@ -490,7 +491,7 @@ function App() {
   };
 
 
-  const openFlavorFromAnalytics = (flavorId) => {
+  const openFlavorFromAnalytics = (flavorId, issueKey = null) => {
     const flavor = flavors.find((item) => String(item.id) === String(flavorId));
 
     if (!flavor) {
@@ -505,7 +506,7 @@ function App() {
     setOpenBrandName(flavor.brand || "");
     setOpenFlavorId(flavor.id);
     highlightFlavor(flavor.id);
-    openEditForm(flavor, "dataQuality");
+    openEditForm(flavor, "dataQuality", issueKey);
   };
 
   const handleDataQualityItemClick = (item, issueKey = "") => {
@@ -524,7 +525,7 @@ function App() {
     }
 
     if (item.type === "flavor") {
-      openFlavorFromAnalytics(item.id);
+      openFlavorFromAnalytics(item.id, issueKey);
       return;
     }
 
@@ -828,9 +829,10 @@ function App() {
     }
   };
 
-  const openEditForm = (flavor, returnTarget = null) => {
+  const openEditForm = (flavor, returnTarget = null, returnIssueKey = null) => {
     setEditingFlavorId(flavor.id);
     setEditReturnTarget(returnTarget);
+    setEditReturnIssueKey(returnIssueKey);
 
     scrollToPageTop();
     setEditForm({
@@ -847,6 +849,7 @@ function App() {
   const closeEditForm = () => {
     setEditingFlavorId(null);
     setEditReturnTarget(null);
+    setEditReturnIssueKey(null);
 
     setEditForm({
       brand: "",
@@ -928,13 +931,14 @@ function App() {
       }
 
       const shouldReturnToDataQuality = editReturnTarget === "dataQuality";
+      const returnIssueKey = editReturnIssueKey;
 
       closeEditForm();
       await refreshFlavors();
 
       if (shouldReturnToDataQuality) {
         setCurrentView("dataQuality");
-        setOpenDataQualityIssue(null);
+        setOpenDataQualityIssue(returnIssueKey);
         scrollToPageTop();
       }
     } catch (error) {
