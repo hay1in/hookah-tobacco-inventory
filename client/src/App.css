@@ -5006,3 +5006,2645 @@ textarea:focus,
 }
 
 /* === MANUAL SUPPLY PANEL CONTRAST FIX END === */
+
+/* === REFERENCE INSPIRED UI V1 START === */
+
+:root {
+  --ui-bg: #0b0809;
+  --ui-bg-soft: #130d0f;
+
+  --ui-panel: rgba(31, 22, 25, 0.92);
+  --ui-panel-soft: rgba(43, 29, 33, 0.88);
+  --ui-panel-light: rgba(255, 247, 244, 0.075);
+  --ui-panel-hover: rgba(102, 41, 51, 0.72);
+
+  --ui-red: #d93642;
+  --ui-red-bright: #ff5963;
+  --ui-red-soft: #ff817a;
+  --ui-wine: #5e2731;
+
+  --ui-cream: #fff3eb;
+  --ui-cream-soft: #ead7d1;
+  --ui-muted: #ae9491;
+
+  --ui-border: rgba(255, 238, 233, 0.11);
+  --ui-border-hover: rgba(255, 111, 116, 0.38);
+
+  --ui-radius-xl: 38px;
+  --ui-radius-lg: 28px;
+  --ui-radius-md: 20px;
+  --ui-radius-sm: 14px;
+
+  --ui-shadow-xl: 0 34px 90px rgba(0, 0, 0, 0.46);
+  --ui-shadow-lg: 0 22px 56px rgba(0, 0, 0, 0.3);
+  --ui-shadow-md: 0 14px 34px rgba(0, 0, 0, 0.22);
+
+  --ui-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Общий фон */
+
+html {
+  background: var(--ui-bg);
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 5% 3%,
+      rgba(217, 54, 66, 0.24),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 92% 14%,
+      rgba(255, 129, 122, 0.13),
+      transparent 23%
+    ),
+    radial-gradient(
+      circle at 74% 88%,
+      rgba(94, 39, 49, 0.22),
+      transparent 28%
+    ),
+    linear-gradient(
+      145deg,
+      #080606 0%,
+      #120c0e 48%,
+      #180c10 100%
+    ) !important;
+  background-attachment: fixed !important;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.018) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.018) 1px,
+      transparent 1px
+    );
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.app {
+  padding: clamp(14px, 2.5vw, 34px) !important;
+  animation: ui-page-enter 420ms var(--ui-ease) both;
+}
+
+.content,
+.header {
+  width: min(100%, 1320px) !important;
+  max-width: 1320px !important;
+}
+
+/* Шапка */
+
+.header {
+  position: relative;
+  isolation: isolate;
+  min-height: 210px;
+  margin-bottom: 22px !important;
+  padding: clamp(24px, 4vw, 46px) !important;
+  border-radius: var(--ui-radius-xl) !important;
+  align-items: flex-end !important;
+  background:
+    radial-gradient(
+      circle at 86% 22%,
+      rgba(255, 129, 122, 0.25),
+      transparent 23%
+    ),
+    radial-gradient(
+      circle at 68% 110%,
+      rgba(217, 54, 66, 0.22),
+      transparent 35%
+    ),
+    linear-gradient(
+      138deg,
+      rgba(38, 24, 28, 0.98),
+      rgba(28, 17, 21, 0.98) 52%,
+      rgba(15, 10, 12, 0.98)
+    ) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow:
+    var(--ui-shadow-xl),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.header::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 26px;
+  right: 28%;
+  width: 108px;
+  height: 108px;
+  border-radius: 42% 58% 65% 35% / 38% 36% 64% 62%;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 129, 122, 0.22),
+      rgba(217, 54, 66, 0.04)
+    );
+  transform: rotate(18deg);
+  filter: blur(0.2px);
+}
+
+.header::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 7%;
+  bottom: 18px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--ui-red);
+  box-shadow:
+    -58px -42px 0 -17px rgba(255, 243, 235, 0.58),
+    34px -82px 0 -12px rgba(255, 129, 122, 0.2);
+  opacity: 0.76;
+}
+
+.header > div:first-child {
+  max-width: 760px;
+}
+
+.header h1 {
+  max-width: 850px;
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: clamp(38px, 6vw, 72px) !important;
+  line-height: 0.94 !important;
+  letter-spacing: -0.055em !important;
+  text-wrap: balance;
+}
+
+.header .eyebrow,
+.eyebrow {
+  margin-bottom: 12px !important;
+  color: var(--ui-red-soft) !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.19em !important;
+}
+
+.header .subtitle {
+  max-width: 680px;
+  margin-top: 18px !important;
+  color: var(--ui-cream-soft) !important;
+  font-size: clamp(14px, 1.5vw, 17px) !important;
+  line-height: 1.55 !important;
+}
+
+.header-actions {
+  position: relative;
+  z-index: 20;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 9px !important;
+}
+
+/* Кнопки */
+
+.primary-button,
+.secondary-button,
+.submit-button,
+.close-button,
+.collapse-button,
+.danger-top-button,
+.menu-toggle-button {
+  min-height: 44px;
+  border-radius: 999px !important;
+  padding: 11px 17px !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.01em;
+  transition:
+    transform 180ms var(--ui-ease),
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease !important;
+}
+
+.primary-button,
+.submit-button {
+  background:
+    linear-gradient(
+      135deg,
+      var(--ui-red-bright),
+      var(--ui-red) 55%,
+      #a41d2a
+    ) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 150, 145, 0.34) !important;
+  box-shadow:
+    0 13px 30px rgba(217, 54, 66, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.primary-button:hover,
+.submit-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 18px 38px rgba(217, 54, 66, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
+}
+
+.secondary-button,
+.close-button,
+.collapse-button,
+.danger-top-button {
+  background: rgba(255, 243, 235, 0.075) !important;
+  color: var(--ui-cream) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(12px);
+}
+
+.secondary-button:hover,
+.close-button:hover,
+.collapse-button:hover,
+.danger-top-button:hover {
+  transform: translateY(-2px) !important;
+  background: rgba(255, 243, 235, 0.12) !important;
+  border-color: var(--ui-border-hover) !important;
+}
+
+.menu-toggle-button {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(217, 54, 66, 0.92),
+      rgba(94, 39, 49, 0.96)
+    ) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 129, 122, 0.32) !important;
+}
+
+/* Выпадающее меню */
+
+.header-dropdown {
+  width: min(570px, calc(100vw - 32px)) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  border-radius: 30px !important;
+  background:
+    radial-gradient(
+      circle at 90% 4%,
+      rgba(255, 129, 122, 0.14),
+      transparent 30%
+    ),
+    rgba(20, 13, 16, 0.96) !important;
+  border: 1px solid var(--ui-border-hover) !important;
+  box-shadow: var(--ui-shadow-xl) !important;
+  backdrop-filter: blur(22px);
+  animation: ui-menu-enter 220ms var(--ui-ease) both;
+}
+
+.dropdown-section {
+  min-width: 0;
+  padding: 13px !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 21px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 243, 235, 0.075),
+      rgba(255, 243, 235, 0.035)
+    ) !important;
+}
+
+.dropdown-section p {
+  margin: 0 0 8px !important;
+  color: var(--ui-red-soft) !important;
+  font-size: 10px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase;
+}
+
+.dropdown-section button,
+.dropdown-file-button {
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 11px !important;
+  border-radius: 13px !important;
+  text-align: left;
+  font-weight: 780 !important;
+}
+
+.dropdown-section button:hover,
+.dropdown-file-button:hover {
+  background: rgba(217, 54, 66, 0.18) !important;
+  transform: translateX(3px);
+}
+
+/* Поиск и верхняя панель */
+
+.toolbar,
+.tag-filter-panel,
+.inventory-quick-filter-panel {
+  padding: 12px !important;
+  border-radius: var(--ui-radius-lg) !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(38, 26, 30, 0.92),
+      rgba(25, 17, 20, 0.94)
+    ) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: var(--ui-shadow-md) !important;
+  backdrop-filter: blur(15px);
+}
+
+.toolbar {
+  gap: 10px !important;
+}
+
+.search-input,
+.filter-select {
+  min-height: 50px;
+  border-radius: 17px !important;
+  padding-inline: 17px !important;
+  background: rgba(255, 243, 235, 0.07) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: none !important;
+}
+
+.search-input:focus,
+.filter-select:focus {
+  background: rgba(255, 243, 235, 0.105) !important;
+  border-color: var(--ui-border-hover) !important;
+  box-shadow: 0 0 0 4px rgba(217, 54, 66, 0.13) !important;
+}
+
+/* Фильтры-капсулы */
+
+.inventory-quick-filters,
+.tag-filter-buttons {
+  gap: 8px !important;
+}
+
+.inventory-quick-filter-button,
+.tag-filter-button {
+  min-height: 38px;
+  padding: 8px 14px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 243, 235, 0.06) !important;
+  color: var(--ui-cream-soft) !important;
+  border: 1px solid var(--ui-border) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  transition:
+    transform 160ms var(--ui-ease),
+    background 160ms ease,
+    border-color 160ms ease !important;
+}
+
+.inventory-quick-filter-button:hover,
+.tag-filter-button:hover {
+  transform: translateY(-2px);
+  background: rgba(217, 54, 66, 0.14) !important;
+  border-color: var(--ui-border-hover) !important;
+}
+
+.inventory-quick-filter-button.active,
+.tag-filter-button.active {
+  background:
+    linear-gradient(
+      135deg,
+      var(--ui-red-bright),
+      var(--ui-red)
+    ) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 169, 160, 0.42) !important;
+  box-shadow: 0 10px 24px rgba(217, 54, 66, 0.23);
+}
+
+/* Общие большие панели */
+
+.analytics-panel,
+.purchase-panel,
+.purchase-smart-section,
+.deadstock-panel,
+.history-panel,
+.duplicates-panel,
+.tags-table-panel,
+.tag-duplicates-panel,
+.data-quality-panel,
+.supply-panel,
+.edit-panel,
+.return-panel {
+  border-radius: var(--ui-radius-xl) !important;
+  background:
+    radial-gradient(
+      circle at 96% 4%,
+      rgba(255, 129, 122, 0.075),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(34, 23, 27, 0.96),
+      rgba(21, 14, 17, 0.97)
+    ) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow:
+    var(--ui-shadow-lg),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+}
+
+/* Карточки статистики */
+
+.analytics-grid {
+  gap: 12px !important;
+}
+
+.analytics-card {
+  position: relative;
+  min-height: 132px;
+  overflow: hidden;
+  padding: 20px !important;
+  border-radius: var(--ui-radius-lg) !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(49, 32, 38, 0.96),
+      rgba(29, 19, 23, 0.98)
+    ) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: var(--ui-shadow-md) !important;
+  transition:
+    transform 190ms var(--ui-ease),
+    border-color 190ms ease,
+    box-shadow 190ms ease !important;
+}
+
+.analytics-card::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  bottom: -34px;
+  width: 90px;
+  height: 90px;
+  border-radius: 42% 58% 68% 32% / 48% 42% 58% 52%;
+  background: rgba(217, 54, 66, 0.13);
+  transform: rotate(22deg);
+}
+
+.analytics-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--ui-border-hover) !important;
+  box-shadow: 0 24px 52px rgba(0, 0, 0, 0.31) !important;
+}
+
+.analytics-card span {
+  position: relative;
+  z-index: 1;
+  color: var(--ui-muted) !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.analytics-card strong {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  color: #ffffff !important;
+  font-size: clamp(28px, 4vw, 46px) !important;
+  letter-spacing: -0.05em;
+}
+
+/* Группы брендов */
+
+.brand-list,
+.purchase-smart-list {
+  gap: 14px !important;
+}
+
+.brand-group {
+  overflow: hidden;
+  border-radius: 31px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(34, 23, 27, 0.96),
+      rgba(22, 15, 18, 0.98)
+    ) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: var(--ui-shadow-md) !important;
+  transition:
+    transform 190ms var(--ui-ease),
+    border-color 190ms ease,
+    box-shadow 190ms ease !important;
+}
+
+.brand-group:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 111, 116, 0.23) !important;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.29) !important;
+}
+
+.brand-row {
+  min-height: 80px;
+  padding: 19px 21px !important;
+  border-radius: 30px !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(55, 36, 42, 0.95),
+      rgba(32, 22, 26, 0.98)
+    ) !important;
+}
+
+.brand-row:hover,
+.brand-row.open {
+  background:
+    radial-gradient(
+      circle at 93% 50%,
+      rgba(255, 129, 122, 0.15),
+      transparent 24%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(91, 38, 48, 0.98),
+      rgba(42, 25, 31, 0.98)
+    ) !important;
+  border-color: var(--ui-border-hover) !important;
+}
+
+.brand-row strong {
+  font-size: clamp(18px, 2.3vw, 23px) !important;
+  letter-spacing: -0.025em;
+}
+
+.brand-row > div:first-child > span {
+  color: var(--ui-muted) !important;
+}
+
+.brand-row-meta {
+  gap: 6px !important;
+}
+
+.brand-row-meta span {
+  padding: 7px 10px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  box-shadow: none !important;
+}
+
+/* Функциональные статусы только в нашей палитре */
+
+.brand-row-meta .brand-stock,
+.analytics-brand-meta .brand-stock,
+.status.in-stock,
+.in-stock {
+  background: var(--ui-cream) !important;
+  color: #321b1f !important;
+  border-color: rgba(255, 243, 235, 0.5) !important;
+}
+
+.brand-row-meta .brand-warning,
+.analytics-brand-meta .brand-warning,
+.status.low-stock,
+.low-stock {
+  background: #f1b27e !important;
+  color: #3a1c12 !important;
+  border-color: rgba(241, 178, 126, 0.6) !important;
+}
+
+.brand-row-meta .brand-alert,
+.analytics-brand-meta .brand-alert,
+.status.need-buy,
+.need-buy {
+  background: var(--ui-red) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 129, 122, 0.55) !important;
+}
+
+.brand-row-meta .brand-muted,
+.status.archived,
+.archived {
+  background: rgba(255, 243, 235, 0.09) !important;
+  color: var(--ui-muted) !important;
+  border-color: var(--ui-border) !important;
+}
+
+/* Вложенные вкусы */
+
+.brand-flavor-list {
+  padding: 12px !important;
+  gap: 9px !important;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(9, 6, 7, 0.35),
+      rgba(255, 243, 235, 0.018)
+    ) !important;
+}
+
+.flavor-row-group {
+  overflow: hidden;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 243, 235, 0.07),
+      rgba(255, 243, 235, 0.035)
+    ) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: none !important;
+  transition:
+    transform 180ms var(--ui-ease),
+    border-color 180ms ease,
+    background 180ms ease !important;
+}
+
+.flavor-row-group:hover,
+.flavor-row-group.open {
+  transform: translateY(-1px);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(217, 54, 66, 0.13),
+      rgba(255, 243, 235, 0.045)
+    ) !important;
+  border-color: rgba(255, 111, 116, 0.29) !important;
+}
+
+.flavor-row-button {
+  min-height: 60px;
+  padding: 14px 16px !important;
+  background: transparent !important;
+}
+
+.flavor-row-main strong {
+  color: #ffffff !important;
+  font-size: 16px !important;
+  letter-spacing: -0.015em;
+}
+
+.flavor-row-main span {
+  color: var(--ui-muted) !important;
+}
+
+.flavor-details-card {
+  margin: 0 10px 10px !important;
+  padding: 17px !important;
+  border-radius: 18px !important;
+  background: rgba(8, 6, 7, 0.38) !important;
+  border: 1px solid var(--ui-border) !important;
+}
+
+/* Теги */
+
+.tags,
+.flavor-row-tags-preview,
+.analytics-flavor-tags,
+.purchase-specific-tags {
+  gap: 6px !important;
+}
+
+.tags span,
+.flavor-row-tags-preview em,
+.analytics-flavor-tags span,
+.purchase-specific-tags strong {
+  padding: 6px 9px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 243, 235, 0.07) !important;
+  color: var(--ui-cream-soft) !important;
+  border: 1px solid var(--ui-border) !important;
+  font-size: 11px !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+}
+
+/* Карточки закупки */
+
+.purchase-smart-section {
+  padding: clamp(18px, 2.5vw, 26px) !important;
+}
+
+.purchase-smart-section-top {
+  padding-bottom: 17px !important;
+  margin-bottom: 16px !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+}
+
+.purchase-smart-card {
+  padding: 18px !important;
+  border-radius: 25px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 243, 235, 0.075),
+      rgba(255, 243, 235, 0.035)
+    ) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: none !important;
+  transition:
+    transform 180ms var(--ui-ease),
+    border-color 180ms ease,
+    background 180ms ease !important;
+}
+
+.purchase-smart-card:hover {
+  transform: translateY(-3px);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(217, 54, 66, 0.14),
+      rgba(255, 243, 235, 0.04)
+    ) !important;
+  border-color: var(--ui-border-hover) !important;
+}
+
+/* Плавность */
+
+@keyframes ui-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-7px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.brand-group,
+.analytics-card,
+.purchase-smart-section {
+  animation: ui-card-enter 420ms var(--ui-ease) both;
+}
+
+.brand-group:nth-child(2),
+.analytics-card:nth-child(2),
+.purchase-smart-section:nth-child(2) {
+  animation-delay: 35ms;
+}
+
+.brand-group:nth-child(3),
+.analytics-card:nth-child(3),
+.purchase-smart-section:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+.brand-group:nth-child(4),
+.analytics-card:nth-child(4),
+.purchase-smart-section:nth-child(4) {
+  animation-delay: 105ms;
+}
+
+@keyframes ui-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Адаптация под iPad и телефон */
+
+@media (max-width: 900px) {
+  .header {
+    min-height: auto;
+    align-items: flex-start !important;
+  }
+
+  .header::before {
+    right: 8%;
+    opacity: 0.55;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start !important;
+  }
+
+  .header-dropdown {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .app {
+    padding: 10px !important;
+  }
+
+  .header {
+    padding: 24px 20px !important;
+    border-radius: 28px !important;
+  }
+
+  .header h1 {
+    font-size: 42px !important;
+  }
+
+  .header::before,
+  .header::after {
+    opacity: 0.28;
+  }
+
+  .header-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .header-actions > button {
+    width: 100%;
+  }
+
+  .header-dropdown {
+    left: 0 !important;
+    right: auto !important;
+    width: min(100%, calc(100vw - 20px)) !important;
+    grid-template-columns: 1fr !important;
+    border-radius: 24px !important;
+  }
+
+  .toolbar,
+  .tag-filter-panel,
+  .inventory-quick-filter-panel,
+  .brand-group,
+  .analytics-panel,
+  .purchase-smart-section,
+  .data-quality-panel {
+    border-radius: 24px !important;
+  }
+
+  .brand-row {
+    padding: 17px !important;
+    border-radius: 23px !important;
+  }
+
+  .analytics-card {
+    min-height: 112px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* === REFERENCE INSPIRED UI V1 END === */
+
+/* === REFERENCE UI V1 MENU FIX START === */
+
+/*
+  Шапка и меню всегда находятся выше основного интерфейса.
+  Декоративные круги удалены.
+*/
+
+.header {
+  position: relative !important;
+  z-index: 1000 !important;
+  isolation: auto !important;
+  overflow: visible !important;
+}
+
+.header::before,
+.header::after {
+  content: none !important;
+  display: none !important;
+}
+
+.header-actions {
+  position: relative !important;
+  z-index: 1100 !important;
+  overflow: visible !important;
+}
+
+.header-dropdown {
+  position: absolute !important;
+  z-index: 9999 !important;
+  top: calc(100% + 12px) !important;
+  right: 0 !important;
+  overflow: visible !important;
+}
+
+.content {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/*
+  Панели не должны перекрывать открытое меню.
+*/
+
+.toolbar,
+.inventory-quick-filter-panel,
+.tag-filter-panel,
+.brand-group,
+.analytics-card,
+.analytics-panel,
+.purchase-smart-section {
+  position: relative;
+  z-index: auto !important;
+}
+
+/*
+  Оставляем глубину шапки через мягкий свет,
+  без отдельных геометрических объектов.
+*/
+
+.header {
+  background:
+    radial-gradient(
+      ellipse at 88% 5%,
+      rgba(255, 105, 105, 0.14),
+      transparent 34%
+    ),
+    linear-gradient(
+      138deg,
+      rgba(38, 24, 28, 0.98),
+      rgba(28, 17, 21, 0.98) 52%,
+      rgba(15, 10, 12, 0.98)
+    ) !important;
+}
+
+@media (max-width: 900px) {
+  .header-dropdown {
+    top: calc(100% + 10px) !important;
+    right: 0 !important;
+    left: auto !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .header-dropdown {
+    top: calc(100% + 10px) !important;
+    left: 0 !important;
+    right: auto !important;
+  }
+}
+
+/* === REFERENCE UI V1 MENU FIX END === */
+
+/* === REFERENCE UI INVENTORY V2 START === */
+
+/* Общий ритм списка брендов */
+
+.brand-accordion {
+  display: grid !important;
+  gap: 16px !important;
+}
+
+.brand-group {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 32px !important;
+}
+
+.brand-group::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  top: 22px;
+  bottom: 22px;
+  width: 4px;
+  border-radius: 0 999px 999px 0;
+  background:
+    linear-gradient(
+      to bottom,
+      var(--ui-red-bright),
+      var(--ui-red),
+      var(--ui-wine)
+    );
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+/* Заголовок бренда */
+
+.brand-row {
+  position: relative;
+  min-height: 90px;
+  padding: 21px 23px 21px 26px !important;
+  border-radius: 31px !important;
+}
+
+.brand-row > div:first-child {
+  min-width: 0;
+}
+
+.brand-row strong {
+  font-size: clamp(21px, 2.4vw, 27px) !important;
+  line-height: 1 !important;
+}
+
+.brand-row > div:first-child > span {
+  margin-top: 9px !important;
+  font-size: 13px !important;
+  line-height: 1.35;
+}
+
+/*
+  Раскрытый бренд становится светлым акцентным блоком.
+  Это добавляет контраст, как в референсах.
+*/
+
+.brand-row.open {
+  background:
+    radial-gradient(
+      circle at 91% 8%,
+      rgba(217, 54, 66, 0.12),
+      transparent 31%
+    ),
+    linear-gradient(
+      135deg,
+      #fff5ee 0%,
+      #f3ddd5 100%
+    ) !important;
+  color: #2d191e !important;
+  border-color: rgba(255, 243, 235, 0.72) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 18px 38px rgba(0, 0, 0, 0.16) !important;
+}
+
+.brand-row.open strong {
+  color: #2d191e !important;
+}
+
+.brand-row.open > div:first-child > span {
+  color: #765e5b !important;
+}
+
+.brand-row.open .brand-arrow {
+  background: #2d191e !important;
+  color: #fff5ee !important;
+  border-color: #2d191e !important;
+}
+
+.brand-row.open .brand-stock {
+  background: #2d191e !important;
+  color: #fff5ee !important;
+  border-color: #2d191e !important;
+}
+
+.brand-row.open .brand-warning {
+  background: #efb17d !important;
+  color: #3c1e13 !important;
+  border-color: rgba(60, 30, 19, 0.1) !important;
+}
+
+.brand-row.open .brand-alert {
+  background: var(--ui-red) !important;
+  color: #ffffff !important;
+  border-color: var(--ui-red) !important;
+}
+
+.brand-row.open .brand-muted {
+  background: rgba(45, 25, 30, 0.07) !important;
+  color: #7a6461 !important;
+  border-color: rgba(45, 25, 30, 0.1) !important;
+}
+
+/* Вкусы внутри бренда */
+
+.brand-flavor-list.flavor-list-mode {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  padding: 14px !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 6, 7, 0.48),
+      rgba(255, 243, 235, 0.025)
+    ) !important;
+  animation: inventory-reveal 260ms var(--ui-ease) both;
+}
+
+.flavor-row-group {
+  position: relative;
+  min-width: 0;
+  border-radius: 23px !important;
+}
+
+.flavor-row-group::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 15px;
+  bottom: 15px;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: rgba(255, 129, 122, 0.42);
+  opacity: 0;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+
+.flavor-row-group:hover::before,
+.flavor-row-group.open::before {
+  opacity: 1;
+}
+
+.flavor-row-group.open {
+  grid-column: 1 / -1;
+  background:
+    radial-gradient(
+      circle at 96% 0%,
+      rgba(255, 129, 122, 0.12),
+      transparent 26%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(54, 32, 39, 0.98),
+      rgba(25, 17, 21, 0.99)
+    ) !important;
+  border-color: var(--ui-border-hover) !important;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.25) !important;
+}
+
+.flavor-row-group.recently-updated {
+  border-color: rgba(255, 129, 122, 0.68) !important;
+  box-shadow:
+    0 0 0 4px rgba(217, 54, 66, 0.1),
+    0 20px 48px rgba(0, 0, 0, 0.24) !important;
+}
+
+/* Строка вкуса */
+
+.flavor-row-header {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  overflow: hidden;
+}
+
+.flavor-row-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 76px;
+  padding: 15px 17px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  background: transparent !important;
+}
+
+.flavor-row-main {
+  min-width: 0;
+}
+
+.flavor-row-main strong {
+  display: block;
+  font-size: 17px !important;
+  line-height: 1.15 !important;
+}
+
+.flavor-row-main > span {
+  display: block;
+  margin-top: 7px !important;
+  color: var(--ui-muted) !important;
+  font-size: 12px !important;
+  line-height: 1.35;
+}
+
+.flavor-row-tags-preview {
+  margin-top: 10px !important;
+}
+
+.flavor-row-meta {
+  flex: 0 0 auto;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.flavor-row-arrow {
+  width: 30px;
+  height: 30px;
+  padding: 0 !important;
+  display: inline-grid !important;
+  place-items: center;
+  border-radius: 50% !important;
+}
+
+/* Чекбокс массового выбора */
+
+.bulk-checkbox {
+  width: 50px !important;
+  min-height: 100% !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(94, 39, 49, 0.72),
+      rgba(45, 25, 30, 0.84)
+    ) !important;
+  border-right: 1px solid var(--ui-border) !important;
+}
+
+.bulk-checkbox span {
+  width: 21px !important;
+  height: 21px !important;
+  border-radius: 7px !important;
+  border: 2px solid rgba(255, 243, 235, 0.52) !important;
+  background: rgba(255, 243, 235, 0.07) !important;
+}
+
+.bulk-checkbox input:checked + span {
+  background: var(--ui-red) !important;
+  border-color: var(--ui-red-bright) !important;
+  box-shadow: inset 0 0 0 4px #fff3eb !important;
+}
+
+/* Раскрытая карточка вкуса */
+
+.flavor-details-card {
+  margin: 0 11px 11px !important;
+  padding: 18px !important;
+  display: grid !important;
+  grid-template-columns:
+    minmax(230px, 0.72fr)
+    minmax(0, 1.28fr) !important;
+  grid-template-areas:
+    "packs history"
+    "tags history"
+    "actions actions";
+  align-items: start;
+  gap: 14px !important;
+  border-radius: 21px !important;
+  background:
+    rgba(8, 6, 7, 0.32) !important;
+}
+
+/* Светлый модуль фасовок */
+
+.flavor-details-card .packs {
+  grid-area: packs;
+  margin: 0 !important;
+  padding: 15px !important;
+  border-radius: 19px !important;
+  background:
+    linear-gradient(
+      145deg,
+      #fff5ee,
+      #f0dcd5
+    ) !important;
+  color: #2d191e !important;
+  border: 1px solid rgba(255, 243, 235, 0.72) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 14px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.flavor-details-card .packs .section-label,
+.flavor-details-card .pack-row span,
+.flavor-details-card .pack-row strong {
+  color: #2d191e !important;
+}
+
+.flavor-details-card .packs .section-label {
+  margin-bottom: 10px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.flavor-details-card .pack-row {
+  min-height: 48px;
+  padding: 8px 3px !important;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(45, 25, 30, 0.1) !important;
+}
+
+.flavor-details-card .pack-row:last-child {
+  border-bottom: none !important;
+}
+
+.flavor-details-card .pack-counter button {
+  width: 34px !important;
+  height: 34px !important;
+  background:
+    linear-gradient(
+      135deg,
+      var(--ui-red-bright),
+      var(--ui-red)
+    ) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 89, 99, 0.4) !important;
+  box-shadow: 0 8px 18px rgba(217, 54, 66, 0.22) !important;
+}
+
+.flavor-details-card .pack-counter button:disabled {
+  background: rgba(45, 25, 30, 0.14) !important;
+  color: rgba(45, 25, 30, 0.42) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* История вкуса */
+
+.flavor-details-card .flavor-history-block {
+  grid-area: history;
+  min-width: 0;
+  margin: 0 !important;
+  border-radius: 19px !important;
+  background:
+    linear-gradient(
+      145deg,
+      #fff5ee,
+      #f0dcd5
+    ) !important;
+  border: 1px solid rgba(255, 243, 235, 0.72) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 14px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.flavor-details-card .flavor-history-toggle {
+  border-radius: 19px !important;
+  background: transparent !important;
+  color: #2d191e !important;
+}
+
+.flavor-details-card .flavor-history-toggle span {
+  color: #2d191e !important;
+}
+
+.flavor-details-card .flavor-history-list {
+  border-top: 1px solid rgba(45, 25, 30, 0.1);
+}
+
+.flavor-details-card .flavor-history-item {
+  background: rgba(45, 25, 30, 0.055) !important;
+  border-color: rgba(45, 25, 30, 0.08) !important;
+}
+
+.flavor-details-card .flavor-history-item strong,
+.flavor-details-card .flavor-history-item span,
+.flavor-details-card .flavor-history-item time,
+.flavor-details-card .flavor-history-empty {
+  color: #2d191e !important;
+}
+
+/* Теги и действия */
+
+.flavor-details-card > .tags {
+  grid-area: tags;
+  align-content: start;
+  margin: 0 !important;
+  padding: 4px 2px;
+}
+
+.flavor-details-card > .actions {
+  grid-area: actions;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding-top: 3px;
+}
+
+.flavor-details-card > .actions button {
+  min-height: 42px;
+  border-radius: 14px !important;
+  padding: 9px 10px !important;
+  background: rgba(255, 243, 235, 0.075) !important;
+  border: 1px solid var(--ui-border) !important;
+  color: var(--ui-cream) !important;
+  box-shadow: none !important;
+}
+
+.flavor-details-card > .actions button:hover {
+  background: rgba(217, 54, 66, 0.17) !important;
+  border-color: var(--ui-border-hover) !important;
+  transform: translateY(-2px);
+}
+
+.flavor-details-card > .actions .danger {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(217, 54, 66, 0.92),
+      rgba(145, 28, 40, 0.94)
+    ) !important;
+  border-color: rgba(255, 129, 122, 0.36) !important;
+}
+
+/* Панель массовых действий */
+
+.bulk-action-panel {
+  z-index: 80 !important;
+  border-radius: 25px !important;
+  background:
+    linear-gradient(
+      135deg,
+      #fff5ee,
+      #efd7cf
+    ) !important;
+  color: #2d191e !important;
+  border-color: rgba(255, 243, 235, 0.72) !important;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.25) !important;
+}
+
+.bulk-action-panel strong,
+.bulk-action-panel span {
+  color: #2d191e !important;
+}
+
+/* Анимация раскрытия */
+
+@keyframes inventory-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* iPad и узкие экраны */
+
+@media (max-width: 1000px) {
+  .brand-flavor-list.flavor-list-mode {
+    grid-template-columns: 1fr !important;
+  }
+
+  .flavor-row-group.open {
+    grid-column: auto;
+  }
+
+  .flavor-details-card {
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "packs"
+      "history"
+      "tags"
+      "actions";
+  }
+
+  .flavor-details-card > .actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .brand-row {
+    padding: 18px !important;
+  }
+
+  .brand-row-meta {
+    justify-content: flex-start !important;
+  }
+
+  .flavor-row-button {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .flavor-row-meta {
+    width: 100%;
+    justify-content: space-between !important;
+  }
+
+  .flavor-details-card > .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* === REFERENCE UI INVENTORY V2 END === */
+
+/* === HEADER AND FLAVOR LAYOUT FIX START === */
+
+/* Шапка: резервируем отдельное место под все три кнопки */
+
+.header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: end !important;
+  column-gap: clamp(22px, 3vw, 48px) !important;
+}
+
+.header > div:first-child {
+  min-width: 0 !important;
+}
+
+.header-actions {
+  width: auto !important;
+  min-width: max-content !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, max-content) !important;
+  align-items: center !important;
+  justify-content: end !important;
+  gap: 9px !important;
+  flex-wrap: nowrap !important;
+}
+
+.header-actions > button {
+  position: relative !important;
+  z-index: 1 !important;
+  width: auto !important;
+  min-width: max-content !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  white-space: nowrap !important;
+}
+
+.header-actions > .primary-button {
+  width: auto !important;
+}
+
+.header-actions > .secondary-button {
+  background: rgba(255, 243, 235, 0.085) !important;
+  color: #fff3eb !important;
+  border: 1px solid rgba(255, 238, 233, 0.14) !important;
+}
+
+.header-actions > .menu-toggle-button {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(217, 54, 66, 0.94),
+      rgba(94, 39, 49, 0.98)
+    ) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 129, 122, 0.34) !important;
+}
+
+/* Выпадающее меню остаётся привязанным к правому краю кнопок */
+
+.header-dropdown {
+  right: 0 !important;
+  left: auto !important;
+}
+
+/* Раскрытый вкус: два симметричных верхних модуля */
+
+.flavor-details-card {
+  grid-template-columns:
+    minmax(260px, 0.72fr)
+    minmax(0, 1.28fr) !important;
+  grid-template-areas:
+    "packs history"
+    "tags tags"
+    "actions actions" !important;
+  align-items: stretch !important;
+}
+
+.flavor-details-card .packs {
+  grid-area: packs;
+  height: 100% !important;
+  min-height: 150px !important;
+}
+
+.flavor-details-card .flavor-history-block {
+  grid-area: history;
+  height: 100% !important;
+  min-height: 150px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.flavor-details-card .flavor-history-toggle {
+  flex: 0 0 auto;
+}
+
+.flavor-details-card .flavor-history-list {
+  flex: 1 1 auto;
+}
+
+/* В закрытом состоянии кнопка истории занимает всю карточку */
+
+.flavor-details-card
+.flavor-history-block:not(:has(.flavor-history-list))
+.flavor-history-toggle {
+  flex: 1 1 auto !important;
+  min-height: 148px !important;
+  align-items: center !important;
+}
+
+/* Теги теперь идут симметричной строкой под обоими модулями */
+
+.flavor-details-card > .tags {
+  grid-area: tags;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  padding: 3px 2px !important;
+}
+
+/* Любое количество кнопок равномерно заполняет строку */
+
+.flavor-details-card > .actions {
+  grid-area: actions;
+  grid-template-columns:
+    repeat(auto-fit, minmax(145px, 1fr)) !important;
+}
+
+.flavor-details-card > .actions button {
+  width: 100% !important;
+}
+
+/* Планшет */
+
+@media (max-width: 1100px) {
+  .header {
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+    row-gap: 24px !important;
+  }
+
+  .header-actions {
+    width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    justify-content: stretch !important;
+  }
+
+  .header-actions > button,
+  .header-actions > .primary-button,
+  .header-actions > .secondary-button {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .flavor-details-card {
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "packs"
+      "history"
+      "tags"
+      "actions" !important;
+  }
+
+  .flavor-details-card .packs,
+  .flavor-details-card .flavor-history-block {
+    min-height: 0 !important;
+  }
+
+  .flavor-details-card
+  .flavor-history-block:not(:has(.flavor-history-list))
+  .flavor-history-toggle {
+    min-height: 64px !important;
+  }
+}
+
+/* Телефон */
+
+@media (max-width: 680px) {
+  .header-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .header-actions > button:last-of-type {
+    grid-column: 1 / -1;
+  }
+
+  .flavor-details-card > .actions {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* === HEADER AND FLAVOR LAYOUT FIX END === */
+
+/* === PRICE CHANGE ROWS FIX START === */
+
+/* Убираем случайные прямоугольные подложки за вкусами */
+
+.price-change-sections .price-change-analytics-row {
+  margin: 0 !important;
+  padding: 18px 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 238, 233, 0.1) !important;
+}
+
+.price-change-sections .price-change-analytics-row:last-child {
+  border-bottom: none !important;
+}
+
+.price-change-sections .price-change-analytics-row:hover {
+  background: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Выравниваем содержимое внутри панели */
+
+.price-change-sections .analytics-panel {
+  overflow: hidden;
+}
+
+.price-change-sections .analytics-panel > h2 {
+  margin-bottom: 8px !important;
+  text-align: center;
+}
+
+.price-change-sections .price-change-analytics-row > span {
+  min-width: 0;
+}
+
+.price-change-sections .price-change-analytics-row > strong {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* === PRICE CHANGE ROWS FIX END === */
+
+/* === ANALYTICS ROWS CLEANUP START === */
+
+/*
+  В аналитических панелях убираем внутренние прямоугольные
+  подложки за брендами, поставщиками, тегами и изменениями цен.
+*/
+
+.analytics-page .analytics-panel > .analytics-row,
+.analytics-page .analytics-panel > .price-change-analytics-row {
+  margin: 0 !important;
+  padding: 18px 0 !important;
+
+  background: transparent !important;
+  background-image: none !important;
+
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 238, 233, 0.1) !important;
+  border-radius: 0 !important;
+
+  outline: none !important;
+  box-shadow: none !important;
+
+  transform: none !important;
+}
+
+.analytics-page .analytics-panel > .analytics-row:last-child,
+.analytics-page .analytics-panel > .price-change-analytics-row:last-child {
+  border-bottom: none !important;
+}
+
+.analytics-page .analytics-panel > .analytics-row:hover,
+.analytics-page .analytics-panel > .price-change-analytics-row:hover {
+  background: transparent !important;
+  background-image: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Убираем возможную общую подложку вокруг списка */
+
+.finance-sections .analytics-panel,
+.price-change-sections .analytics-panel {
+  background-clip: padding-box !important;
+}
+
+.finance-sections .analytics-panel > h2,
+.price-change-sections .analytics-panel > h2 {
+  margin-bottom: 10px !important;
+}
+
+/* === ANALYTICS ROWS CLEANUP END === */
+
+/* === REFERENCE UI PURCHASE V3 START === */
+
+.purchase-page {
+  display: grid !important;
+  gap: 20px !important;
+}
+
+/* Верхние показатели */
+
+.purchase-page > .analytics-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.purchase-page > .analytics-grid .analytics-card {
+  min-height: 145px;
+}
+
+/* Всего к закупке — светлый главный показатель */
+
+.purchase-page > .analytics-grid .analytics-card:nth-child(1) {
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(217, 54, 66, 0.1),
+      transparent 33%
+    ),
+    linear-gradient(
+      145deg,
+      #fff5ee,
+      #eed8d1
+    ) !important;
+  border-color: rgba(255, 243, 235, 0.72) !important;
+}
+
+.purchase-page > .analytics-grid .analytics-card:nth-child(1) span,
+.purchase-page > .analytics-grid .analytics-card:nth-child(1) strong {
+  color: #2d191e !important;
+}
+
+.purchase-page > .analytics-grid .analytics-card:nth-child(1)::after {
+  background: rgba(217, 54, 66, 0.16) !important;
+}
+
+/* Подтверждено — красная карточка */
+
+.purchase-page > .analytics-grid .analytics-card:nth-child(2) {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(231, 67, 77, 0.98),
+      rgba(157, 27, 42, 0.98)
+    ) !important;
+  border-color: rgba(255, 129, 122, 0.42) !important;
+}
+
+.purchase-page > .analytics-grid .analytics-card:nth-child(2) span,
+.purchase-page > .analytics-grid .analytics-card:nth-child(2) strong {
+  color: #ffffff !important;
+}
+
+/* Остальные показатели */
+
+.purchase-page > .analytics-grid .analytics-card:nth-child(3) {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(76, 30, 39, 0.98),
+      rgba(34, 22, 27, 0.98)
+    ) !important;
+  border-color: rgba(255, 89, 99, 0.25) !important;
+}
+
+.purchase-page > .analytics-grid .analytics-card:nth-child(4) {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(54, 37, 41, 0.98),
+      rgba(28, 19, 23, 0.98)
+    ) !important;
+}
+
+/* Главный блок важных тегов */
+
+.purchase-missing-tags-summary {
+  position: relative;
+  overflow: hidden;
+  display: grid !important;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.35fr) !important;
+  align-items: center !important;
+  gap: 26px !important;
+  margin: 0 !important;
+  padding: clamp(24px, 3vw, 34px) !important;
+  border-radius: 34px !important;
+  background:
+    radial-gradient(
+      circle at 94% 12%,
+      rgba(217, 54, 66, 0.13),
+      transparent 27%
+    ),
+    linear-gradient(
+      135deg,
+      #fff5ee,
+      #efd8d0
+    ) !important;
+  border: 1px solid rgba(255, 243, 235, 0.78) !important;
+  color: #2d191e !important;
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+}
+
+.purchase-missing-tags-summary::after {
+  content: "!";
+  position: absolute;
+  right: 26px;
+  bottom: -34px;
+  color: rgba(217, 54, 66, 0.08);
+  font-size: 170px;
+  font-weight: 950;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.purchase-missing-tags-summary > div {
+  position: relative;
+  z-index: 1;
+}
+
+.purchase-missing-tags-summary span {
+  color: var(--ui-red) !important;
+}
+
+.purchase-missing-tags-summary h2 {
+  margin: 4px 0 10px !important;
+  color: #2d191e !important;
+  font-size: clamp(26px, 3vw, 36px) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.04em;
+}
+
+.purchase-missing-tags-summary p {
+  max-width: 520px;
+  color: #725b58 !important;
+  line-height: 1.5;
+}
+
+.purchase-missing-tags-summary-list {
+  position: relative;
+  z-index: 1;
+  align-content: center;
+}
+
+.purchase-missing-tags-summary-list button {
+  min-height: 44px;
+  padding: 10px 14px !important;
+  background: rgba(45, 25, 30, 0.07) !important;
+  color: #2d191e !important;
+  border: 1px solid rgba(45, 25, 30, 0.11) !important;
+  box-shadow: none !important;
+}
+
+.purchase-missing-tags-summary-list button:hover {
+  background: var(--ui-red) !important;
+  color: #ffffff !important;
+  border-color: var(--ui-red) !important;
+  transform: translateY(-2px);
+}
+
+.purchase-missing-tags-summary-list strong,
+.purchase-missing-tags-summary-list small {
+  color: inherit !important;
+}
+
+/* Секции закупки */
+
+.purchase-smart-sections {
+  display: grid !important;
+  gap: 20px !important;
+}
+
+.purchase-smart-section {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(20px, 2.5vw, 28px) !important;
+  border-radius: 34px !important;
+}
+
+.purchase-smart-section::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 0;
+  width: 4px;
+  border-radius: 0 999px 999px 0;
+}
+
+/* Подтверждённые */
+
+.purchase-smart-section:nth-child(1)::before {
+  background: #fff5ee;
+}
+
+.purchase-smart-section:nth-child(1)
+.purchase-smart-section-top > span {
+  background: #fff5ee !important;
+  color: #2d191e !important;
+  border-color: #fff5ee !important;
+}
+
+/* Важно докупить */
+
+.purchase-smart-section:nth-child(2) {
+  background:
+    radial-gradient(
+      circle at 95% 4%,
+      rgba(255, 89, 99, 0.11),
+      transparent 28%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(48, 24, 30, 0.98),
+      rgba(22, 14, 18, 0.98)
+    ) !important;
+  border-color: rgba(255, 89, 99, 0.24) !important;
+}
+
+.purchase-smart-section:nth-child(2)::before {
+  background: var(--ui-red-bright);
+}
+
+/* Аналоги */
+
+.purchase-smart-section:nth-child(3)::before {
+  background: #efb17d;
+}
+
+.purchase-smart-section-top {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 18px !important;
+  margin-bottom: 18px !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+}
+
+.purchase-smart-section-top h2 {
+  font-size: clamp(25px, 3vw, 34px) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.04em;
+}
+
+.purchase-smart-section-top p {
+  margin-top: 9px !important;
+  color: var(--ui-muted) !important;
+}
+
+.purchase-smart-section-top > span {
+  min-width: 70px;
+  justify-content: center;
+  background: rgba(217, 54, 66, 0.18) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 129, 122, 0.25) !important;
+}
+
+/* Карточки позиций */
+
+.purchase-smart-list {
+  position: relative;
+  z-index: 1;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 12px !important;
+}
+
+.purchase-smart-card {
+  min-width: 0;
+  height: 100%;
+  padding: 19px !important;
+  display: flex !important;
+  flex-direction: column;
+  border-radius: 25px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 243, 235, 0.075),
+      rgba(255, 243, 235, 0.03)
+    ) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: none !important;
+}
+
+.purchase-smart-card:hover {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(217, 54, 66, 0.13),
+      rgba(255, 243, 235, 0.04)
+    ) !important;
+  border-color: var(--ui-border-hover) !important;
+  transform: translateY(-3px);
+}
+
+.purchase-smart-card-main {
+  min-height: 92px;
+}
+
+.purchase-smart-card-main .brand {
+  margin: 0 0 7px !important;
+  color: var(--ui-red-soft) !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.purchase-smart-card-main h3 {
+  margin: 0 0 11px !important;
+  color: #ffffff !important;
+  font-size: 21px !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.025em;
+}
+
+.purchase-smart-card-main > strong {
+  min-width: 74px !important;
+  padding: 10px 12px;
+  border-radius: 17px;
+  background: rgba(255, 243, 235, 0.075);
+  color: #ffffff !important;
+  font-size: 20px !important;
+  text-align: center !important;
+  white-space: nowrap;
+}
+
+/* Ключевые теги */
+
+.purchase-specific-tags {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px !important;
+  margin-top: 14px;
+}
+
+.purchase-specific-tags > span {
+  width: 100%;
+  color: var(--ui-muted) !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.purchase-specific-tags strong {
+  padding: 6px 9px !important;
+}
+
+/* Отсутствующие теги */
+
+.purchase-missing-tags-alert {
+  margin-top: 13px !important;
+  padding: 12px 14px !important;
+  border-radius: 16px !important;
+  background: rgba(217, 54, 66, 0.13) !important;
+  border: 1px solid rgba(255, 89, 99, 0.25) !important;
+}
+
+.purchase-missing-tags-alert strong {
+  color: var(--ui-red-soft) !important;
+}
+
+/* Аналоги как светлый внутренний модуль */
+
+.purchase-analogs {
+  margin-top: 14px !important;
+  padding: 14px !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(
+      145deg,
+      #fff5ee,
+      #ecd6cf
+    ) !important;
+  color: #2d191e !important;
+  border: 1px solid rgba(255, 243, 235, 0.7) !important;
+  box-shadow: none !important;
+}
+
+.purchase-analogs p {
+  color: #2d191e !important;
+}
+
+.purchase-analog-item {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(45, 25, 30, 0.1) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.purchase-analog-item:last-child {
+  border-bottom: none !important;
+}
+
+.purchase-analog-item span {
+  color: #2d191e !important;
+  font-weight: 900;
+}
+
+.purchase-analog-item small {
+  color: #725b58 !important;
+}
+
+/* Действия */
+
+.purchase-smart-actions {
+  width: 100%;
+  margin-top: auto !important;
+  padding-top: 16px;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.purchase-smart-actions button {
+  width: 100%;
+  min-height: 43px;
+  padding: 9px 10px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 243, 235, 0.075) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: none !important;
+}
+
+.purchase-smart-actions button:first-child {
+  background:
+    linear-gradient(
+      135deg,
+      var(--ui-red-bright),
+      var(--ui-red)
+    ) !important;
+  border-color: rgba(255, 129, 122, 0.36) !important;
+}
+
+.purchase-smart-actions button.danger {
+  background: rgba(217, 54, 66, 0.13) !important;
+  border-color: rgba(255, 89, 99, 0.25) !important;
+}
+
+.purchase-smart-actions button:last-child {
+  background: #fff5ee !important;
+  color: #2d191e !important;
+  border-color: #fff5ee !important;
+}
+
+.purchase-smart-actions button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+/* Планшет */
+
+@media (max-width: 1050px) {
+  .purchase-page > .analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .purchase-smart-list {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .purchase-missing-tags-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .purchase-smart-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .purchase-page > .analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* === REFERENCE UI PURCHASE V3 END === */
+
+/* === ANALYTICS FLAVOR REDESIGN START === */
+
+/*
+  Убираем большую серую плашку и лишние вложенные рамки
+  в раскрытом вкусе общей аналитики.
+*/
+
+.analytics-page .analytics-flavor-accordion-row {
+  overflow: hidden;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 243, 235, 0.055),
+      rgba(255, 243, 235, 0.025)
+    ) !important;
+  border: 1px solid rgba(255, 238, 233, 0.09) !important;
+  box-shadow: none !important;
+}
+
+.analytics-page .analytics-flavor-accordion-row:hover {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 243, 235, 0.075),
+      rgba(255, 243, 235, 0.035)
+    ) !important;
+  border-color: rgba(255, 129, 122, 0.2) !important;
+}
+
+.analytics-page .analytics-flavor-accordion-row.open {
+  background:
+    radial-gradient(
+      circle at 96% 0%,
+      rgba(255, 129, 122, 0.09),
+      transparent 27%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(47, 27, 34, 0.98),
+      rgba(23, 15, 19, 0.99)
+    ) !important;
+  border-color: rgba(255, 89, 99, 0.3) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Верхняя строка вкуса */
+
+.analytics-page .analytics-flavor-button {
+  min-height: 76px;
+  padding: 16px 18px !important;
+  background: transparent !important;
+}
+
+.analytics-page .analytics-flavor-button > div:first-child {
+  min-width: 0;
+}
+
+.analytics-page .analytics-flavor-button strong {
+  color: #ffffff !important;
+  font-size: 18px !important;
+  letter-spacing: -0.02em;
+}
+
+.analytics-page .analytics-flavor-button > div:first-child > span {
+  margin-top: 8px !important;
+  color: var(--ui-muted) !important;
+  font-size: 13px !important;
+}
+
+.analytics-page .analytics-flavor-button-meta em {
+  width: 34px;
+  height: 34px;
+  display: inline-grid !important;
+  place-items: center;
+  border-radius: 50% !important;
+  background: rgba(217, 54, 66, 0.18) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 89, 99, 0.28) !important;
+  font-style: normal !important;
+}
+
+/* Раскрытая часть */
+
+.analytics-page .analytics-flavor-details {
+  display: grid !important;
+  gap: 13px !important;
+  padding: 14px !important;
+  background: rgba(8, 6, 7, 0.22) !important;
+  border-top: 1px solid rgba(255, 238, 233, 0.08);
+}
+
+/* Теги */
+
+.analytics-page .analytics-flavor-details .analytics-flavor-tags {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 7px !important;
+  margin: 0 !important;
+}
+
+.analytics-page .analytics-flavor-details .analytics-flavor-tags span {
+  padding: 7px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 243, 235, 0.07) !important;
+  color: var(--ui-cream-soft) !important;
+  border: 1px solid var(--ui-border) !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+}
+
+/* Четыре компактных показателя вместо серого прямоугольника */
+
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  text-align: left !important;
+}
+
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span {
+  min-width: 0;
+  min-height: 74px;
+  display: flex !important;
+  align-items: flex-end;
+  padding: 14px !important;
+  border-radius: 17px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 243, 235, 0.075),
+      rgba(255, 243, 235, 0.035)
+    ) !important;
+  color: var(--ui-cream-soft) !important;
+  border: 1px solid var(--ui-border) !important;
+  font-size: 14px !important;
+  font-weight: 850 !important;
+  line-height: 1.35;
+}
+
+/* Главный показатель */
+
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span:nth-child(1) {
+  background:
+    linear-gradient(
+      145deg,
+      #fff5ee,
+      #efd9d1
+    ) !important;
+  color: #2d191e !important;
+  border-color: rgba(255, 243, 235, 0.7) !important;
+}
+
+/* Вес на полке */
+
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span:nth-child(2) {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(217, 54, 66, 0.92),
+      rgba(139, 27, 40, 0.96)
+    ) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 129, 122, 0.32) !important;
+}
+
+/* Закуплено и использовано */
+
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span:nth-child(3),
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span:nth-child(4) {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(67, 42, 49, 0.94),
+      rgba(37, 24, 29, 0.98)
+    ) !important;
+}
+
+/* Не даём старым стилям возвращать серый фон */
+
+.analytics-flavor-details .analytics-flavor-stats {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Планшет */
+
+@media (max-width: 1050px) {
+  .analytics-page
+  .analytics-flavor-details
+  .analytics-flavor-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Телефон */
+
+@media (max-width: 560px) {
+  .analytics-page
+  .analytics-flavor-details
+  .analytics-flavor-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  .analytics-page
+  .analytics-flavor-details
+  .analytics-flavor-stats > span {
+    min-height: 58px;
+  }
+}
+
+/* === ANALYTICS FLAVOR REDESIGN END === */
+
+/* === ANALYTICS FLAVOR CALM PALETTE START === */
+
+/*
+  Спокойная единая палитра раскрытого вкуса:
+  без четырёх разноцветных карточек.
+*/
+
+.analytics-page .analytics-flavor-accordion-row.open {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(43, 28, 34, 0.98),
+      rgba(23, 16, 19, 0.99)
+    ) !important;
+  border-color: rgba(255, 238, 233, 0.12) !important;
+}
+
+/* Все показатели одного цвета */
+
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span,
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span:nth-child(1),
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span:nth-child(2),
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span:nth-child(3),
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span:nth-child(4) {
+  position: relative;
+  min-height: 68px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 243, 235, 0.07),
+      rgba(255, 243, 235, 0.035)
+    ) !important;
+
+  color: var(--ui-cream-soft) !important;
+  border: 1px solid rgba(255, 238, 233, 0.1) !important;
+  box-shadow: none !important;
+}
+
+/* Только первый показатель получает тонкий красный маркер */
+
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-stats > span:first-child {
+  border-left: 3px solid var(--ui-red) !important;
+}
+
+/* Остальные элементы тоже делаем спокойнее */
+
+.analytics-page
+.analytics-flavor-details
+.analytics-flavor-tags span {
+  background: rgba(255, 243, 235, 0.055) !important;
+  color: var(--ui-muted) !important;
+  border-color: rgba(255, 238, 233, 0.09) !important;
+}
+
+.analytics-page .analytics-flavor-button-meta em {
+  background: rgba(255, 243, 235, 0.065) !important;
+  color: var(--ui-cream-soft) !important;
+  border-color: rgba(255, 238, 233, 0.11) !important;
+}
+
+/* === ANALYTICS FLAVOR CALM PALETTE END === */
