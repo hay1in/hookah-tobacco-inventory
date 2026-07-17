@@ -63,6 +63,20 @@ const getTodayInputDate = () => {
   return new Date().toISOString().slice(0, 10);
 };
 
+const getCurrentTimestamp = () => Date.now();
+
+let fallbackIdCounter = 0;
+
+const createClientId = () => {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  fallbackIdCounter += 1;
+
+  return `client-id-${fallbackIdCounter}`;
+};
+
 const scrollToPageTop = () => {
   window.setTimeout(() => {
     window.scrollTo({
@@ -87,12 +101,7 @@ function App() {
   const [historyActionFilter, setHistoryActionFilter] = useState("all");
   const [historyPeriodFilter, setHistoryPeriodFilter] = useState("all");
   const [historySearchText, setHistorySearchText] = useState("");
-  const [aliases, setAliases] = useState([]);
-  const [aliasForm, setAliasForm] = useState({
-    type: "brand",
-    alias: "",
-    canonical: "",
-  });
+  const [aliases] = useState([]);
 
   const isDemoMode = accessRole === "test";
 
@@ -126,10 +135,7 @@ function App() {
   });
 
   const showNotification = (message, type = "success") => {
-    const id =
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random()}`;
+    const id = createClientId();
 
     setNotifications((currentNotifications) => [
       ...currentNotifications,
@@ -401,7 +407,7 @@ function App() {
 
   const refreshFlavors = async () => {
     try {
-      const response = await apiFetch(`/api/flavors?ts=${Date.now()}`);
+      const response = await apiFetch(`/api/flavors?ts=${getCurrentTimestamp()}`);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -1228,10 +1234,8 @@ function App() {
         "Количество": Number(pack.quantity || 0),
         "Закуплено": Number(pack.purchasedQuantity ?? pack.purchased_quantity ?? pack.quantity ?? 0),
         "Теги": (flavor.tags || []).join(", "),
-        "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock) ? "да" : "нет",
-        "Не считать залежью": Boolean(
-          flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
-        )
+        "Мало осталось": flavor.lowStock || flavor.low_stock ? "да" : "нет",
+        "Не считать залежью": flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
           ? "да"
           : "нет",
         "Архив": flavor.archived ? "да" : "нет",
@@ -1691,17 +1695,11 @@ function App() {
             0
         ),
         "Теги": (flavor.tags || []).join(", "),
-        "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock)
+        "Мало осталось": flavor.lowStock || flavor.low_stock ? "да" : "нет",
+        "Не считать залежью": flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
           ? "да"
           : "нет",
-        "Не считать залежью": Boolean(
-          flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
-        )
-          ? "да"
-          : "нет",
-        "Закупка подтверждена": Boolean(
-          flavor.purchaseConfirmed || flavor.purchase_confirmed
-        )
+        "Закупка подтверждена": flavor.purchaseConfirmed || flavor.purchase_confirmed
           ? "да"
           : "нет",
         "Архив": flavor.archived ? "да" : "нет",
@@ -1764,12 +1762,6 @@ function App() {
     const number = Number(normalizedValue);
 
     return Number.isFinite(number) ? number : fallback;
-  };
-
-  const parseExcelBoolean = (value) => {
-    const normalizedValue = String(value).trim().toLowerCase();
-
-    return ["да", "true", "1", "yes", "архив"].includes(normalizedValue);
   };
 
   const parseExcelDate = (value) => {
@@ -2332,7 +2324,7 @@ const titles = {
       return null;
     }
 
-    const diffMs = Date.now() - date.getTime();
+    const diffMs = getCurrentTimestamp() - date.getTime();
 
     return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
   };
@@ -2595,6 +2587,84 @@ const titles = {
 
     return matchesSearch && matchesStatus && matchesTag;
   });
+
+
+  const inventoryStats = flavors.reduce(
+    (stats, flavor) => {
+      const status = getStatus(flavor).text;
+      const totalQuantity = getTotalQuantity(flavor);
+
+      if (!flavor.archived) {
+        stats.activeFlavors += 1;
+        stats.totalPacks += totalQuantity;
+
+        if (!Array.isArray(flavor.tags) || flavor.tags.length === 0) {
+          stats.noTags += 1;
+        }
+      }
+
+      if (status === "Мало осталось") {
+        stats.lowStock += 1;
+      }
+
+      if (status === "Отсутствует") {
+        stats.absent += 1;
+      }
+
+      if (flavor.archived) {
+        stats.archived += 1;
+      }
+
+      return stats;
+    },
+    {
+      activeFlavors: 0,
+      totalPacks: 0,
+      lowStock: 0,
+      absent: 0,
+      archived: 0,
+      noTags: 0,
+    }
+  );
+
+  const inventoryQuickFilters = [
+    {
+      label: "Все",
+      count: inventoryStats.activeFlavors,
+      isActive: statusFilter === "all" && selectedTag === "all",
+      onClick: () => applyInventoryQuickFilter("all"),
+    },
+    {
+      label: "В наличии",
+      count: inventoryStats.activeFlavors - inventoryStats.lowStock - inventoryStats.absent,
+      isActive: statusFilter === "В наличии" && selectedTag === "all",
+      onClick: () => applyInventoryQuickFilter("В наличии"),
+    },
+    {
+      label: "Мало",
+      count: inventoryStats.lowStock,
+      isActive: statusFilter === "Мало осталось" && selectedTag === "all",
+      onClick: () => applyInventoryQuickFilter("Мало осталось"),
+    },
+    {
+      label: "Нет",
+      count: inventoryStats.absent,
+      isActive: statusFilter === "Отсутствует" && selectedTag === "all",
+      onClick: () => applyInventoryQuickFilter("Отсутствует"),
+    },
+    {
+      label: "Без тегов",
+      count: inventoryStats.noTags,
+      isActive: statusFilter === "all" && selectedTag === "__NO_TAGS__",
+      onClick: () => applyInventoryQuickFilter("all", "__NO_TAGS__"),
+    },
+    {
+      label: "Архив",
+      count: inventoryStats.archived,
+      isActive: statusFilter === "Архив" && selectedTag === "all",
+      onClick: () => applyInventoryQuickFilter("Архив"),
+    },
+  ];
 
 
   const normalizeDuplicateKey = (value) => {
@@ -2928,25 +2998,6 @@ const titles = {
 
     return total === 0 || isLowStock;
   });
-
-  const noTagFlavors = flavors
-    .filter((flavor) => {
-      const tags = Array.isArray(flavor.tags) ? flavor.tags : [];
-
-      return !flavor.archived && tags.length === 0;
-    })
-    .sort((a, b) => {
-      const brandCompare = String(a.brand || "").localeCompare(
-        String(b.brand || ""),
-        "ru"
-      );
-
-      if (brandCompare !== 0) {
-        return brandCompare;
-      }
-
-      return String(a.name || "").localeCompare(String(b.name || ""), "ru");
-    });
 
 
   const parseWeightGrams = (weight) => {
@@ -3979,28 +4030,6 @@ const titles = {
     }
   };
 
-  const actionLabels = {
-    pack_plus: "+1 фасовка",
-    pack_minus: "−1 фасовка",
-    clear: "Выбит вкус",
-    archive: "В архив",
-    restore: "Возврат из архива",
-    low_stock_on: "Мало осталось",
-    low_stock_off: "Снято “мало осталось”",
-    purchase_confirmed_on: "Закупка подтверждена",
-    purchase_confirmed_off: "Подтверждение закупки снято",
-    supply: "Поставка",
-    import_excel: "Импорт Excel",
-    import_inventory: "Старый импорт данных",
-    merge_duplicates: "Объединение дублей",
-    merge_tags: "Объединение тегов",
-    bulk_action: "Массовое действие",
-    alias_create: "Создан алиас",
-    alias_delete: "Удалён алиас",
-    deadstock_excluded_on: "Исключён из залежей",
-    deadstock_excluded_off: "Возвращён в залежи",
-  };
-
   const formatActionTime = (value) => {
     if (!value) {
       return "";
@@ -4110,20 +4139,6 @@ const titles = {
 return "";
   };
 
-
-  const getDateInputValue = (value) => {
-    if (!value) {
-      return getTodayInputDate();
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-      return String(value).slice(0, 10);
-    }
-
-    return date.toISOString().slice(0, 10);
-  };
 
   const getSupplyEditDateInputValue = (value) => {
     if (!value) {
@@ -4865,6 +4880,7 @@ return "";
           {isDemoMode && (
             <p className="demo-badge">Ознакомительный режим</p>
           )}
+
         </div>
 
         <div className="header-actions">
@@ -7315,72 +7331,28 @@ if (currentView === "purchase") {
             </div>
           </section>
         )}
-<section className="inventory-quick-filter-panel">
-  <button
-    className={
-      statusFilter === "all" && selectedTag === "all"
-        ? "inventory-quick-filter-button active"
-        : "inventory-quick-filter-button"
-    }
-    onClick={() => applyInventoryQuickFilter("all")}
-  >
-    Все
-  </button>
+<section className="inventory-quick-filter-panel" aria-label="Сводка и быстрые фильтры склада">
+  <div className="inventory-filter-summary">
+    <strong>Сводка склада</strong>
+    <span>Всего {inventoryStats.totalPacks.toLocaleString("ru-RU")} пач. · {filteredFlavors.length.toLocaleString("ru-RU")} позиций в текущей выдаче</span>
+  </div>
 
-  <button
-    className={
-      statusFilter === "В наличии" && selectedTag === "all"
-        ? "inventory-quick-filter-button active"
-        : "inventory-quick-filter-button"
-    }
-    onClick={() => applyInventoryQuickFilter("В наличии")}
-  >
-    В наличии
-  </button>
-
-  <button
-    className={
-      statusFilter === "Мало осталось" && selectedTag === "all"
-        ? "inventory-quick-filter-button active"
-        : "inventory-quick-filter-button"
-    }
-    onClick={() => applyInventoryQuickFilter("Мало осталось")}
-  >
-    Мало
-  </button>
-
-  <button
-    className={
-      statusFilter === "Отсутствует" && selectedTag === "all"
-        ? "inventory-quick-filter-button active"
-        : "inventory-quick-filter-button"
-    }
-    onClick={() => applyInventoryQuickFilter("Отсутствует")}
-  >
-    Нет
-  </button>
-
-  <button
-    className={
-      statusFilter === "all" && selectedTag === "__NO_TAGS__"
-        ? "inventory-quick-filter-button active"
-        : "inventory-quick-filter-button"
-    }
-    onClick={() => applyInventoryQuickFilter("all", "__NO_TAGS__")}
-  >
-    Без тегов
-  </button>
-
-  <button
-    className={
-      statusFilter === "Архив" && selectedTag === "all"
-        ? "inventory-quick-filter-button active"
-        : "inventory-quick-filter-button"
-    }
-    onClick={() => applyInventoryQuickFilter("Архив")}
-  >
-    Архив
-  </button>
+  <div className="inventory-filter-buttons">
+    {inventoryQuickFilters.map((filter) => (
+      <button
+        className={
+          filter.isActive
+            ? "inventory-quick-filter-button active"
+            : "inventory-quick-filter-button"
+        }
+        key={filter.label}
+        onClick={filter.onClick}
+      >
+        <span>{filter.label}</span>
+        <strong>{filter.count.toLocaleString("ru-RU")}</strong>
+      </button>
+    ))}
+  </div>
 </section>
         <section className="tag-filter-panel">
           <button
@@ -7593,7 +7565,7 @@ if (currentView === "purchase") {
                                     {!flavor.archived &&
                                       getTotalQuantity(flavor.packs || []) > 0 && (
                                         <button onClick={() => toggleLowStock(flavor)}>
-                                          {Boolean(flavor.lowStock || flavor.low_stock)
+                                          {flavor.lowStock || flavor.low_stock
                                             ? "Убрать мало"
                                             : "Мало осталось"}
                                         </button>
@@ -7601,10 +7573,7 @@ if (currentView === "purchase") {
 
                                     {!flavor.archived && (
                                       <button onClick={() => toggleDeadstockExcluded(flavor)}>
-                                        {Boolean(
-                                          flavor.excludedFromDeadstock ||
-                                            flavor.excluded_from_deadstock
-                                        )
+                                        {flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
                                           ? "Вернуть в залежи"
                                           : "Не считать залежью"}
                                       </button>

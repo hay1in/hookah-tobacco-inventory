@@ -7648,3 +7648,75 @@ body::before {
 }
 
 /* === ANALYTICS FLAVOR CALM PALETTE END === */
+
+/* === INVENTORY FILTER SUMMARY START === */
+
+.inventory-quick-filter-panel {
+  display: grid !important;
+  grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr) !important;
+  align-items: center;
+  gap: 14px !important;
+}
+
+.inventory-filter-summary {
+  min-width: 0;
+  padding: 8px 10px;
+  color: #fff7ed;
+}
+
+.inventory-filter-summary strong {
+  display: block;
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.inventory-filter-summary span {
+  display: block;
+  margin-top: 6px;
+  color: #d8cec2;
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
+.inventory-filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.inventory-quick-filter-button {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 9px;
+}
+
+.inventory-quick-filter-button strong {
+  min-width: 28px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 247, 237, 0.11);
+  color: currentColor;
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+}
+
+.inventory-quick-filter-button.active strong {
+  background: rgba(33, 27, 24, 0.22);
+}
+
+@media (max-width: 900px) {
+  .inventory-quick-filter-panel {
+    grid-template-columns: 1fr !important;
+  }
+
+  .inventory-filter-buttons {
+    justify-content: flex-start;
+  }
+}
+
+/* === INVENTORY FILTER SUMMARY END === */
