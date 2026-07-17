@@ -1,4 +1,32 @@
 import { useEffect, useState } from "react";
+import {
+  Archive,
+  BarChart3,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
+  LogOut,
+  Menu as MenuIcon,
+  Package,
+  PackageMinus,
+  PackagePlus,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Search,
+  ShoppingCart,
+  TriangleAlert,
+  Undo2,
+  Ellipsis,
+  FileDown,
+  FileUp,
+  History,
+  ShieldAlert,
+  Tags,
+  X
+} from "lucide-react";
 import "./App.css";
 
 let xlsxModulePromise = null;
@@ -2111,6 +2139,7 @@ const [selectedTag, setSelectedTag] = useState("all");
   const [openAnalyticsBrandName, setOpenAnalyticsBrandName] = useState("");
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
+  const [isBottomMoreOpen, setIsBottomMoreOpen] = useState(false);
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all");
   const [openDataQualityIssue, setOpenDataQualityIssue] = useState(null);
@@ -3520,7 +3549,16 @@ const titles = {
       items: dataQualityData.suppliesWithoutPrice.map((log) => ({
         id: log.id,
         title: `${log.brand} — ${log.name}`,
-        meta: formatHistoryDate(log),
+        meta: [
+          formatHistoryDate(log).split(",")[0],
+          log.parsedDetails.supplier,
+          log.parsedDetails.weight,
+          Number(log.parsedDetails.quantity || 0) > 0
+            ? `${Number(log.parsedDetails.quantity)} пач.`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
         type: "log",
       })),
     },
@@ -3530,7 +3568,15 @@ const titles = {
       items: dataQualityData.suppliesWithoutSupplier.map((log) => ({
         id: log.id,
         title: `${log.brand} — ${log.name}`,
-        meta: formatHistoryDate(log),
+        meta: [
+          formatHistoryDate(log).split(",")[0],
+          log.parsedDetails.weight,
+          Number(log.parsedDetails.price || 0) > 0
+            ? `${Number(log.parsedDetails.price)} ₽/пач.`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
         type: "log",
       })),
     },
@@ -4736,7 +4782,10 @@ return "";
   };
 
   const renderAppHeader = ({ title, subtitle, isInventory = false }) => {
-    const closeMenu = () => setIsHeaderMenuOpen(false);
+    const closeMenu = () => {
+      setIsHeaderMenuOpen(false);
+      setIsBottomMoreOpen(false);
+    };
 
     const goToView = (view) => {
       setDataQualityReturnTarget(null);
@@ -4874,7 +4923,8 @@ return "";
                 className="primary-button"
                 onClick={() => setIsSupplyFormOpen(true)}
               >
-                + Поставка
+                <Plus className="ui-icon" aria-hidden="true" />
+                <span>Поставка</span>
               </button>
             )
           ) : (
@@ -4882,7 +4932,8 @@ return "";
               className="secondary-button"
               onClick={() => goToView("inventory")}
             >
-              Склад
+              <Package className="ui-icon" aria-hidden="true" />
+              <span>Склад</span>
             </button>
           )}
 
@@ -4890,11 +4941,29 @@ return "";
             className="secondary-button menu-toggle-button"
             onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
           >
-            Меню {isHeaderMenuOpen ? "↑" : "↓"}
+            <MenuIcon className="ui-icon" aria-hidden="true" />
+            <span>Меню</span>
+
+            {isHeaderMenuOpen ? (
+              <ChevronUp
+                className="ui-icon ui-icon-chevron"
+                aria-hidden="true"
+              />
+            ) : (
+              <ChevronDown
+                className="ui-icon ui-icon-chevron"
+                aria-hidden="true"
+              />
+            )}
           </button>
 
-          <button className="secondary-button" type="button" onClick={handleLogout}>
-            Выйти
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleLogout}
+          >
+            <LogOut className="ui-icon" aria-hidden="true" />
+            <span>Выйти</span>
           </button>
 
           {isHeaderMenuOpen && (
@@ -4903,11 +4972,19 @@ return "";
                 <p>Работа</p>
 
                 <button type="button" onClick={() => goToView("inventory")}>
-                  Склад
+                  <Package className="ui-icon" aria-hidden="true" />
+                  <span>Склад</span>
                 </button>
 
                 <button type="button" onClick={() => goToView("purchase")}>
-                  Закупка{purchaseFlavors.length > 0 ? ` (${purchaseFlavors.length})` : ""}
+                  <ShoppingCart className="ui-icon" aria-hidden="true" />
+
+                  <span>
+                    Закупка
+                    {purchaseFlavors.length > 0
+                      ? ` (${purchaseFlavors.length})`
+                      : ""}
+                  </span>
                 </button>
               </div>
 
@@ -4915,11 +4992,13 @@ return "";
                 <p>Аналитика</p>
 
                 <button type="button" onClick={() => goToView("analytics")}>
-                  Общая аналитика
+                  <BarChart3 className="ui-icon" aria-hidden="true" />
+                  <span>Общая аналитика</span>
                 </button>
 
                 <button type="button" onClick={() => goToView("deadstock")}>
-                  Залежи
+                  <Archive className="ui-icon" aria-hidden="true" />
+                  <span>Залежи</span>
                 </button>
               </div>
 
@@ -4981,6 +5060,191 @@ return "";
           )}
         </div>
       </header>
+
+      <nav
+        className="bottom-navigation"
+        aria-label="Основная навигация"
+      >
+        <button
+          type="button"
+          className={
+            currentView === "inventory"
+              ? "bottom-navigation-item active"
+              : "bottom-navigation-item"
+          }
+          onClick={() => goToView("inventory")}
+        >
+          <Package className="ui-icon" aria-hidden="true" />
+          <span>Склад</span>
+        </button>
+
+        <button
+          type="button"
+          className={
+            currentView === "purchase"
+              ? "bottom-navigation-item active"
+              : "bottom-navigation-item"
+          }
+          onClick={() => goToView("purchase")}
+        >
+          <span className="bottom-navigation-icon-wrap">
+            <ShoppingCart className="ui-icon" aria-hidden="true" />
+
+            {purchaseFlavors.length > 0 && (
+              <strong className="bottom-navigation-badge">
+                {purchaseFlavors.length > 99
+                  ? "99+"
+                  : purchaseFlavors.length}
+              </strong>
+            )}
+          </span>
+
+          <span>Закупка</span>
+        </button>
+
+        <button
+          type="button"
+          className={
+            currentView === "analytics"
+              ? "bottom-navigation-item active"
+              : "bottom-navigation-item"
+          }
+          onClick={() => goToView("analytics")}
+        >
+          <BarChart3 className="ui-icon" aria-hidden="true" />
+          <span>Аналитика</span>
+        </button>
+
+        <button
+          type="button"
+          className={
+            currentView === "dataQuality"
+              ? "bottom-navigation-item active"
+              : "bottom-navigation-item"
+          }
+          onClick={() => goToView("dataQuality")}
+        >
+          <span className="bottom-navigation-icon-wrap">
+            <ShieldAlert className="ui-icon" aria-hidden="true" />
+
+            {dataQualityTotalIssues > 0 && (
+              <strong className="bottom-navigation-badge">
+                {dataQualityTotalIssues > 99
+                  ? "99+"
+                  : dataQualityTotalIssues}
+              </strong>
+            )}
+          </span>
+
+          <span>Проверка</span>
+        </button>
+
+        <button
+          type="button"
+          className={
+            isBottomMoreOpen ||
+            ["deadstock", "tags", "history"].includes(currentView)
+              ? "bottom-navigation-item active"
+              : "bottom-navigation-item"
+          }
+          onClick={() => {
+            setIsHeaderMenuOpen(false);
+            setIsBottomMoreOpen((current) => !current);
+          }}
+        >
+          <Ellipsis className="ui-icon" aria-hidden="true" />
+          <span>Ещё</span>
+        </button>
+      </nav>
+
+      {isBottomMoreOpen && (
+        <>
+          <button
+            type="button"
+            className="bottom-more-backdrop"
+            aria-label="Закрыть дополнительное меню"
+            onClick={() => setIsBottomMoreOpen(false)}
+          />
+
+          <section
+            className="bottom-more-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Дополнительные разделы"
+          >
+            <div className="bottom-more-sheet-handle" />
+
+            <div className="bottom-more-sheet-header">
+              <div>
+                <span>Навигация</span>
+                <strong>Ещё</strong>
+              </div>
+
+              <button
+                type="button"
+                aria-label="Закрыть"
+                onClick={() => setIsBottomMoreOpen(false)}
+              >
+                <X className="ui-icon" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="bottom-more-sheet-grid">
+              <button
+                type="button"
+                onClick={() => goToView("deadstock")}
+              >
+                <Archive className="ui-icon" aria-hidden="true" />
+                <span>Залежи</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goToView("tags")}
+              >
+                <Tags className="ui-icon" aria-hidden="true" />
+                <span>Теги</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  openHistory();
+                  closeMenu();
+                }}
+              >
+                <History className="ui-icon" aria-hidden="true" />
+                <span>История</span>
+              </button>
+
+              {!isDemoMode && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    openImportChoice();
+                    closeMenu();
+                  }}
+                >
+                  <FileUp className="ui-icon" aria-hidden="true" />
+                  <span>Импорт</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  openExportChoice();
+                  closeMenu();
+                }}
+              >
+                <FileDown className="ui-icon" aria-hidden="true" />
+                <span>Экспорт</span>
+              </button>
+            </div>
+          </section>
+        </>
+      )}
+
       </>
     );
   };
@@ -5355,7 +5619,7 @@ if (currentView === "deadstock") {
   }
   if (currentView === "dataQuality") {
     return (
-      <div className="app">
+      <div className="app data-quality-app">
         {renderAppHeader({
           title: "Проверка базы",
           subtitle: "Проблемные данные, дубли, пустые теги и ошибки поставок",
@@ -5483,15 +5747,6 @@ if (currentView === "deadstock") {
                     : `${dataQualityTotalIssues} замеч.`}
                 </strong>
 
-                {openDataQualityIssue && (
-                  <button
-                    type="button"
-                    className="secondary-button dark"
-                    onClick={() => setOpenDataQualityIssue(null)}
-                  >
-                    Свернуть всё
-                  </button>
-                )}
               </div>
             </div>
 
@@ -5512,9 +5767,22 @@ if (currentView === "deadstock") {
                       }}
                     >
                       <span>{issue.title}</span>
-                      <strong>
-                        {issue.items.length}
-                        {openDataQualityIssue === issue.key ? " ↑" : " ↓"}
+                      <strong className="data-quality-issue-toggle">
+                        <span className="data-quality-issue-count">
+                          {issue.items.length}
+                        </span>
+
+                        {openDataQualityIssue === issue.key ? (
+                          <ChevronUp
+                            className="ui-icon data-quality-chevron"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <ChevronDown
+                            className="ui-icon data-quality-chevron"
+                            aria-hidden="true"
+                          />
+                        )}
                       </strong>
                     </button>
 
@@ -5823,20 +6091,42 @@ if (currentView === "purchase") {
                             <button
                               onClick={() => togglePurchaseConfirmed(flavor)}
                             >
-                              {isPurchaseConfirmed
-                                ? "Снять подтверждение"
-                                : "Подтвердить закупку"}
+                              {isPurchaseConfirmed ? (
+                                <Undo2
+                                  className="ui-icon"
+                                  aria-hidden="true"
+                                />
+                              ) : (
+                                <Check
+                                  className="ui-icon"
+                                  aria-hidden="true"
+                                />
+                              )}
+
+                              <span>
+                                {isPurchaseConfirmed
+                                  ? "Снять подтверждение"
+                                  : "Подтвердить закупку"}
+                              </span>
                             </button>
 
                             <button
                               className="danger"
                               onClick={() => archiveFlavor(flavor.id)}
                             >
-                              В архив
+                              <Archive
+                                className="ui-icon"
+                                aria-hidden="true"
+                              />
+                              <span>В архив</span>
                             </button>
 
                             <button onClick={() => startSupplyForFlavor(flavor)}>
-                              Добавить поставку
+                              <PackagePlus
+                                className="ui-icon"
+                                aria-hidden="true"
+                              />
+                              <span>Добавить поставку</span>
                             </button>
                           </div>
                         )}
@@ -7239,6 +7529,11 @@ if (currentView === "purchase") {
 
         <section className="toolbar">
           <div className="search-field-wrap">
+            <Search
+              className="ui-icon search-field-icon"
+              aria-hidden="true"
+            />
+
             <input
               type="text"
               placeholder="Поиск по бренду, вкусу, тегу или алиасу"
@@ -7583,19 +7878,34 @@ if (currentView === "purchase") {
                                 {!isDemoMode && (
                                   <div className="actions">
                                     <button onClick={() => clearFlavor(flavor.id)}>
-                                      Выбить
+                                      <PackageMinus
+                                        className="ui-icon"
+                                        aria-hidden="true"
+                                      />
+                                      <span>Выбить</span>
                                     </button>
 
                                     <button onClick={() => openEditForm(flavor)}>
-                                      Редактировать
+                                      <Pencil
+                                        className="ui-icon"
+                                        aria-hidden="true"
+                                      />
+                                      <span>Редактировать</span>
                                     </button>
 
                                     {!flavor.archived &&
                                       getTotalQuantity(flavor.packs || []) > 0 && (
                                         <button onClick={() => toggleLowStock(flavor)}>
-                                          {Boolean(flavor.lowStock || flavor.low_stock)
-                                            ? "Убрать мало"
-                                            : "Мало осталось"}
+                                          <TriangleAlert
+                                            className="ui-icon"
+                                            aria-hidden="true"
+                                          />
+
+                                          <span>
+                                            {Boolean(flavor.lowStock || flavor.low_stock)
+                                              ? "Убрать мало"
+                                              : "Мало осталось"}
+                                          </span>
                                         </button>
                                       )}
 
@@ -7604,22 +7914,47 @@ if (currentView === "purchase") {
                                         {Boolean(
                                           flavor.excludedFromDeadstock ||
                                             flavor.excluded_from_deadstock
-                                        )
-                                          ? "Вернуть в залежи"
-                                          : "Не считать залежью"}
+                                        ) ? (
+                                          <Eye
+                                            className="ui-icon"
+                                            aria-hidden="true"
+                                          />
+                                        ) : (
+                                          <EyeOff
+                                            className="ui-icon"
+                                            aria-hidden="true"
+                                          />
+                                        )}
+
+                                        <span>
+                                          {Boolean(
+                                            flavor.excludedFromDeadstock ||
+                                              flavor.excluded_from_deadstock
+                                          )
+                                            ? "Вернуть в залежи"
+                                            : "Не считать залежью"}
+                                        </span>
                                       </button>
                                     )}
 
                                     {flavor.archived ? (
                                       <button onClick={() => restoreFlavor(flavor.id)}>
-                                        Вернуть
+                                        <RotateCcw
+                                          className="ui-icon"
+                                          aria-hidden="true"
+                                        />
+                                        <span>Вернуть</span>
                                       </button>
                                     ) : (
                                       <button
                                         className="danger"
                                         onClick={() => archiveFlavor(flavor.id)}
                                       >
-                                        В архив
+                                        <Archive
+                                          className="ui-icon"
+                                          aria-hidden="true"
+                                        />
+                                        <span>В архив</span>
                                       </button>
                                     )}
                                   </div>

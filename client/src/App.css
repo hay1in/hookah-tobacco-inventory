@@ -7648,3 +7648,919 @@ body::before {
 }
 
 /* === ANALYTICS FLAVOR CALM PALETTE END === */
+
+/* === MINIMAL ICONS SAFE START === */
+
+.ui-icon {
+  display: block;
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  flex: 0 0 auto;
+
+  color: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.7;
+
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.header-actions > button,
+.header-dropdown button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+}
+
+.header-actions > button {
+  justify-content: center !important;
+}
+
+.header-dropdown button {
+  justify-content: flex-start !important;
+}
+
+.header-actions > button:hover .ui-icon,
+.header-dropdown button:hover .ui-icon {
+  opacity: 1;
+}
+
+.ui-icon-chevron {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  margin-left: -3px;
+  opacity: 0.55;
+}
+
+/* Поиск */
+
+.search-field-wrap {
+  position: relative !important;
+}
+
+.search-field-icon {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 19px;
+
+  color: rgba(255, 243, 241, 0.46);
+  opacity: 1;
+
+  transform: translateY(-50%);
+}
+
+.search-field-wrap .search-input {
+  padding-left: 50px !important;
+}
+
+/* === MINIMAL ICONS SAFE END === */
+
+/* === ACTION ICONS LAYER START === */
+
+.flavor-details-card > .actions button,
+.purchase-smart-actions button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.flavor-details-card > .actions button .ui-icon,
+.purchase-smart-actions button .ui-icon {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+
+  color: currentColor;
+  opacity: 0.62;
+
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.flavor-details-card > .actions button:hover .ui-icon,
+.purchase-smart-actions button:hover .ui-icon {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+/* Красная иконка только у опасного действия */
+
+.flavor-details-card > .actions button.danger .ui-icon,
+.purchase-smart-actions button.danger .ui-icon {
+  color: #ff8b92;
+  opacity: 0.86;
+}
+
+/* В светлой кнопке иконка наследует тёмный текст */
+
+.purchase-smart-actions button:last-child .ui-icon {
+  color: currentColor;
+  opacity: 0.72;
+}
+
+/* На планшете не уменьшаем область нажатия */
+
+@media (max-width: 760px) {
+  .flavor-details-card > .actions button,
+  .purchase-smart-actions button {
+    min-height: 46px;
+  }
+}
+
+/* === ACTION ICONS LAYER END === */
+
+/* === BOTTOM APP NAVIGATION START === */
+
+/*
+  Навигация показывается на планшетных и мобильных экранах.
+  На широком компьютере остаётся обычное верхнее меню.
+*/
+
+.bottom-navigation,
+.bottom-more-backdrop,
+.bottom-more-sheet {
+  display: none;
+}
+
+@media (max-width: 1400px), (hover: none) and (pointer: coarse) {
+  .content {
+    padding-bottom:
+      calc(112px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .bottom-navigation {
+    position: fixed;
+    z-index: 12020;
+    right: 16px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    left: 16px;
+
+    width: min(680px, calc(100% - 32px));
+    min-height: 72px;
+    margin: 0 auto;
+    padding: 7px;
+
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 4px;
+
+    border: 1px solid rgba(255, 99, 110, 0.2);
+    border-radius: 25px;
+
+    background:
+      linear-gradient(
+        145deg,
+        rgba(33, 21, 26, 0.96),
+        rgba(16, 12, 15, 0.98)
+      );
+
+    box-shadow:
+      0 22px 60px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.055);
+
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+  }
+
+  .bottom-navigation-item {
+    position: relative;
+    min-width: 0;
+    min-height: 58px;
+    padding: 7px 4px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    border: 0;
+    border-radius: 19px;
+
+    background: transparent;
+    color: rgba(255, 241, 239, 0.52);
+
+    font: inherit;
+    cursor: pointer;
+
+    transition:
+      color 170ms ease,
+      background 170ms ease,
+      transform 170ms ease;
+  }
+
+  .bottom-navigation-item > span:last-child {
+    max-width: 100%;
+    overflow: hidden;
+
+    color: inherit;
+    font-size: 10px;
+    font-weight: 850;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bottom-navigation-item .ui-icon {
+    width: 19px;
+    height: 19px;
+    min-width: 19px;
+    opacity: 0.72;
+  }
+
+  .bottom-navigation-item.active {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(225, 55, 67, 0.98),
+        rgba(151, 29, 43, 0.98)
+      );
+
+    color: #ffffff;
+
+    box-shadow:
+      0 9px 22px rgba(164, 28, 43, 0.26),
+      inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+
+  .bottom-navigation-item.active .ui-icon {
+    opacity: 1;
+  }
+
+  .bottom-navigation-item:active {
+    transform: scale(0.96);
+  }
+
+  .bottom-navigation-icon-wrap {
+    position: relative;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    color: inherit;
+  }
+
+  .bottom-navigation-badge {
+    position: absolute;
+    top: -8px;
+    right: -13px;
+
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid #1d1418;
+    border-radius: 999px;
+
+    background: #ff6570;
+    color: #ffffff;
+
+    font-size: 8px;
+    font-weight: 950;
+    line-height: 1;
+  }
+
+  .bottom-navigation-item.active
+  .bottom-navigation-badge {
+    border-color: #a82234;
+    background: #ffffff;
+    color: #a82234;
+  }
+
+  /* Затемнение */
+
+  .bottom-more-backdrop {
+    position: fixed;
+    z-index: 12030;
+    inset: 0;
+
+    display: block;
+
+    border: 0;
+    background: rgba(5, 3, 4, 0.62);
+
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+
+    animation: bottomBackdropIn 180ms ease both;
+  }
+
+  /* Нижняя панель «Ещё» */
+
+  .bottom-more-sheet {
+    position: fixed;
+    z-index: 12040;
+    right: 16px;
+    bottom: calc(99px + env(safe-area-inset-bottom));
+    left: 16px;
+
+    width: min(620px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 11px 16px 18px;
+
+    display: block;
+
+    border: 1px solid rgba(255, 99, 110, 0.24);
+    border-radius: 30px;
+
+    background:
+      radial-gradient(
+        circle at 90% 0%,
+        rgba(204, 43, 57, 0.11),
+        transparent 34%
+      ),
+      linear-gradient(
+        145deg,
+        rgba(40, 25, 31, 0.99),
+        rgba(17, 12, 15, 0.995)
+      );
+
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.56),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+    animation: bottomSheetIn 220ms ease both;
+  }
+
+  .bottom-more-sheet-handle {
+    width: 42px;
+    height: 4px;
+    margin: 0 auto 13px;
+
+    border-radius: 999px;
+    background: rgba(255, 241, 239, 0.2);
+  }
+
+  .bottom-more-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    margin-bottom: 15px;
+  }
+
+  .bottom-more-sheet-header > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .bottom-more-sheet-header span {
+    color: #ff7d86 !important;
+    font-size: 9px;
+    font-weight: 950;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+  }
+
+  .bottom-more-sheet-header strong {
+    color: #ffffff !important;
+    font-size: 25px;
+    letter-spacing: -0.035em;
+  }
+
+  .bottom-more-sheet-header > button {
+    width: 40px;
+    height: 40px;
+
+    display: inline-grid;
+    place-items: center;
+
+    border: 1px solid rgba(255, 241, 239, 0.1);
+    border-radius: 50%;
+
+    background: rgba(255, 241, 239, 0.055);
+    color: #ffffff;
+  }
+
+  .bottom-more-sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .bottom-more-sheet-grid > button {
+    min-width: 0;
+    min-height: 60px;
+    padding: 13px 15px;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 11px;
+
+    border: 1px solid rgba(255, 241, 239, 0.09);
+    border-radius: 18px;
+
+    background:
+      linear-gradient(
+        145deg,
+        rgba(255, 241, 239, 0.065),
+        rgba(255, 241, 239, 0.025)
+      );
+
+    color: rgba(255, 246, 244, 0.82);
+    font: inherit;
+    font-weight: 850;
+    text-align: left;
+
+    cursor: pointer;
+  }
+
+  .bottom-more-sheet-grid > button .ui-icon {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+
+    color: #ff7d86;
+    opacity: 0.82;
+  }
+
+  .bottom-more-sheet-grid > button span {
+    color: inherit !important;
+  }
+
+  .bottom-more-sheet-grid > button:active {
+    background: rgba(199, 42, 56, 0.17);
+    transform: scale(0.98);
+  }
+}
+
+@media (max-width: 480px) {
+  .bottom-navigation {
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    left: 8px;
+
+    width: calc(100% - 16px);
+    border-radius: 22px;
+  }
+
+  .bottom-navigation-item {
+    border-radius: 16px;
+  }
+
+  .bottom-navigation-item > span:last-child {
+    font-size: 9px;
+  }
+
+  .bottom-more-sheet {
+    right: 8px;
+    bottom: calc(91px + env(safe-area-inset-bottom));
+    left: 8px;
+
+    width: calc(100% - 16px);
+    border-radius: 25px;
+  }
+}
+
+@keyframes bottomSheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bottomBackdropIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* === BOTTOM APP NAVIGATION END === */
+
+/* === DATA QUALITY IPAD REDESIGN START === */
+
+.data-quality-app .data-quality-page {
+  display: grid;
+  gap: 14px;
+}
+
+.data-quality-app .data-quality-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin: 0 !important;
+}
+
+.data-quality-app .data-quality-summary-grid .analytics-card {
+  min-height: 104px !important;
+  padding: 16px 18px !important;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(43, 28, 33, 0.98),
+      rgba(24, 17, 20, 0.99)
+    ) !important;
+  border: 1px solid rgba(255, 238, 233, 0.1) !important;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+}
+
+.data-quality-app
+  .data-quality-summary-grid
+  .analytics-card:first-child {
+  background:
+    radial-gradient(
+      circle at 92% 12%,
+      rgba(217, 54, 66, 0.2),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(57, 27, 34, 0.98),
+      rgba(28, 17, 21, 0.99)
+    ) !important;
+  border-color: rgba(255, 100, 109, 0.25) !important;
+}
+
+.data-quality-app
+  .data-quality-summary-grid
+  .analytics-card::after {
+  content: none !important;
+  display: none !important;
+}
+
+.data-quality-app .data-quality-summary-grid .analytics-card span {
+  color: rgba(239, 218, 214, 0.64) !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1.25 !important;
+  text-transform: uppercase !important;
+}
+
+.data-quality-app .data-quality-summary-grid .analytics-card strong {
+  margin-top: 11px !important;
+  color: #ffffff !important;
+  font-size: 38px !important;
+  line-height: 1 !important;
+}
+
+.data-quality-app
+  .data-quality-summary-grid
+  .analytics-card.muted {
+  opacity: 0.68 !important;
+}
+
+.data-quality-app
+  .data-quality-summary-grid
+  .analytics-card.clickable:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(255, 100, 109, 0.3) !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+.data-quality-app .data-quality-panel {
+  margin-top: 0 !important;
+  padding: 20px !important;
+  border-radius: 30px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(34, 23, 27, 0.98),
+      rgba(19, 14, 16, 0.99)
+    ) !important;
+  border: 1px solid rgba(255, 238, 233, 0.11) !important;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+}
+
+.data-quality-app .data-quality-header {
+  align-items: center !important;
+  margin-bottom: 16px !important;
+}
+
+.data-quality-app .data-quality-header h2 {
+  margin: 6px 0 0 !important;
+  font-size: 27px !important;
+  line-height: 1.1 !important;
+}
+
+.data-quality-app .data-quality-header-actions > strong {
+  padding: 8px 12px !important;
+  border: 1px solid rgba(255, 100, 109, 0.2) !important;
+  border-radius: 999px !important;
+  background: rgba(217, 54, 66, 0.11) !important;
+  color: #f3deda !important;
+  font-size: 12px !important;
+  white-space: nowrap !important;
+}
+
+.data-quality-app
+  .data-quality-header-actions
+  .secondary-button {
+  min-height: 38px !important;
+  padding: 8px 12px !important;
+  background: rgba(255, 243, 235, 0.055) !important;
+  color: #ead7d1 !important;
+  border-color: rgba(255, 238, 233, 0.1) !important;
+  box-shadow: none !important;
+}
+
+.data-quality-app .data-quality-list,
+.data-quality-app .data-quality-items {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.data-quality-app .data-quality-list {
+  gap: 10px !important;
+}
+
+.data-quality-app .data-quality-issue {
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 238, 233, 0.1) !important;
+  border-radius: 21px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(43, 29, 34, 0.92),
+      rgba(27, 19, 22, 0.96)
+    ) !important;
+  box-shadow: none !important;
+}
+
+.data-quality-app .data-quality-issue > button {
+  min-height: 64px !important;
+  padding: 15px 17px !important;
+  align-items: center !important;
+  background: transparent !important;
+}
+
+.data-quality-app .data-quality-issue > button:hover {
+  background: rgba(217, 54, 66, 0.09) !important;
+}
+
+.data-quality-app .data-quality-issue > button > span {
+  color: #f6e9e6 !important;
+  font-size: 15px !important;
+  font-weight: 850 !important;
+}
+
+.data-quality-issue-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.data-quality-app .data-quality-issue-count {
+  min-width: 28px !important;
+  height: 28px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  background: rgba(217, 54, 66, 0.18) !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+.data-quality-app .data-quality-chevron {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  color: rgba(242, 222, 218, 0.65) !important;
+}
+
+.data-quality-app .data-quality-items {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  padding: 10px !important;
+  border-top: 1px solid rgba(255, 238, 233, 0.08) !important;
+}
+
+.data-quality-app button.data-quality-item {
+  min-height: 76px !important;
+  margin: 0 !important;
+  padding: 13px 14px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 14px !important;
+  border: 1px solid rgba(255, 238, 233, 0.08) !important;
+  border-radius: 17px !important;
+  background: rgba(255, 243, 235, 0.035) !important;
+  box-shadow: none !important;
+}
+
+.data-quality-app button.data-quality-item:hover {
+  transform: translateY(-1px) !important;
+  background: rgba(217, 54, 66, 0.08) !important;
+  border-color: rgba(255, 100, 109, 0.22) !important;
+}
+
+.data-quality-app .data-quality-item-main {
+  display: grid !important;
+  gap: 5px !important;
+}
+
+.data-quality-app .data-quality-item-main strong {
+  color: #ffffff !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+}
+
+.data-quality-app .data-quality-item-main > span {
+  color: rgba(234, 215, 209, 0.58) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+}
+
+.data-quality-app .data-quality-item-action {
+  padding: 8px 11px !important;
+  border: 1px solid rgba(255, 100, 109, 0.22) !important;
+  border-radius: 999px !important;
+  background: rgba(217, 54, 66, 0.11) !important;
+  color: #ff9298 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+@media (max-width: 1400px), (hover: none) and (pointer: coarse) {
+  /*
+    ui-page-enter сохранял transform на .app и превращал его
+    в контейнер для position: fixed в Safari.
+  */
+  .app {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .bottom-navigation {
+    position: fixed !important;
+    z-index: 2147483000 !important;
+    top: auto !important;
+    bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    isolation: isolate !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background:
+      linear-gradient(
+        145deg,
+        rgba(35, 22, 27, 0.995),
+        rgba(14, 10, 12, 0.998)
+      ) !important;
+  }
+
+  .data-quality-app .header {
+    min-height: 154px !important;
+    padding: 24px 30px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 24px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .data-quality-app .header h1 {
+    margin: 0 0 9px !important;
+    font-size: clamp(46px, 5vw, 64px) !important;
+    line-height: 0.95 !important;
+  }
+
+  .data-quality-app .header .eyebrow {
+    margin-bottom: 10px !important;
+  }
+
+  .data-quality-app .header .subtitle {
+    max-width: 650px !important;
+    margin: 0 !important;
+    font-size: 15px !important;
+    line-height: 1.4 !important;
+  }
+
+  .data-quality-app
+    .header-actions
+    > .secondary-button:first-child,
+  .data-quality-app .header-actions > .menu-toggle-button {
+    display: none !important;
+  }
+
+  .data-quality-app .header-actions {
+    width: auto !important;
+    justify-content: flex-end !important;
+  }
+
+  .data-quality-app .header-actions > button {
+    min-height: 46px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .data-quality-app .data-quality-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .data-quality-app .data-quality-items {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .data-quality-app .header {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+    padding: 22px 20px !important;
+  }
+
+  .data-quality-app .header h1 {
+    font-size: 42px !important;
+  }
+
+  .data-quality-app .header-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+
+  .data-quality-app button.data-quality-item {
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+  }
+
+  .data-quality-app .data-quality-item-action {
+    justify-self: start !important;
+  }
+}
+
+/* === DATA QUALITY IPAD REDESIGN END === */
+
+/* === DATA QUALITY IPAD POLISH START === */
+
+.data-quality-app .data-quality-chevron {
+  display: block !important;
+  width: 19px !important;
+  height: 19px !important;
+  min-width: 19px !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  color: #e9cfca !important;
+  stroke: #e9cfca !important;
+  stroke-width: 2.4 !important;
+}
+
+.data-quality-app .data-quality-header-actions {
+  flex-wrap: nowrap !important;
+}
+
+.data-quality-app .data-quality-header-actions > strong {
+  margin: 0 !important;
+}
+
+@media (max-width: 1400px), (hover: none) and (pointer: coarse) {
+  .bottom-navigation-item.active .bottom-navigation-badge {
+    top: -9px !important;
+    right: -14px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    padding: 0 5px !important;
+    border: 2px solid rgba(255, 255, 255, 0.82) !important;
+    background: #681725 !important;
+    color: #ffffff !important;
+    font-size: 9px !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+  }
+
+  .bottom-navigation-item.active
+    .bottom-navigation-badge {
+    color: #ffffff !important;
+  }
+}
+
+/* === DATA QUALITY IPAD POLISH END === */
