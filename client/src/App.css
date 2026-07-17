@@ -3609,6 +3609,36 @@ button.data-quality-item:hover {
   color: rgba(50, 50, 50, 0.55);
 }
 
+.inventory-summary-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.inventory-summary-item {
+  border: 1px solid rgba(255, 123, 132, 0.18);
+  background: rgba(17, 11, 13, 0.72);
+  border-radius: 18px;
+  padding: 10px 12px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
+}
+
+.inventory-summary-item span {
+  display: block;
+  color: rgba(232, 208, 204, 0.68);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.inventory-summary-item strong {
+  display: block;
+  margin-top: 4px;
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1;
+}
+
 .inventory-quick-filter-panel {
   display: flex;
   flex-wrap: wrap;
@@ -3625,7 +3655,20 @@ button.data-quality-item:hover {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.inventory-quick-filter-button span {
+  min-width: 20px;
+  border-radius: 999px;
+  padding: 2px 6px;
+  background: rgba(217, 45, 56, 0.16);
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 .inventory-quick-filter-button:hover {

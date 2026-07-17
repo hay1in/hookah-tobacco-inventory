@@ -2581,6 +2581,35 @@ const titles = {
       .filter(Boolean);
   };
 
+  const inventoryQuickFilterStats = flavors.reduce(
+    (stats, flavor) => {
+      const totalQuantity = getTotalQuantity(flavor.packs || []);
+      const status = getStatus(flavor).text;
+      const flavorTags = Array.isArray(flavor.tags) ? flavor.tags : [];
+
+      return {
+        ...stats,
+        all: stats.all + (flavor.archived ? 0 : 1),
+        inStock: stats.inStock + (status === "В наличии" ? 1 : 0),
+        lowStock: stats.lowStock + (status === "Мало осталось" ? 1 : 0),
+        absent: stats.absent + (status === "Отсутствует" ? 1 : 0),
+        noTags:
+          stats.noTags + (!flavor.archived && flavorTags.length === 0 ? 1 : 0),
+        archived: stats.archived + (status === "Архив" ? 1 : 0),
+        totalPacks: stats.totalPacks + (flavor.archived ? 0 : totalQuantity),
+      };
+    },
+    {
+      all: 0,
+      inStock: 0,
+      lowStock: 0,
+      absent: 0,
+      noTags: 0,
+      archived: 0,
+      totalPacks: 0,
+    }
+  );
+
   const filteredFlavors = flavors.filter((flavor) => {
     const normalizedSearch = normalizeSearchValue(searchText);
 
@@ -2793,6 +2822,10 @@ const titles = {
   const importPreviewVisibleRows = showOnlyImportProblems
     ? importPreviewRowsWithWarnings.filter(hasImportRowProblems)
     : importPreviewRowsWithWarnings;
+
+  const filteredInventoryTotalPacks = filteredFlavors.reduce((sum, flavor) => {
+    return sum + getTotalQuantity(flavor.packs || []);
+  }, 0);
 
   const groupedFlavorsByBrand = Array.from(
     filteredFlavors.reduce((groups, flavor) => {
@@ -7572,6 +7605,23 @@ if (currentView === "purchase") {
           )}
         </section>
 
+        <section className="inventory-summary-panel">
+          <div className="inventory-summary-item">
+            <span>Всего пачек</span>
+            <strong>{inventoryQuickFilterStats.totalPacks}</strong>
+          </div>
+
+          <div className="inventory-summary-item">
+            <span>Пачек в выдаче</span>
+            <strong>{filteredInventoryTotalPacks}</strong>
+          </div>
+
+          <div className="inventory-summary-item">
+            <span>Позиций в выдаче</span>
+            <strong>{filteredFlavors.length}</strong>
+          </div>
+        </section>
+
         {!isDemoMode && selectedFlavorIds.length > 0 && (
           <section className="bulk-action-panel">
             <div>
@@ -7619,7 +7669,7 @@ if (currentView === "purchase") {
     }
     onClick={() => applyInventoryQuickFilter("all")}
   >
-    Все
+    Все <span>{inventoryQuickFilterStats.all}</span>
   </button>
 
   <button
@@ -7630,7 +7680,7 @@ if (currentView === "purchase") {
     }
     onClick={() => applyInventoryQuickFilter("В наличии")}
   >
-    В наличии
+    В наличии <span>{inventoryQuickFilterStats.inStock}</span>
   </button>
 
   <button
@@ -7641,7 +7691,7 @@ if (currentView === "purchase") {
     }
     onClick={() => applyInventoryQuickFilter("Мало осталось")}
   >
-    Мало
+    Мало <span>{inventoryQuickFilterStats.lowStock}</span>
   </button>
 
   <button
@@ -7652,7 +7702,7 @@ if (currentView === "purchase") {
     }
     onClick={() => applyInventoryQuickFilter("Отсутствует")}
   >
-    Нет
+    Нет <span>{inventoryQuickFilterStats.absent}</span>
   </button>
 
   <button
@@ -7663,7 +7713,7 @@ if (currentView === "purchase") {
     }
     onClick={() => applyInventoryQuickFilter("all", "__NO_TAGS__")}
   >
-    Без тегов
+    Без тегов <span>{inventoryQuickFilterStats.noTags}</span>
   </button>
 
   <button
@@ -7674,7 +7724,7 @@ if (currentView === "purchase") {
     }
     onClick={() => applyInventoryQuickFilter("Архив")}
   >
-    Архив
+    Архив <span>{inventoryQuickFilterStats.archived}</span>
   </button>
 </section>
         <section className="tag-filter-panel">
