@@ -41,6 +41,45 @@ const loadXlsx = async () => {
 
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+const AUTH_REQUEST_TIMEOUT_MS = 30000;
+const AUXILIARY_REQUEST_TIMEOUT_MS = 10000;
+
+const fetchWithTimeout = async (url, options = {}, timeoutMs = AUTH_REQUEST_TIMEOUT_MS) => {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      const timeoutError = new Error(
+        "Сервер долго не отвечает. Проверьте, что backend и база данных запущены."
+      );
+
+      timeoutError.code = "AUTH_REQUEST_TIMEOUT";
+      throw timeoutError;
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+};
+
+const getAuthErrorMessage = (error) => {
+  if (error?.code === "AUTH_REQUEST_TIMEOUT") {
+    return error.message;
+  }
+
+  if (error instanceof TypeError) {
+    return "Не удалось подключиться к серверу. Проверьте backend и интернет-соединение.";
+  }
+
+  return error?.message || "Не удалось войти";
+};
 
 const AUTH_STORAGE_KEY = "hookahInventoryAuth";
 const AUTH_TTL_MS = 1000 * 60 * 60 * 24 * 7;
@@ -251,7 +290,7 @@ function App() {
   };
 
   const loadFlavorsWithPassword = async (password) => {
-    const response = await fetch(`${API_URL}/api/flavors`, {
+    const response = await fetchWithTimeout(`${API_URL}/api/flavors`, {
       headers: {
         "x-admin-password": password,
       },
@@ -259,7 +298,10 @@ function App() {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || "Не удалось войти");
+      const authError = new Error(errorData?.message || "Не удалось войти");
+
+      authError.status = response.status;
+      throw authError;
     }
 
     const data = await response.json();
@@ -272,19 +314,28 @@ function App() {
   };
 
   const loadActionLogsWithPassword = async (password) => {
-    const response = await fetch(`${API_URL}/api/action-logs`, {
-      headers: {
-        "x-admin-password": password,
-      },
-    });
+    try {
+      const response = await fetchWithTimeout(
+        `${API_URL}/api/action-logs`,
+        {
+          headers: {
+            "x-admin-password": password,
+          },
+        },
+        AUXILIARY_REQUEST_TIMEOUT_MS
+      );
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return [];
+      }
+
+      const data = await response.json();
+
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.warn("Не удалось загрузить историю при входе", error);
       return [];
     }
-
-    const data = await response.json();
-
-    return Array.isArray(data) ? data : [];
   };
 
   useEffect(() => {
@@ -299,8 +350,10 @@ function App() {
         setIsLoading(true);
         setAuthError("");
 
-        const data = await loadFlavorsWithPassword(savedAuth.password);
-        const logs = await loadActionLogsWithPassword(savedAuth.password);
+        const [data, logs] = await Promise.all([
+          loadFlavorsWithPassword(savedAuth.password),
+          loadActionLogsWithPassword(savedAuth.password),
+        ]);
 
         setActionLogs(logs);
         setAdminPassword(savedAuth.password);
@@ -310,8 +363,13 @@ function App() {
         setErrorText("");
       } catch (error) {
         console.error(error);
-        clearSavedAuth();
-        setAuthError("Сохранённый вход истёк. Введите пароль заново.");
+
+        if (error?.status === 401 || error?.status === 403) {
+          clearSavedAuth();
+          setAuthError("Сохранённый вход истёк. Введите пароль заново.");
+        } else {
+          setAuthError(getAuthErrorMessage(error));
+        }
       } finally {
         setIsLoading(false);
       }
@@ -334,8 +392,10 @@ function App() {
       setIsLoading(true);
       setAuthError("");
 
-      const data = await loadFlavorsWithPassword(trimmedPassword);
-      const logs = await loadActionLogsWithPassword(trimmedPassword);
+      const [data, logs] = await Promise.all([
+        loadFlavorsWithPassword(trimmedPassword),
+        loadActionLogsWithPassword(trimmedPassword),
+      ]);
 
       setActionLogs(logs);
 
@@ -351,7 +411,7 @@ function App() {
       setErrorText("");
     } catch (error) {
       console.error(error);
-      setAuthError(error.message || "Не удалось войти");
+      setAuthError(getAuthErrorMessage(error));
     } finally {
       setImportProgress(null);
       setIsLoading(false);
