@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Archive,
   BarChart3,
@@ -27,6 +27,7 @@ import {
   Tags,
   X
 } from "lucide-react";
+import NotificationStack from "./components/NotificationStack";
 import StrengthIndicator from "./components/StrengthIndicator";
 import {
   getStrengthLabel,
@@ -53,6 +54,7 @@ import {
   getDateInputValue,
   getTodayInputDate,
 } from "./utils/dates";
+import useNotifications from "./hooks/useNotifications";
 import "./App.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -92,8 +94,11 @@ function App() {
   const [flavors, setFlavors] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
-  const [notifications, setNotifications] = useState([]);
-  const notificationIdRef = useRef(0);
+  const {
+    notifications,
+    showNotification,
+    closeNotification,
+  } = useNotifications();
 
   const [isSupplyFormOpen, setIsSupplyFormOpen] = useState(false);
   const [supplyForm, setSupplyForm] = useState({
@@ -123,61 +128,6 @@ function App() {
     initialBrandStrength: "unknown",
     initialStrengthOverride: "",
   });
-
-  const showNotification = (message, type = "success") => {
-    notificationIdRef.current += 1;
-
-    const id =
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `notification-${notificationIdRef.current}`;
-
-    setNotifications((currentNotifications) => [
-      ...currentNotifications,
-      {
-        id,
-        message,
-        type,
-      },
-    ]);
-
-    window.setTimeout(() => {
-      setNotifications((currentNotifications) =>
-        currentNotifications.filter((notification) => notification.id !== id)
-      );
-    }, 3600);
-  };
-
-  const closeNotification = (notificationId) => {
-    setNotifications((currentNotifications) =>
-      currentNotifications.filter(
-        (notification) => notification.id !== notificationId
-      )
-    );
-  };
-
-  const renderNotifications = () => {
-    if (notifications.length === 0) {
-      return null;
-    }
-
-    return (
-      <div className="notification-stack">
-        {notifications.map((notification) => (
-          <div
-            className={`notification-toast ${notification.type}`}
-            key={notification.id}
-          >
-            <span>{notification.message}</span>
-
-            <button onClick={() => closeNotification(notification.id)}>
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   const renderImportProgress = () => {
     if (!importProgress) {
@@ -4741,7 +4691,10 @@ return "";
 
     return (
       <>
-      {renderNotifications()}
+      <NotificationStack
+        notifications={notifications}
+        onClose={closeNotification}
+      />
       {renderImportProgress()}
       {renderGlobalFileInput()}
       {renderChoiceModal()}
