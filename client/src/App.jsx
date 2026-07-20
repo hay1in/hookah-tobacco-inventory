@@ -1094,6 +1094,7 @@ function App() {
         .filter(Boolean),
       minStock: Number(editForm.minStock),
       strengthOverride: editForm.strengthOverride || null,
+      brandStrength: editForm.brandStrength || "unknown",
     };
 
     try {
@@ -1114,25 +1115,6 @@ function App() {
 
       const flavorStrengthChanged =
         editForm.strengthOverride !== editForm.initialStrengthOverride;
-
-      if (brandStrengthChanged) {
-        const brandResponse = await apiFetch(
-          `/api/brand-settings/${encodeURIComponent(editForm.brand)}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              defaultStrength: editForm.brandStrength,
-            }),
-          }
-        );
-
-        if (!brandResponse.ok) {
-          throw new Error("Вкус сохранён, но не удалось сохранить крепость бренда");
-        }
-      }
 
       const editedFlavor = flavors.find(
         (flavor) => flavor.id === editingFlavorId
