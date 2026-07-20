@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Archive,
   BarChart3,
@@ -27,109 +27,35 @@ import {
   Tags,
   X
 } from "lucide-react";
+import StrengthIndicator from "./components/StrengthIndicator";
+import {
+  getStrengthLabel,
+  STRENGTH_OPTIONS,
+} from "./constants/strength";
+import {
+  getExcelValue,
+  loadXlsx,
+  parseExcelDate,
+  parseExcelNumber,
+  parseImportedStrength,
+} from "./utils/excel";
+import {
+  AUXILIARY_REQUEST_TIMEOUT_MS,
+  clearSavedAuth,
+  fetchWithTimeout,
+  getAuthErrorMessage,
+  readSavedAuth,
+  saveAuth,
+} from "./utils/auth";
+import { normalizeBrandName } from "./utils/brands";
+import {
+  getCurrentTimestamp,
+  getDateInputValue,
+  getTodayInputDate,
+} from "./utils/dates";
 import "./App.css";
 
-let xlsxModulePromise = null;
-
-const loadXlsx = async () => {
-  if (!xlsxModulePromise) {
-    xlsxModulePromise = import("xlsx");
-  }
-
-  return await xlsxModulePromise;
-};
-
-
 const API_URL = import.meta.env.VITE_API_URL || "";
-const AUTH_REQUEST_TIMEOUT_MS = 30000;
-const AUXILIARY_REQUEST_TIMEOUT_MS = 10000;
-
-const fetchWithTimeout = async (url, options = {}, timeoutMs = AUTH_REQUEST_TIMEOUT_MS) => {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    return await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-  } catch (error) {
-    if (controller.signal.aborted) {
-      const timeoutError = new Error(
-        "Сервер долго не отвечает. Проверьте, что backend и база данных запущены."
-      );
-
-      timeoutError.code = "AUTH_REQUEST_TIMEOUT";
-      throw timeoutError;
-    }
-
-    throw error;
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-};
-
-const getAuthErrorMessage = (error) => {
-  if (error?.code === "AUTH_REQUEST_TIMEOUT") {
-    return error.message;
-  }
-
-  if (error instanceof TypeError) {
-    return "Не удалось подключиться к серверу. Проверьте backend и интернет-соединение.";
-  }
-
-  return error?.message || "Не удалось войти";
-};
-
-const AUTH_STORAGE_KEY = "hookahInventoryAuth";
-const AUTH_TTL_MS = 1000 * 60 * 60 * 24 * 7;
-
-const readSavedAuth = () => {
-  try {
-    const rawValue = localStorage.getItem(AUTH_STORAGE_KEY);
-
-    if (!rawValue) {
-      return null;
-    }
-
-    const savedAuth = JSON.parse(rawValue);
-
-    if (!savedAuth?.password || !savedAuth?.expiresAt) {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      return null;
-    }
-
-    if (Date.now() > savedAuth.expiresAt) {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      return null;
-    }
-
-    return savedAuth;
-  } catch {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    return null;
-  }
-};
-
-const saveAuth = (password, role) => {
-  localStorage.setItem(
-    AUTH_STORAGE_KEY,
-    JSON.stringify({
-      password,
-      role,
-      expiresAt: Date.now() + AUTH_TTL_MS,
-    })
-  );
-};
-
-const clearSavedAuth = () => {
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-};
-
-const getTodayInputDate = () => {
-  return new Date().toISOString().slice(0, 10);
-};
-
 const scrollToPageTop = () => {
   window.setTimeout(() => {
     window.scrollTo({
@@ -154,12 +80,12 @@ function App() {
   const [historyActionFilter, setHistoryActionFilter] = useState("all");
   const [historyPeriodFilter, setHistoryPeriodFilter] = useState("all");
   const [historySearchText, setHistorySearchText] = useState("");
-  const [aliases, setAliases] = useState([]);
-  const [aliasForm, setAliasForm] = useState({
-    type: "brand",
-    alias: "",
-    canonical: "",
-  });
+  const [historyViewMode, setHistoryViewMode] = useState("actions");
+  const [openSupplyHistoryDates, setOpenSupplyHistoryDates] = useState({});
+  const [supplyBrandFilter, setSupplyBrandFilter] = useState("all");
+  const [supplySupplierFilter, setSupplySupplierFilter] = useState("all");
+  const [supplyWeightFilter, setSupplyWeightFilter] = useState("all");
+  const [aliases] = useState([]);
 
   const isDemoMode = accessRole === "test";
 
@@ -167,6 +93,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
   const [notifications, setNotifications] = useState([]);
+  const notificationIdRef = useRef(0);
 
   const [isSupplyFormOpen, setIsSupplyFormOpen] = useState(false);
   const [supplyForm, setSupplyForm] = useState({
@@ -176,6 +103,7 @@ function App() {
     quantity: 1,
     supplyDate: getTodayInputDate(),
     supplier: "",
+    invoiceNumber: "",
     price: "",
     tags: "",
     minStock: 1,
@@ -190,13 +118,19 @@ function App() {
     packsText: "",
     tags: "",
     minStock: 1,
+    brandStrength: "unknown",
+    strengthOverride: "",
+    initialBrandStrength: "unknown",
+    initialStrengthOverride: "",
   });
 
   const showNotification = (message, type = "success") => {
+    notificationIdRef.current += 1;
+
     const id =
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random()}`;
+        : `notification-${notificationIdRef.current}`;
 
     setNotifications((currentNotifications) => [
       ...currentNotifications,
@@ -489,7 +423,7 @@ function App() {
 
   const refreshFlavors = async () => {
     try {
-      const response = await apiFetch(`/api/flavors?ts=${Date.now()}`);
+      const response = await apiFetch("/api/flavors");
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -859,6 +793,7 @@ function App() {
       quantity: Number(supplyForm.quantity),
       supplyDate: supplyForm.supplyDate || getTodayInputDate(),
       supplier: normalizeSupplierName(supplyForm.supplier),
+      invoiceNumber: String(supplyForm.invoiceNumber || "").trim(),
       price: supplyForm.price === "" ? null : Number(supplyForm.price),
       tags: supplyForm.tags
         .split(",")
@@ -890,6 +825,7 @@ function App() {
           quantity: payload.quantity,
           suppliedAt: payload.supplyDate,
           supplier: payload.supplier,
+          invoiceNumber: payload.invoiceNumber,
           price: payload.price,
         },
       });
@@ -902,8 +838,9 @@ function App() {
         name: "",
         weight: "",
         quantity: 1,
-        supplyDate: getTodayInputDate(),
-        supplier: "",
+        supplyDate: payload.supplyDate,
+        supplier: payload.supplier,
+        invoiceNumber: payload.invoiceNumber,
         price: "",
         tags: "",
         minStock: 1,
@@ -931,6 +868,10 @@ function App() {
         .join("\\n"),
       tags: (flavor.tags || []).join(", "),
       minStock: flavor.minStock || 1,
+      brandStrength: flavor.brandStrength || "unknown",
+      strengthOverride: flavor.strengthOverride || "",
+      initialBrandStrength: flavor.brandStrength || "unknown",
+      initialStrengthOverride: flavor.strengthOverride || "",
     });
   };
 
@@ -945,6 +886,10 @@ function App() {
       packsText: "",
       tags: "",
       minStock: 1,
+      brandStrength: "unknown",
+      strengthOverride: "",
+      initialBrandStrength: "unknown",
+      initialStrengthOverride: "",
     });
   };
 
@@ -1003,6 +948,8 @@ function App() {
         .map((tag) => tag.trim())
         .filter(Boolean),
       minStock: Number(editForm.minStock),
+      strengthOverride: editForm.strengthOverride || null,
+      brandStrength: editForm.brandStrength || "unknown",
     };
 
     try {
@@ -1016,6 +963,48 @@ function App() {
 
       if (!response.ok) {
         throw new Error("Не удалось сохранить изменения");
+      }
+
+      const brandStrengthChanged =
+        editForm.brandStrength !== editForm.initialBrandStrength;
+
+      const flavorStrengthChanged =
+        editForm.strengthOverride !== editForm.initialStrengthOverride;
+
+      const editedFlavor = flavors.find(
+        (flavor) => flavor.id === editingFlavorId
+      );
+
+      if (brandStrengthChanged) {
+        await addActionLog({
+          action: "brand_strength_changed",
+          flavor: editedFlavor || {
+            id: editingFlavorId,
+            brand: editForm.brand,
+            name: editForm.name,
+          },
+          details: {
+            previousStrength: editForm.initialBrandStrength,
+            newStrength: editForm.brandStrength,
+          },
+          refreshLogs: false,
+        });
+      }
+
+      if (flavorStrengthChanged) {
+        await addActionLog({
+          action: "flavor_strength_changed",
+          flavor: editedFlavor || {
+            id: editingFlavorId,
+            brand: editForm.brand,
+            name: editForm.name,
+          },
+          details: {
+            previousStrength: editForm.initialStrengthOverride || null,
+            newStrength: editForm.strengthOverride || null,
+          },
+          refreshLogs: false,
+        });
       }
 
       const shouldReturnToDataQuality = editReturnTarget === "dataQuality";
@@ -1045,6 +1034,7 @@ function App() {
       quantity: 1,
       supplyDate: getTodayInputDate(),
       supplier: "",
+      invoiceNumber: "",
       price: "",
       tags: (flavor.tags || []).join(", "),
       minStock: flavor.minStock || 1,
@@ -1316,10 +1306,14 @@ function App() {
         "Количество": Number(pack.quantity || 0),
         "Закуплено": Number(pack.purchasedQuantity ?? pack.purchased_quantity ?? pack.quantity ?? 0),
         "Теги": (flavor.tags || []).join(", "),
-        "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock) ? "да" : "нет",
-        "Не считать залежью": Boolean(
-          flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
-        )
+        "Крепость бренда": getStrengthLabel(
+          flavor.brandStrength || "unknown"
+        ),
+        "Крепость вкуса": flavor.strengthOverride
+          ? getStrengthLabel(flavor.strengthOverride)
+          : "По бренду",
+        "Мало осталось": flavor.lowStock || flavor.low_stock ? "да" : "нет",
+        "Не считать залежью": flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
           ? "да"
           : "нет",
         "Архив": flavor.archived ? "да" : "нет",
@@ -1779,17 +1773,19 @@ function App() {
             0
         ),
         "Теги": (flavor.tags || []).join(", "),
-        "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock)
+        "Крепость бренда": getStrengthLabel(
+          flavor.brandStrength || "unknown"
+        ),
+        "Крепость вкуса": flavor.strengthOverride
+          ? getStrengthLabel(flavor.strengthOverride)
+          : "По бренду",
+        "Мало осталось": flavor.lowStock || flavor.low_stock
           ? "да"
           : "нет",
-        "Не считать залежью": Boolean(
-          flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
-        )
+        "Не считать залежью": flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
           ? "да"
           : "нет",
-        "Закупка подтверждена": Boolean(
-          flavor.purchaseConfirmed || flavor.purchase_confirmed
-        )
+        "Закупка подтверждена": flavor.purchaseConfirmed || flavor.purchase_confirmed
           ? "да"
           : "нет",
         "Архив": flavor.archived ? "да" : "нет",
@@ -1823,16 +1819,6 @@ function App() {
     showNotification("Backup скачан", "info");
   };
 
-  const getExcelValue = (row, names) => {
-    for (const name of names) {
-      if (row[name] !== undefined && row[name] !== null && row[name] !== "") {
-        return row[name];
-      }
-    }
-
-    return "";
-  };
-
   const cleanImportedFlavorName = (value) => {
     return String(value || "")
       .replace(/кальянная\s+смесь/gi, "")
@@ -1845,59 +1831,6 @@ function App() {
       .replace(/\s+/g, " ")
       .replace(/^[-–—:,.;\s]+|[-–—:,.;\s]+$/g, "")
       .trim();
-  };
-
-  const parseExcelNumber = (value, fallback = 0) => {
-    const normalizedValue = String(value).replace(",", ".").trim();
-    const number = Number(normalizedValue);
-
-    return Number.isFinite(number) ? number : fallback;
-  };
-
-  const parseExcelBoolean = (value) => {
-    const normalizedValue = String(value).trim().toLowerCase();
-
-    return ["да", "true", "1", "yes", "архив"].includes(normalizedValue);
-  };
-
-  const parseExcelDate = (value) => {
-    if (value === undefined || value === null || value === "") {
-      return "";
-    }
-
-    if (value instanceof Date && !Number.isNaN(value.getTime())) {
-      return value.toISOString().slice(0, 10);
-    }
-
-    if (typeof value === "number" && Number.isFinite(value)) {
-      const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-      const date = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
-
-      return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
-    }
-
-    const cleanValue = String(value).trim();
-
-    if (!cleanValue) {
-      return "";
-    }
-
-    const date = new Date(cleanValue);
-
-    if (!Number.isNaN(date.getTime())) {
-      return date.toISOString().slice(0, 10);
-    }
-
-    const dateParts = cleanValue.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);
-
-    if (dateParts) {
-      const [, day, month, year] = dateParts;
-      const fullYear = year.length === 2 ? `20${year}` : year;
-
-      return `${fullYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-    }
-
-    return cleanValue;
   };
 
   const importFromExcel = async (event) => {
@@ -1924,9 +1857,9 @@ function App() {
 
       const rows = rawRows
         .map((row) => {
-          const brand = String(
+          const brand = normalizeBrandName(
             getExcelValue(row, ["Бренд", "brand", "Brand"])
-          ).trim();
+          );
 
           const rawName = String(
             getExcelValue(row, [
@@ -1960,6 +1893,23 @@ function App() {
           const tags = String(
             getExcelValue(row, ["Теги", "tags", "Tags"])
           ).trim();
+
+          const brandStrength = parseImportedStrength(
+            getExcelValue(row, [
+              "Крепость бренда",
+              "brandStrength",
+              "Brand strength",
+            ])
+          );
+
+          const strengthOverride = parseImportedStrength(
+            getExcelValue(row, [
+              "Крепость вкуса",
+              "strengthOverride",
+              "Flavor strength",
+            ]),
+            { allowByBrand: true }
+          );
 
           const supplyDate = parseExcelDate(
             getExcelValue(row, [
@@ -1999,6 +1949,8 @@ function App() {
             weight,
             quantity,
             tags,
+            brandStrength,
+            strengthOverride,
             supplyDate,
             supplier,
             price,
@@ -2421,7 +2373,7 @@ const titles = {
       return null;
     }
 
-    const diffMs = Date.now() - date.getTime();
+    const diffMs = getCurrentTimestamp() - date.getTime();
 
     return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
   };
@@ -3017,26 +2969,6 @@ const titles = {
 
     return total === 0 || isLowStock;
   });
-
-  const noTagFlavors = flavors
-    .filter((flavor) => {
-      const tags = Array.isArray(flavor.tags) ? flavor.tags : [];
-
-      return !flavor.archived && tags.length === 0;
-    })
-    .sort((a, b) => {
-      const brandCompare = String(a.brand || "").localeCompare(
-        String(b.brand || ""),
-        "ru"
-      );
-
-      if (brandCompare !== 0) {
-        return brandCompare;
-      }
-
-      return String(a.name || "").localeCompare(String(b.name || ""), "ru");
-    });
-
 
   const parseWeightGrams = (weight) => {
     const normalizedWeight = String(weight || "")
@@ -4085,28 +4017,6 @@ const titles = {
     }
   };
 
-  const actionLabels = {
-    pack_plus: "+1 фасовка",
-    pack_minus: "−1 фасовка",
-    clear: "Выбит вкус",
-    archive: "В архив",
-    restore: "Возврат из архива",
-    low_stock_on: "Мало осталось",
-    low_stock_off: "Снято “мало осталось”",
-    purchase_confirmed_on: "Закупка подтверждена",
-    purchase_confirmed_off: "Подтверждение закупки снято",
-    supply: "Поставка",
-    import_excel: "Импорт Excel",
-    import_inventory: "Старый импорт данных",
-    merge_duplicates: "Объединение дублей",
-    merge_tags: "Объединение тегов",
-    bulk_action: "Массовое действие",
-    alias_create: "Создан алиас",
-    alias_delete: "Удалён алиас",
-    deadstock_excluded_on: "Исключён из залежей",
-    deadstock_excluded_off: "Возвращён в залежи",
-  };
-
   const formatActionTime = (value) => {
     if (!value) {
       return "";
@@ -4182,6 +4092,10 @@ const titles = {
         parts.push(`поставщик: ${details.supplier}`);
       }
 
+      if (details.invoiceNumber) {
+        parts.push(`накладная: ${details.invoiceNumber}`);
+      }
+
       if (details.price !== null && details.price !== undefined && details.price !== "") {
         parts.push(`цена: ${Number(details.price).toLocaleString("ru-RU")} ₽`);
       }
@@ -4217,34 +4131,6 @@ return "";
   };
 
 
-  const getDateInputValue = (value) => {
-    if (!value) {
-      return getTodayInputDate();
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-      return String(value).slice(0, 10);
-    }
-
-    return date.toISOString().slice(0, 10);
-  };
-
-  const getSupplyEditDateInputValue = (value) => {
-    if (!value) {
-      return getTodayInputDate();
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-      return String(value).slice(0, 10);
-    }
-
-    return date.toISOString().slice(0, 10);
-  };
-
   const normalizeSupplyEditWeight = (value) => {
     const match = String(value || "").match(/\d+/);
     return match ? `${match[0]} г` : String(value || "").trim();
@@ -4255,7 +4141,7 @@ return "";
 
     setEditingSupplyLog(log);
     setEditingSupplyForm({
-      suppliedAt: getSupplyEditDateInputValue(
+      suppliedAt: getDateInputValue(
         details.suppliedAt || log.createdAt || log.created_at
       ),
       supplier: details.supplier || "",
@@ -5538,7 +5424,13 @@ if (currentView === "deadstock") {
                 {deadStockRows.map((row) => (
                   <article className="deadstock-card" key={row.id}>
                     <div>
-                      <p className="brand">{row.brand}</p>
+                      <div className="brand-with-strength">
+                          <p className="brand">{row.brand}</p>
+                          <StrengthIndicator
+                            strength={row.effectiveStrength || "unknown"}
+                            inherited={!row.strengthOverride}
+                          />
+                        </div>
                       <h3>{row.name}</h3>
 
                       <div className="analytics-flavor-tags">
@@ -5615,7 +5507,13 @@ if (currentView === "deadstock") {
                   return (
                     <article className="deadstock-card" key={row.id}>
                       <div>
-                        <p className="brand">{row.brand}</p>
+                        <div className="brand-with-strength">
+                          <p className="brand">{row.brand}</p>
+                          <StrengthIndicator
+                            strength={row.effectiveStrength || "unknown"}
+                            inherited={!row.strengthOverride}
+                          />
+                        </div>
                         <h3>{row.name}</h3>
 
                         <div className="analytics-flavor-tags">
@@ -6635,6 +6533,293 @@ if (currentView === "purchase") {
     return actionMatches && periodMatches && haystack.includes(search);
   });
 
+  const parseSupplyHistoryDate = (value) => {
+    const text = String(value || "").trim();
+
+    if (!text) {
+      return null;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      const [year, month, day] = text.split("-").map(Number);
+      const localDate = new Date(year, month - 1, day);
+
+      return Number.isNaN(localDate.getTime()) ? null : localDate;
+    }
+
+    const parsedDate = new Date(text);
+
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+  };
+
+  const getSupplyHistoryDate = (log) => {
+    const details = parseActionDetails(log?.details);
+
+    return parseSupplyHistoryDate(
+      details.suppliedAt ||
+        details.supplyDate ||
+        log?.createdAt ||
+        log?.created_at
+    );
+  };
+
+  const isSupplyLogInSelectedPeriod = (log) => {
+    if (historyPeriodFilter === "all") {
+      return true;
+    }
+
+    const date = getSupplyHistoryDate(log);
+
+    if (!date) {
+      return false;
+    }
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const supplyDay = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+
+    const differenceInDays =
+      (today.getTime() - supplyDay.getTime()) /
+      (1000 * 60 * 60 * 24);
+
+    if (historyPeriodFilter === "today") {
+      return differenceInDays === 0;
+    }
+
+    if (historyPeriodFilter === "7days") {
+      return differenceInDays >= 0 && differenceInDays <= 7;
+    }
+
+    if (historyPeriodFilter === "30days") {
+      return differenceInDays >= 0 && differenceInDays <= 30;
+    }
+
+    return true;
+  };
+
+  const activeSupplyHistoryLogs = actionLogs.filter(
+    (log) => log.action === "supply" && !isCancelledSupplyLog(log)
+  );
+
+  const supplyHistoryBrandOptions = Array.from(
+    activeSupplyHistoryLogs.reduce((groups, log) => {
+      const brand = String(log.brand || "").trim();
+      const brandKey = normalizeDuplicateKey(brand);
+
+      if (!brand || !brandKey) {
+        return groups;
+      }
+
+      if (!groups.has(brandKey)) {
+        groups.set(brandKey, new Map());
+      }
+
+      const variants = groups.get(brandKey);
+
+      variants.set(
+        brand,
+        (variants.get(brand) || 0) + 1
+      );
+
+      return groups;
+    }, new Map())
+  )
+    .map(([value, variants]) => {
+      const label = Array.from(variants.entries())
+        .sort(
+          (firstVariant, secondVariant) =>
+            secondVariant[1] - firstVariant[1] ||
+            firstVariant[0].localeCompare(
+              secondVariant[0],
+              "ru"
+            )
+        )[0][0];
+
+      return {
+        value,
+        label,
+      };
+    })
+    .sort((firstBrand, secondBrand) =>
+      firstBrand.label.localeCompare(
+        secondBrand.label,
+        "ru"
+      )
+    );
+
+  const supplyHistorySupplierOptions = Array.from(
+    new Set(
+      activeSupplyHistoryLogs
+        .map((log) => {
+          const details = parseActionDetails(log.details);
+          return String(details.supplier || "").trim();
+        })
+        .filter(Boolean)
+    )
+  ).sort((firstSupplier, secondSupplier) =>
+    firstSupplier.localeCompare(secondSupplier, "ru")
+  );
+
+  const supplyHistoryWeightOptions = Array.from(
+    new Set(
+      activeSupplyHistoryLogs
+        .map((log) => {
+          const details = parseActionDetails(log.details);
+          return String(details.weight || "").trim();
+        })
+        .filter(Boolean)
+    )
+  ).sort((firstWeight, secondWeight) =>
+    firstWeight.localeCompare(secondWeight, "ru", {
+      numeric: true,
+    })
+  );
+
+  const supplyHistorySearch = historySearchText.trim().toLowerCase();
+
+  const filteredSupplyHistoryLogs = activeSupplyHistoryLogs
+    .filter(isSupplyLogInSelectedPeriod)
+    .filter((log) => {
+      const details = parseActionDetails(log.details);
+
+      const brand = String(log.brand || "").trim();
+      const brandKey = normalizeDuplicateKey(brand);
+      const supplier = String(details.supplier || "").trim();
+      const weight = String(details.weight || "").trim();
+
+      const brandMatches =
+        supplyBrandFilter === "all" ||
+        brandKey === supplyBrandFilter;
+
+      const supplierMatches =
+        supplySupplierFilter === "all" ||
+        supplier === supplySupplierFilter;
+
+      const weightMatches =
+        supplyWeightFilter === "all" || weight === supplyWeightFilter;
+
+      return brandMatches && supplierMatches && weightMatches;
+    })
+    .filter((log) => {
+      if (!supplyHistorySearch) {
+        return true;
+      }
+
+      const details = parseActionDetails(log.details);
+
+      const haystack = [
+        log.brand,
+        log.name,
+        details.weight,
+        details.quantity,
+        details.supplier,
+        details.invoiceNumber,
+        details.price,
+        details.suppliedAt,
+        details.supplyDate,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(supplyHistorySearch);
+    });
+
+  const supplyHistoryGroups = Object.values(
+    filteredSupplyHistoryLogs.reduce((groups, log) => {
+      const date = getSupplyHistoryDate(log);
+      const details = parseActionDetails(log.details);
+      const supplyId = Number(log.supplyId || log.supply_id);
+      const supplier =
+        String(details.supplier || "").trim() || "Без поставщика";
+      const invoiceNumber = String(
+        details.invoiceNumber || details.invoice || ""
+      ).trim();
+
+      const legacyDateKey = date
+        ? [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, "0"),
+            String(date.getDate()).padStart(2, "0"),
+          ].join("-")
+        : "unknown";
+
+      const key =
+        Number.isInteger(supplyId) && supplyId > 0
+          ? `supply-${supplyId}`
+          : `legacy-${legacyDateKey}-${supplier}-${invoiceNumber}`;
+
+      if (!groups[key]) {
+        groups[key] = {
+          key,
+          supplyId:
+            Number.isInteger(supplyId) && supplyId > 0
+              ? supplyId
+              : null,
+          date,
+          supplier,
+          invoiceNumber,
+          logs: [],
+        };
+      }
+
+      groups[key].logs.push(log);
+
+      return groups;
+    }, {})
+  )
+    .map((group) => ({
+      ...group,
+      logs: [...group.logs].sort((firstLog, secondLog) => {
+        const brandComparison = String(firstLog.brand || "").localeCompare(
+          String(secondLog.brand || ""),
+          "ru"
+        );
+
+        if (brandComparison !== 0) {
+          return brandComparison;
+        }
+
+        return String(firstLog.name || "").localeCompare(
+          String(secondLog.name || ""),
+          "ru"
+        );
+      }),
+    }))
+    .sort((firstGroup, secondGroup) => {
+      if (!firstGroup.date) {
+        return 1;
+      }
+
+      if (!secondGroup.date) {
+        return -1;
+      }
+
+      return secondGroup.date.getTime() - firstGroup.date.getTime();
+    });
+
+  const supplyHistorySummary = {
+    dates: supplyHistoryGroups.length,
+    records: filteredSupplyHistoryLogs.length,
+    flavors: new Set(
+      filteredSupplyHistoryLogs.map(
+        (log) =>
+          `${String(log.brand || "").trim().toLowerCase()}::${String(
+            log.name || ""
+          )
+            .trim()
+            .toLowerCase()}`
+      )
+    ).size,
+    quantity: filteredSupplyHistoryLogs.reduce((sum, log) => {
+      const details = parseActionDetails(log.details);
+      return sum + Number(details.quantity || 0);
+    }, 0),
+  };
+
   if (currentView === "history") {
     return (
       <div className="app">
@@ -6647,7 +6832,9 @@ if (currentView === "purchase") {
           <section className="history-panel">
             <div className="history-panel-top">
               <h2>
-                Последние действия · показано {filteredHistoryLogs.length} из {actionLogs.length}
+                {historyViewMode === "actions"
+                  ? `Последние действия · показано ${filteredHistoryLogs.length} из ${actionLogs.length}`
+                  : `Поставки · показано ${filteredSupplyHistoryLogs.length} из ${activeSupplyHistoryLogs.length}`}
               </h2>
 
               <button className="secondary-button" onClick={loadActionLogs}>
@@ -6655,28 +6842,55 @@ if (currentView === "purchase") {
               </button>
             </div>
 
+            <div className="history-mode-switch">
+              <button
+                type="button"
+                className={historyViewMode === "actions" ? "active" : ""}
+                onClick={() => setHistoryViewMode("actions")}
+              >
+                Все действия
+              </button>
+
+              <button
+                type="button"
+                className={historyViewMode === "supplies" ? "active" : ""}
+                onClick={() => setHistoryViewMode("supplies")}
+              >
+                Поставки по датам
+                <span>{activeSupplyHistoryLogs.length}</span>
+              </button>
+            </div>
+
             <div className="history-filters">
               <input
                 className="search-input"
                 type="search"
-                placeholder="Поиск по истории: бренд, вкус, поставщик, детали"
+                placeholder={
+                  historyViewMode === "actions"
+                    ? "Поиск по истории: бренд, вкус, поставщик, детали"
+                    : "Поиск поставки: бренд, вкус, фасовка или поставщик"
+                }
                 value={historySearchText}
                 onChange={(event) => setHistorySearchText(event.target.value)}
               />
 
-              <select
-                value={historyActionFilter}
-                onChange={(event) => setHistoryActionFilter(event.target.value)}
-              >
-                <option value="all">Все действия</option>
-                <option value="supply">Поставки</option>
-                <option value="cancelled">Отменённые поставки</option>
-                <option value="backup">Backup создан</option>
-                <option value="restore">Backup восстановлен</option>
-                <option value="write_off">Списания / уменьшения</option>
-                <option value="changes">Изменения / объединения</option>
-                <option value="other">Остальное</option>
-              </select>
+              {historyViewMode === "actions" && (
+                <select
+                  value={historyActionFilter}
+                  onChange={(event) =>
+                    setHistoryActionFilter(event.target.value)
+                  }
+                >
+                  <option value="all">Все действия</option>
+                  <option value="supply">Поставки</option>
+                  <option value="cancelled">Отменённые поставки</option>
+                  <option value="backup">Backup создан</option>
+                  <option value="restore">Backup восстановлен</option>
+                  <option value="write_off">Списания / уменьшения</option>
+                  <option value="changes">Изменения / объединения</option>
+                  <option value="other">Остальное</option>
+                </select>
+              )}
 
               <select
                 value={historyPeriodFilter}
@@ -6688,7 +6902,10 @@ if (currentView === "purchase") {
                 <option value="30days">30 дней</option>
               </select>
 
-              {(historySearchText || historyActionFilter !== "all" || historyPeriodFilter !== "all") && (
+              {(historySearchText ||
+                historyPeriodFilter !== "all" ||
+                (historyViewMode === "actions" &&
+                  historyActionFilter !== "all")) && (
                 <button
                   className="secondary-button small"
                   type="button"
@@ -6696,6 +6913,9 @@ if (currentView === "purchase") {
                     setHistorySearchText("");
                     setHistoryActionFilter("all");
                     setHistoryPeriodFilter("all");
+                    setSupplyBrandFilter("all");
+                    setSupplySupplierFilter("all");
+                    setSupplyWeightFilter("all");
                   }}
                 >
                   Сбросить
@@ -6703,51 +6923,319 @@ if (currentView === "purchase") {
               )}
             </div>
 
-            {actionLogs.length === 0 && (
-              <p className="info-message">История пока пустая</p>
+            {historyViewMode === "actions" && (
+              <>
+                {actionLogs.length === 0 && (
+                  <p className="info-message">История пока пустая</p>
+                )}
+
+                {actionLogs.length > 0 &&
+                  filteredHistoryLogs.length === 0 && (
+                    <p className="info-message">
+                      По выбранным фильтрам ничего не найдено
+                    </p>
+                  )}
+
+                <div className="history-list">
+                  {filteredHistoryLogs.map((log) => (
+                    <article className="history-item" key={log.id}>
+                      <div>
+                        <span className="history-time">
+                          {formatActionTime(
+                            log.createdAt || log.created_at
+                          )}
+                        </span>
+
+                        <strong>
+                          {getHistoryActionTitle(log.action, log)}
+                        </strong>
+
+                        {(log.brand || log.name) && (
+                          <p>
+                            {log.brand}
+                            {log.brand && log.name ? " — " : ""}
+                            {log.name}
+                          </p>
+                        )}
+
+                        {formatActionDetails(log) && (
+                          <small>{formatActionDetails(log)}</small>
+                        )}
+
+                        {!isDemoMode &&
+                          log.action === "supply" &&
+                          !isCancelledSupplyLog(log) && (
+                            <button
+                              className="secondary-button small"
+                              type="button"
+                              onClick={() => editSupplyLog(log)}
+                            >
+                              Исправить
+                            </button>
+                          )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
             )}
 
-            {actionLogs.length > 0 && filteredHistoryLogs.length === 0 && (
-              <p className="info-message">По выбранным фильтрам ничего не найдено</p>
-            )}
+            {historyViewMode === "supplies" && (
+              <>
+                <section className="supply-inner-filters">
+                  <div className="supply-inner-filters-top">
+                    <div>
+                      <p className="eyebrow dark">Внутри поставок</p>
+                      <h3>Фильтры по содержимому</h3>
+                    </div>
 
-            <div className="history-list">
-              {filteredHistoryLogs.map((log) => (
-                <article className="history-item" key={log.id}>
-                  <div>
-                    <span className="history-time">
-                      {formatActionTime(log.createdAt || log.created_at)}
-                    </span>
-
-                    <strong>
-                      {getHistoryActionTitle(log.action, log)}
-                    </strong>
-
-                    {(log.brand || log.name) && (
-                      <p>
-                        {log.brand}
-                        {log.brand && log.name ? " — " : ""}
-                        {log.name}
-                      </p>
-                    )}
-
-                    {formatActionDetails(log) && (
-                      <small>{formatActionDetails(log)}</small>
-                    )}
-
-                    {!isDemoMode && log.action === "supply" && !isCancelledSupplyLog(log) && (
+                    {(supplyBrandFilter !== "all" ||
+                      supplySupplierFilter !== "all" ||
+                      supplyWeightFilter !== "all") && (
                       <button
-                        className="secondary-button small"
                         type="button"
-                        onClick={() => editSupplyLog(log)}
+                        className="secondary-button small"
+                        onClick={() => {
+                          setSupplyBrandFilter("all");
+                          setSupplySupplierFilter("all");
+                          setSupplyWeightFilter("all");
+                        }}
                       >
-                        Исправить
+                        Сбросить фильтры
                       </button>
                     )}
                   </div>
-                </article>
-              ))}
-            </div>
+
+                  <div className="supply-inner-filter-grid">
+                    <label>
+                      <span>Бренд</span>
+
+                      <select
+                        value={supplyBrandFilter}
+                        onChange={(event) =>
+                          setSupplyBrandFilter(event.target.value)
+                        }
+                      >
+                        <option value="all">Все бренды</option>
+
+                        {supplyHistoryBrandOptions.map((brandOption) => (
+                          <option
+                            value={brandOption.value}
+                            key={brandOption.value}
+                          >
+                            {brandOption.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      <span>Поставщик</span>
+
+                      <select
+                        value={supplySupplierFilter}
+                        onChange={(event) =>
+                          setSupplySupplierFilter(event.target.value)
+                        }
+                      >
+                        <option value="all">Все поставщики</option>
+
+                        {supplyHistorySupplierOptions.map((supplier) => (
+                          <option value={supplier} key={supplier}>
+                            {supplier}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      <span>Фасовка</span>
+
+                      <select
+                        value={supplyWeightFilter}
+                        onChange={(event) =>
+                          setSupplyWeightFilter(event.target.value)
+                        }
+                      >
+                        <option value="all">Все фасовки</option>
+
+                        {supplyHistoryWeightOptions.map((weight) => (
+                          <option value={weight} key={weight}>
+                            {weight}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                </section>
+
+                <div className="supply-history-summary">
+                  <article>
+                    <span>Поставок</span>
+                    <strong>{supplyHistorySummary.dates}</strong>
+                  </article>
+
+                  <article>
+                    <span>Записей</span>
+                    <strong>{supplyHistorySummary.records}</strong>
+                  </article>
+
+                  <article>
+                    <span>Уникальных вкусов</span>
+                    <strong>{supplyHistorySummary.flavors}</strong>
+                  </article>
+
+                  <article>
+                    <span>Закуплено пачек</span>
+                    <strong>{supplyHistorySummary.quantity}</strong>
+                  </article>
+                </div>
+
+                {activeSupplyHistoryLogs.length === 0 && (
+                  <p className="info-message">
+                    В истории пока нет активных поставок
+                  </p>
+                )}
+
+                {activeSupplyHistoryLogs.length > 0 &&
+                  filteredSupplyHistoryLogs.length === 0 && (
+                    <p className="info-message">
+                      По выбранным фильтрам поставки не найдены
+                    </p>
+                  )}
+
+                <div className="supply-history-groups">
+                  {supplyHistoryGroups.map((group, groupIndex) => {
+                    const groupQuantity = group.logs.reduce((sum, log) => {
+                      const details = parseActionDetails(log.details);
+                      return sum + Number(details.quantity || 0);
+                    }, 0);
+
+                    const isGroupOpen =
+                      openSupplyHistoryDates[group.key] ??
+                      (groupIndex === 0);
+
+                    return (
+                      <article
+                        className={
+                          isGroupOpen
+                            ? "supply-date-card open"
+                            : "supply-date-card collapsed"
+                        }
+                        key={group.key}
+                      >
+                        <button
+                          type="button"
+                          className="supply-date-header"
+                          aria-expanded={isGroupOpen}
+                          onClick={() =>
+                            setOpenSupplyHistoryDates((currentDates) => ({
+                              ...currentDates,
+                              [group.key]: !(
+                                currentDates[group.key] ??
+                                (groupIndex === 0)
+                              ),
+                            }))
+                          }
+                        >
+                          <div>
+                            <p className="eyebrow dark">Поставка</p>
+                            <h3>
+                              {group.date
+                                ? group.date.toLocaleDateString("ru-RU", {
+                                    day: "numeric",
+                                    month: "long",
+                                    year: "numeric",
+                                  })
+                                : "Без даты поставки"}
+                            </h3>
+
+                            <div className="supply-entity-identity">
+                              <strong>{group.supplier}</strong>
+
+                              {group.invoiceNumber && (
+                                <span>Накладная: {group.invoiceNumber}</span>
+                              )}
+
+                              {group.supplyId && (
+                                <span>ID поставки: {group.supplyId}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="supply-date-header-side">
+                            <div className="supply-date-stats">
+                              <span>{group.logs.length} поз.</span>
+                              <strong>{groupQuantity} пач.</strong>
+                            </div>
+
+                            <span
+                              className="supply-date-toggle"
+                              aria-hidden="true"
+                            >
+                              <ChevronDown size={21} />
+                            </span>
+                          </div>
+                        </button>
+
+                        {isGroupOpen && (
+                          <div className="supply-date-list">
+                          {group.logs.map((log) => {
+                            const details = parseActionDetails(log.details);
+                            const quantity = Number(details.quantity || 0);
+                            const price = Number(details.price || 0);
+
+                            return (
+                              <div className="supply-history-row" key={log.id}>
+                                <div className="supply-history-main">
+                                  <strong>
+                                    {log.brand}
+                                    {log.brand && log.name ? " — " : ""}
+                                    {log.name}
+                                  </strong>
+
+                                  <div className="supply-history-meta">
+                                    {details.weight && (
+                                      <span>Фасовка: {details.weight}</span>
+                                    )}
+
+                                    <span>Количество: {quantity} пач.</span>
+
+                                    {details.supplier && (
+                                      <span>
+                                        Поставщик: {details.supplier}
+                                      </span>
+                                    )}
+
+                                    {price > 0 && (
+                                      <span>
+                                        Цена:{" "}
+                                        {price.toLocaleString("ru-RU")} ₽
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {!isDemoMode && (
+                                  <button
+                                    className="secondary-button small"
+                                    type="button"
+                                    onClick={() => editSupplyLog(log)}
+                                  >
+                                    Исправить
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </section>
         </main>
       </div>
@@ -7029,7 +7517,13 @@ if (currentView === "purchase") {
                   {purchaseFinanceData.rows.slice(0, 12).map((row) => (
                     <article className="finance-history-row" key={row.id}>
                       <div>
-                        <strong>{row.brand} — {row.name}</strong>
+                        <span className="flavor-title-with-strength">
+                            <strong>{row.brand} — {row.name}</strong>
+                            <StrengthIndicator
+                              strength={row.effectiveStrength || "unknown"}
+                              inherited={!row.strengthOverride}
+                            />
+                          </span>
                         <span>
                           {row.supplier} · {row.weight} · {row.quantity} пач. ×{" "}
                           {row.price.toLocaleString("ru-RU")} ₽
@@ -7477,6 +7971,19 @@ if (currentView === "purchase") {
               </label>
 
               <label>
+                Номер накладной / поставки
+                <input
+                  name="invoiceNumber"
+                  value={supplyForm.invoiceNumber}
+                  onChange={handleSupplyChange}
+                  placeholder="Например, ТДК 20.07 или № 1548"
+                />
+                <span className="form-hint">
+                  Одинаковые дата, поставщик и номер объединяются в одну поставку
+                </span>
+              </label>
+
+              <label>
                 Цена за пачку
                 <input
                   type="number"
@@ -7553,6 +8060,49 @@ if (currentView === "purchase") {
                   onChange={handleEditChange}
                   required
                 />
+              </label>
+
+              <label>
+                Крепость бренда
+                <select
+                  name="brandStrength"
+                  value={editForm.brandStrength}
+                  onChange={handleEditChange}
+                >
+                  {STRENGTH_OPTIONS.map((option) => (
+                    <option value={option.value} key={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="form-hint">
+                  Используется всеми вкусами бренда без индивидуальной настройки
+                </span>
+              </label>
+
+              <label>
+                Крепость вкуса
+                <select
+                  name="strengthOverride"
+                  value={editForm.strengthOverride}
+                  onChange={handleEditChange}
+                >
+                  <option value="">
+                    По бренду — {getStrengthLabel(editForm.brandStrength)}
+                  </option>
+
+                  {STRENGTH_OPTIONS.filter(
+                    (option) => option.value !== "unknown"
+                  ).map((option) => (
+                    <option value={option.value} key={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <span className="form-hint">
+                  Индивидуальная настройка переопределяет крепость бренда
+                </span>
               </label>
 
               <label className="wide-field">
@@ -7787,7 +8337,17 @@ if (currentView === "purchase") {
                     }}
                   >
                     <div>
-                      <strong>{group.brand}</strong>
+                      <div className="brand-title-with-strength">
+                        <strong>{group.brand}</strong>
+
+                        <StrengthIndicator
+                          strength={
+                            group.items[0]?.brandStrength || "unknown"
+                          }
+                          inherited={false}
+                        />
+                      </div>
+
                       <span>
                         {group.items.length} вкусов · {group.totalPacks} пач. в наличии
                       </span>
@@ -7853,7 +8413,16 @@ if (currentView === "purchase") {
                                 }
                               >
                               <div className="flavor-row-main">
-                                <strong>{flavor.name}</strong>
+                                <div className="flavor-title-with-strength">
+                                  <strong>{flavor.name}</strong>
+
+                                  <StrengthIndicator
+                                    strength={
+                                      flavor.effectiveStrength || "unknown"
+                                    }
+                                    inherited={!flavor.strengthOverride}
+                                  />
+                                </div>
 
                                 <span>
                                   {totalQuantity} пач. ·{" "}
@@ -7962,7 +8531,7 @@ if (currentView === "purchase") {
                                           />
 
                                           <span>
-                                            {Boolean(flavor.lowStock || flavor.low_stock)
+                                            {flavor.lowStock || flavor.low_stock
                                               ? "Убрать мало"
                                               : "Мало осталось"}
                                           </span>
@@ -7971,10 +8540,8 @@ if (currentView === "purchase") {
 
                                     {!flavor.archived && (
                                       <button onClick={() => toggleDeadstockExcluded(flavor)}>
-                                        {Boolean(
-                                          flavor.excludedFromDeadstock ||
-                                            flavor.excluded_from_deadstock
-                                        ) ? (
+                                        {flavor.excludedFromDeadstock ||
+                                            flavor.excluded_from_deadstock ? (
                                           <Eye
                                             className="ui-icon"
                                             aria-hidden="true"
@@ -7987,10 +8554,8 @@ if (currentView === "purchase") {
                                         )}
 
                                         <span>
-                                          {Boolean(
-                                            flavor.excludedFromDeadstock ||
+                                          {flavor.excludedFromDeadstock ||
                                               flavor.excluded_from_deadstock
-                                          )
                                             ? "Вернуть в залежи"
                                             : "Не считать залежью"}
                                         </span>
