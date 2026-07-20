@@ -100,15 +100,88 @@ const defaultFlavors = [
   },
 ];
 
+const CANONICAL_BRAND_NAMES = Object.freeze({
+  chabacco: "Chabacco",
+  "chabacco mix": "Chabacco",
+  "chabacco medium": "Chabacco",
+  deus: "Deus",
+  "deus perfume": "Deus",
+  jent: "Jent",
+  "jent cigar": "Jent",
+  "trofimoff's": "Trofimoff's",
+  "trofimoff's terror": "Trofimoff's",
+  "trofimoff’s": "Trofimoff's",
+  "trofimoff’s terror": "Trofimoff's",
+});
+
+function normalizeBrandName(value) {
+  const trimmedValue = String(value || "").trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  return CANONICAL_BRAND_NAMES[trimmedValue.toLowerCase()] || trimmedValue;
+}
+
+const STRENGTH_VALUES = Object.freeze([
+  "unknown",
+  "light",
+  "medium",
+  "strong",
+  "extra_strong",
+]);
+
+function normalizeStrengthValue(value, { allowEmpty = false } = {}) {
+  const normalizedValue = String(value ?? "").trim().toLowerCase();
+
+  if (!normalizedValue && allowEmpty) {
+    return null;
+  }
+
+  return STRENGTH_VALUES.includes(normalizedValue)
+    ? normalizedValue
+    : "unknown";
+}
+
+async function ensureStrengthSchema(queryable = pool) {
+  await queryable.query(`
+    ALTER TABLE flavors
+    ADD COLUMN IF NOT EXISTS strength_override TEXT;
+  `);
+
+  await queryable.query(`
+    CREATE TABLE IF NOT EXISTS brand_settings (
+      brand TEXT PRIMARY KEY,
+      default_strength TEXT NOT NULL DEFAULT 'unknown',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  `);
+}
+
 function normalizeFlavor(row) {
+  const strengthOverride =
+    row.strength_override === undefined
+      ? row.strengthOverride ?? null
+      : row.strength_override;
+
+  const brandStrength =
+    row.brand_strength === undefined
+      ? row.brandStrength ?? "unknown"
+      : row.brand_strength;
+
   return {
     id: row.id,
     brand: row.brand,
     name: row.name,
     packs: Array.isArray(row.packs) ? row.packs : [],
     tags: Array.isArray(row.tags) ? row.tags : [],
-    minStock: row.min_stock,
+    minStock: row.min_stock ?? row.minStock,
     archived: row.archived,
+    strengthOverride,
+    brandStrength,
+    effectiveStrength: strengthOverride || brandStrength || "unknown",
   };
 }
 
@@ -126,6 +199,8 @@ async function initDb() {
       updated_at TIMESTAMP DEFAULT NOW()
     );
   `);
+
+  await ensureStrengthSchema();
 
   const countResult = await pool.query("SELECT COUNT(*) FROM flavors");
   const count = Number(countResult.rows[0].count);
@@ -200,6 +275,7 @@ app.post("/api/admin/restore-backup", async (req, res) => {
   const backup = req.body || {};
   const flavors = Array.isArray(backup.flavors) ? backup.flavors : null;
   const actionLogs = Array.isArray(backup.actionLogs) ? backup.actionLogs : [];
+  const restoredBrandStrengths = new Map();
 
   if (!flavors) {
     return res.status(400).json({
@@ -249,18 +325,30 @@ app.post("/api/admin/restore-backup", async (req, res) => {
       ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
     `);
 
+    await ensureStrengthSchema(client);
+
     await client.query("BEGIN");
 
     await client.query(
-      "TRUNCATE TABLE flavors, action_logs, supplies RESTART IDENTITY"
+      "TRUNCATE TABLE flavors, action_logs, supplies, brand_settings RESTART IDENTITY"
     );
 
     for (const flavor of flavors) {
       const id = Number(flavor.id);
-      const brand = String(flavor.brand || "").trim();
+      const brand = normalizeBrandName(flavor.brand);
       const name = String(flavor.name || "").trim();
       const packs = Array.isArray(flavor.packs) ? flavor.packs : [];
       const tags = Array.isArray(flavor.tags) ? flavor.tags : [];
+      const strengthOverride = normalizeStrengthValue(
+        flavor.strengthOverride ?? flavor.strength_override,
+        { allowEmpty: true }
+      );
+      const brandStrength = normalizeStrengthValue(
+        flavor.brandStrength ?? flavor.brand_strength
+      );
+
+      restoredBrandStrengths.set(brand, brandStrength);
+
       const rawMinStock = Number(flavor.minStock ?? flavor.min_stock ?? 1);
       const minStock = Number.isFinite(rawMinStock) ? rawMinStock : 1;
       const archived = Boolean(flavor.archived);
@@ -291,10 +379,11 @@ app.post("/api/admin/restore-backup", async (req, res) => {
             low_stock,
             purchase_confirmed,
             excluded_from_deadstock,
+            strength_override,
             created_at,
             updated_at
           )
-          VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12)
+          VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13)
         `,
         [
           id,
@@ -307,9 +396,24 @@ app.post("/api/admin/restore-backup", async (req, res) => {
           lowStock,
           purchaseConfirmed,
           excludedFromDeadstock,
+          strengthOverride,
           createdAt,
           updatedAt,
         ]
+      );
+    }
+
+    for (const [brand, defaultStrength] of restoredBrandStrengths.entries()) {
+      await client.query(
+        `
+          INSERT INTO brand_settings (brand, default_strength)
+          VALUES ($1, $2)
+          ON CONFLICT (brand)
+          DO UPDATE SET
+            default_strength = EXCLUDED.default_strength,
+            updated_at = NOW()
+        `,
+        [brand, defaultStrength]
       );
     }
 
@@ -322,9 +426,16 @@ app.post("/api/admin/restore-backup", async (req, res) => {
         Number.isInteger(flavorIdNumber) && flavorIdNumber > 0
           ? flavorIdNumber
           : null;
-      const brand = String(log.brand || log.flavorBrand || log.flavor_brand || "");
+      const brand = normalizeBrandName(
+        log.brand || log.flavorBrand || log.flavor_brand || ""
+      );
       const name = String(log.name || log.flavorName || log.flavor_name || "");
       const details = parseDetails(log.details);
+
+      if (action === "supply") {
+        details.supplier = normalizeSupplierName(details.supplier);
+      }
+
       const createdAt = log.createdAt || log.created_at || log.date || new Date().toISOString();
 
       if (!Number.isInteger(id) || id <= 0 || !action) {
@@ -430,6 +541,43 @@ function parseActionDetailsObject(details) {
 
   return details;
 }
+
+function normalizeSupplierName(value) {
+  const originalValue = String(value || "").trim();
+
+  if (!originalValue) {
+    return "Без поставщика";
+  }
+
+  const key = originalValue
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[«»"']/g, "")
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const keyWithoutLegalForm = key
+    .replace(/^ооо\s+/, "")
+    .replace(/^ип\s+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const compactKey = keyWithoutLegalForm.replace(/\s+/g, "");
+
+  if (
+    compactKey === "хукамаркет" ||
+    compactKey === "хукаmarket" ||
+    compactKey === "hookahmarket" ||
+    compactKey === "hookamarket"
+  ) {
+    return "Хукамаркет";
+  }
+
+  return originalValue;
+}
+
 
 function normalizeSupplyDateValue(value) {
   const cleanValue = String(value || "").trim();
@@ -573,8 +721,9 @@ async function resolveSupplyForDetails(details, preferredSupplyId = null) {
   const supplyDate = normalizeSupplyDateValue(
     normalizedDetails.suppliedAt || normalizedDetails.supplyDate
   );
-  const supplier =
-    String(normalizedDetails.supplier || "").trim() || "Без поставщика";
+  const supplier = normalizeSupplierName(
+    normalizedDetails.supplier
+  );
   const invoiceNumber = String(
     normalizedDetails.invoiceNumber || normalizedDetails.invoice || ""
   ).trim();
@@ -636,6 +785,10 @@ app.post("/api/action-logs", async (req, res) => {
     let resolvedSupplyId = null;
 
     if (action === "supply") {
+      normalizedDetails.supplier = normalizeSupplierName(
+        normalizedDetails.supplier
+      );
+
       const supply = await resolveSupplyForDetails(
         normalizedDetails,
         supplyId
@@ -669,7 +822,7 @@ app.post("/api/action-logs", async (req, res) => {
         action,
         flavorId || null,
         resolvedSupplyId,
-        brand || "",
+        normalizeBrandName(brand),
         name || "",
         JSON.stringify(normalizedDetails),
       ]
@@ -713,6 +866,10 @@ app.patch("/api/action-logs/:id", async (req, res) => {
     let resolvedSupplyId = currentLog.supply_id;
 
     if (currentLog.action === "supply") {
+      normalizedDetails.supplier = normalizeSupplierName(
+        normalizedDetails.supplier
+      );
+
       const supply = await resolveSupplyForDetails(normalizedDetails);
       resolvedSupplyId = supply.id;
     }
@@ -1170,22 +1327,33 @@ app.get("/api/flavors", async (req, res) => {
       ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
     `);
 
+    await ensureStrengthSchema();
+
     const result = await pool.query(`
       SELECT
-        id,
-        brand,
-        name,
-        packs,
-        tags,
-        min_stock AS "minStock",
-        archived,
-        low_stock AS "lowStock",
-        purchase_confirmed AS "purchaseConfirmed",
-        excluded_from_deadstock AS "excludedFromDeadstock",
-        created_at AS "createdAt",
-        updated_at AS "updatedAt"
-      FROM flavors
-      ORDER BY brand ASC, name ASC
+        f.id,
+        f.brand,
+        f.name,
+        f.packs,
+        f.tags,
+        f.min_stock AS "minStock",
+        f.archived,
+        f.low_stock AS "lowStock",
+        f.purchase_confirmed AS "purchaseConfirmed",
+        f.excluded_from_deadstock AS "excludedFromDeadstock",
+        f.strength_override AS "strengthOverride",
+        COALESCE(bs.default_strength, 'unknown') AS "brandStrength",
+        COALESCE(
+          f.strength_override,
+          bs.default_strength,
+          'unknown'
+        ) AS "effectiveStrength",
+        f.created_at AS "createdAt",
+        f.updated_at AS "updatedAt"
+      FROM flavors AS f
+      LEFT JOIN brand_settings AS bs
+        ON LOWER(bs.brand) = LOWER(f.brand)
+      ORDER BY f.brand ASC, f.name ASC
     `);
 
     res.json(result.rows);
@@ -1195,10 +1363,66 @@ app.get("/api/flavors", async (req, res) => {
   }
 });
 
+app.get("/api/brand-settings", async (req, res) => {
+  try {
+    await ensureStrengthSchema();
+
+    const result = await pool.query(`
+      SELECT
+        brand,
+        default_strength AS "defaultStrength",
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM brand_settings
+      ORDER BY brand ASC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Get brand settings error:", error);
+    res.status(500).json({ message: "Не удалось получить крепость брендов" });
+  }
+});
+
+app.put("/api/brand-settings/:brand", async (req, res) => {
+  try {
+    await ensureStrengthSchema();
+
+    const brand = normalizeBrandName(decodeURIComponent(req.params.brand || ""));
+    const defaultStrength = normalizeStrengthValue(req.body?.defaultStrength);
+
+    if (!brand) {
+      return res.status(400).json({ message: "Не указан бренд" });
+    }
+
+    const result = await pool.query(
+      `
+        INSERT INTO brand_settings (brand, default_strength)
+        VALUES ($1, $2)
+        ON CONFLICT (brand)
+        DO UPDATE SET
+          default_strength = EXCLUDED.default_strength,
+          updated_at = NOW()
+        RETURNING
+          brand,
+          default_strength AS "defaultStrength",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+      `,
+      [brand, defaultStrength]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Update brand strength error:", error);
+    res.status(500).json({ message: "Не удалось сохранить крепость бренда" });
+  }
+});
+
 app.post("/api/flavors/supply", async (req, res) => {
   const { brand, name, weight, quantity, tags = [], minStock = 0 } = req.body;
 
-  const cleanBrand = String(brand || "").trim();
+  const cleanBrand = normalizeBrandName(brand);
   const cleanName = String(name || "").trim();
   const cleanWeight = String(weight || "").trim();
   const cleanQuantity = Number(quantity || 0);
@@ -1328,6 +1552,8 @@ app.post("/api/flavors/supply", async (req, res) => {
 app.post("/api/flavors/import", async (req, res) => {
   const { rows } = req.body;
 
+  await ensureStrengthSchema();
+
   if (!Array.isArray(rows)) {
     return res.status(400).json({ message: "Неверный формат Excel-данных" });
   }
@@ -1335,7 +1561,7 @@ app.post("/api/flavors/import", async (req, res) => {
   const groupedFlavors = new Map();
 
   for (const row of rows) {
-    const brand = String(row.brand || "").trim();
+    const brand = normalizeBrandName(row.brand);
     const name = String(row.name || "").trim();
     const weight = String(row.weight || "").trim();
     const quantity = Number(row.quantity || 0);
@@ -1349,6 +1575,13 @@ app.post("/api/flavors/import", async (req, res) => {
         row.excludedFromDeadstock || row.excluded_from_deadstock
       );
     const lowStock = Boolean(row.lowStock);
+    const strengthOverride = normalizeStrengthValue(
+      row.strengthOverride ?? row.strength_override,
+      { allowEmpty: true }
+    );
+    const brandStrength = normalizeStrengthValue(
+      row.brandStrength ?? row.brand_strength
+    );
 
     if (
       !brand ||
@@ -1372,7 +1605,9 @@ app.post("/api/flavors/import", async (req, res) => {
         tags: new Set(),
         archived,
         lowStock,
-                excludedFromDeadstock,
+        excludedFromDeadstock,
+        strengthOverride,
+        brandStrength,
       });
     }
 
@@ -1413,6 +1648,14 @@ app.post("/api/flavors/import", async (req, res) => {
     if (excludedFromDeadstock) {
       flavor.excludedFromDeadstock = true;
     }
+
+    if (strengthOverride) {
+      flavor.strengthOverride = strengthOverride;
+    }
+
+    if (brandStrength !== "unknown") {
+      flavor.brandStrength = brandStrength;
+    }
   }
 
   const client = await pool.connect();
@@ -1433,6 +1676,22 @@ app.post("/api/flavors/import", async (req, res) => {
     let importedCount = 0;
 
     for (const flavor of groupedFlavors.values()) {
+      await client.query(
+        `
+          INSERT INTO brand_settings (brand, default_strength)
+          VALUES ($1, $2)
+          ON CONFLICT (brand)
+          DO UPDATE SET
+            default_strength = CASE
+              WHEN EXCLUDED.default_strength = 'unknown'
+                THEN brand_settings.default_strength
+              ELSE EXCLUDED.default_strength
+            END,
+            updated_at = NOW()
+        `,
+        [flavor.brand, flavor.brandStrength || "unknown"]
+      );
+
       const packs = Array.from(flavor.packsByWeight.entries()).map(
         ([weight, pack]) => ({
           weight,
@@ -1476,8 +1735,9 @@ app.post("/api/flavors/import", async (req, res) => {
                 archived = $3,
                 low_stock = $4,
                 excluded_from_deadstock = $5,
+                strength_override = $6,
                 updated_at = NOW()
-            WHERE id = $6
+            WHERE id = $7
           `,
           [
             JSON.stringify(packs),
@@ -1485,14 +1745,25 @@ app.post("/api/flavors/import", async (req, res) => {
             flavor.archived,
             flavor.lowStock,
             flavor.excludedFromDeadstock,
+            flavor.strengthOverride || null,
             existingFlavor.rows[0].id,
           ]
         );
       } else {
         await client.query(
           `
-            INSERT INTO flavors (brand, name, packs, tags, min_stock, archived, low_stock, excluded_from_deadstock)
-            VALUES ($1, $2, $3, $4, 0, $5, $6, $7)
+            INSERT INTO flavors (
+              brand,
+              name,
+              packs,
+              tags,
+              min_stock,
+              archived,
+              low_stock,
+              excluded_from_deadstock,
+              strength_override
+            )
+            VALUES ($1, $2, $3, $4, 0, $5, $6, $7, $8)
           `,
           [
             flavor.brand,
@@ -1502,6 +1773,7 @@ app.post("/api/flavors/import", async (req, res) => {
             flavor.archived,
             flavor.lowStock,
             flavor.excludedFromDeadstock,
+            flavor.strengthOverride || null,
           ]
         );
       }
@@ -1732,7 +2004,16 @@ app.patch("/api/flavors/:id/clear", async (req, res) => {
 app.put("/api/flavors/:id", async (req, res) => {
   try {
     const flavorId = Number(req.params.id);
-    const { brand, name, packs, tags, minStock } = req.body;
+    const {
+      brand,
+      name,
+      packs,
+      tags,
+      minStock,
+      strengthOverride,
+    } = req.body;
+
+    await ensureStrengthSchema();
 
     if (!brand || !name || !Array.isArray(packs) || packs.length === 0) {
       return res.status(400).json({
@@ -1792,17 +2073,19 @@ app.put("/api/flavors/:id", async (req, res) => {
             packs = $3::jsonb,
             tags = $4::jsonb,
             min_stock = $5,
+            strength_override = $6,
             archived = false,
             updated_at = NOW()
-        WHERE id = $6
+        WHERE id = $7
         RETURNING *
       `,
       [
-        String(brand).trim(),
+        normalizeBrandName(brand),
         String(name).trim(),
         JSON.stringify(normalizedPacks),
         JSON.stringify(normalizedTags),
         Number(minStock) || 1,
+        normalizeStrengthValue(strengthOverride, { allowEmpty: true }),
         flavorId,
       ]
     );

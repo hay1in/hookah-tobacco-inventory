@@ -139,6 +139,75 @@ const scrollToPageTop = () => {
   }, 0);
 };
 
+const CANONICAL_BRAND_NAMES = Object.freeze({
+  chabacco: "Chabacco",
+  "chabacco mix": "Chabacco",
+  "chabacco medium": "Chabacco",
+  deus: "Deus",
+  "deus perfume": "Deus",
+  jent: "Jent",
+  "jent cigar": "Jent",
+  "trofimoff's": "Trofimoff's",
+  "trofimoff's terror": "Trofimoff's",
+  "trofimoff’s": "Trofimoff's",
+  "trofimoff’s terror": "Trofimoff's",
+});
+
+const normalizeBrandName = (value) => {
+  const trimmedValue = String(value || "").trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  return CANONICAL_BRAND_NAMES[trimmedValue.toLowerCase()] || trimmedValue;
+};
+
+const STRENGTH_OPTIONS = Object.freeze([
+  { value: "unknown", label: "Не указана" },
+  { value: "light", label: "Лёгкая" },
+  { value: "medium", label: "Средняя" },
+  { value: "strong", label: "Крепкая" },
+  { value: "extra_strong", label: "Очень крепкая" },
+]);
+
+const getStrengthLabel = (value) => {
+  return (
+    STRENGTH_OPTIONS.find((option) => option.value === value)?.label ||
+    "Не указана"
+  );
+};
+
+const STRENGTH_LEVELS = Object.freeze({
+  unknown: 0,
+  light: 1,
+  medium: 2,
+  strong: 3,
+  extra_strong: 4,
+});
+
+function StrengthIndicator({
+  strength = "unknown",
+  inherited = false,
+  className = "",
+}) {
+  const level = STRENGTH_LEVELS[strength] || 0;
+  const segments = `${"▰".repeat(level)}${"▱".repeat(4 - level)}`;
+  const label = getStrengthLabel(strength);
+
+  return (
+    <span
+      className={`strength-indicator strength-${strength} ${
+        inherited ? "inherited" : "custom"
+      } ${className}`.trim()}
+      title={inherited ? `${label} — по бренду` : label}
+      aria-label={inherited ? `${label}, по бренду` : label}
+    >
+      {segments}
+    </span>
+  );
+}
+
 function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [currentView, setCurrentView] = useState("inventory");
@@ -196,6 +265,10 @@ function App() {
     packsText: "",
     tags: "",
     minStock: 1,
+    brandStrength: "unknown",
+    strengthOverride: "",
+    initialBrandStrength: "unknown",
+    initialStrengthOverride: "",
   });
 
   const showNotification = (message, type = "success") => {
@@ -940,6 +1013,10 @@ function App() {
         .join("\\n"),
       tags: (flavor.tags || []).join(", "),
       minStock: flavor.minStock || 1,
+      brandStrength: flavor.brandStrength || "unknown",
+      strengthOverride: flavor.strengthOverride || "",
+      initialBrandStrength: flavor.brandStrength || "unknown",
+      initialStrengthOverride: flavor.strengthOverride || "",
     });
   };
 
@@ -954,6 +1031,10 @@ function App() {
       packsText: "",
       tags: "",
       minStock: 1,
+      brandStrength: "unknown",
+      strengthOverride: "",
+      initialBrandStrength: "unknown",
+      initialStrengthOverride: "",
     });
   };
 
@@ -1012,6 +1093,7 @@ function App() {
         .map((tag) => tag.trim())
         .filter(Boolean),
       minStock: Number(editForm.minStock),
+      strengthOverride: editForm.strengthOverride || null,
     };
 
     try {
@@ -1025,6 +1107,67 @@ function App() {
 
       if (!response.ok) {
         throw new Error("Не удалось сохранить изменения");
+      }
+
+      const brandStrengthChanged =
+        editForm.brandStrength !== editForm.initialBrandStrength;
+
+      const flavorStrengthChanged =
+        editForm.strengthOverride !== editForm.initialStrengthOverride;
+
+      if (brandStrengthChanged) {
+        const brandResponse = await apiFetch(
+          `/api/brand-settings/${encodeURIComponent(editForm.brand)}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              defaultStrength: editForm.brandStrength,
+            }),
+          }
+        );
+
+        if (!brandResponse.ok) {
+          throw new Error("Вкус сохранён, но не удалось сохранить крепость бренда");
+        }
+      }
+
+      const editedFlavor = flavors.find(
+        (flavor) => flavor.id === editingFlavorId
+      );
+
+      if (brandStrengthChanged) {
+        await addActionLog({
+          action: "brand_strength_changed",
+          flavor: editedFlavor || {
+            id: editingFlavorId,
+            brand: editForm.brand,
+            name: editForm.name,
+          },
+          details: {
+            previousStrength: editForm.initialBrandStrength,
+            newStrength: editForm.brandStrength,
+          },
+          refreshLogs: false,
+        });
+      }
+
+      if (flavorStrengthChanged) {
+        await addActionLog({
+          action: "flavor_strength_changed",
+          flavor: editedFlavor || {
+            id: editingFlavorId,
+            brand: editForm.brand,
+            name: editForm.name,
+          },
+          details: {
+            previousStrength: editForm.initialStrengthOverride || null,
+            newStrength: editForm.strengthOverride || null,
+          },
+          refreshLogs: false,
+        });
       }
 
       const shouldReturnToDataQuality = editReturnTarget === "dataQuality";
@@ -1326,6 +1469,12 @@ function App() {
         "Количество": Number(pack.quantity || 0),
         "Закуплено": Number(pack.purchasedQuantity ?? pack.purchased_quantity ?? pack.quantity ?? 0),
         "Теги": (flavor.tags || []).join(", "),
+        "Крепость бренда": getStrengthLabel(
+          flavor.brandStrength || "unknown"
+        ),
+        "Крепость вкуса": flavor.strengthOverride
+          ? getStrengthLabel(flavor.strengthOverride)
+          : "По бренду",
         "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock) ? "да" : "нет",
         "Не считать залежью": Boolean(
           flavor.excludedFromDeadstock || flavor.excluded_from_deadstock
@@ -1789,6 +1938,12 @@ function App() {
             0
         ),
         "Теги": (flavor.tags || []).join(", "),
+        "Крепость бренда": getStrengthLabel(
+          flavor.brandStrength || "unknown"
+        ),
+        "Крепость вкуса": flavor.strengthOverride
+          ? getStrengthLabel(flavor.strengthOverride)
+          : "По бренду",
         "Мало осталось": Boolean(flavor.lowStock || flavor.low_stock)
           ? "да"
           : "нет",
@@ -1864,6 +2019,34 @@ function App() {
     return Number.isFinite(number) ? number : fallback;
   };
 
+  const parseImportedStrength = (value, { allowByBrand = false } = {}) => {
+    const normalizedValue = String(value || "").trim().toLowerCase();
+
+    if (
+      allowByBrand &&
+      ["", "по бренду", "наследовать", "by brand"].includes(normalizedValue)
+    ) {
+      return "";
+    }
+
+    const strengthAliases = {
+      unknown: "unknown",
+      "не указана": "unknown",
+      "не указано": "unknown",
+      light: "light",
+      "лёгкая": "light",
+      "легкая": "light",
+      medium: "medium",
+      "средняя": "medium",
+      strong: "strong",
+      "крепкая": "strong",
+      extra_strong: "extra_strong",
+      "очень крепкая": "extra_strong",
+    };
+
+    return strengthAliases[normalizedValue] || (allowByBrand ? "" : "unknown");
+  };
+
   const parseExcelBoolean = (value) => {
     const normalizedValue = String(value).trim().toLowerCase();
 
@@ -1934,9 +2117,9 @@ function App() {
 
       const rows = rawRows
         .map((row) => {
-          const brand = String(
+          const brand = normalizeBrandName(
             getExcelValue(row, ["Бренд", "brand", "Brand"])
-          ).trim();
+          );
 
           const rawName = String(
             getExcelValue(row, [
@@ -1970,6 +2153,23 @@ function App() {
           const tags = String(
             getExcelValue(row, ["Теги", "tags", "Tags"])
           ).trim();
+
+          const brandStrength = parseImportedStrength(
+            getExcelValue(row, [
+              "Крепость бренда",
+              "brandStrength",
+              "Brand strength",
+            ])
+          );
+
+          const strengthOverride = parseImportedStrength(
+            getExcelValue(row, [
+              "Крепость вкуса",
+              "strengthOverride",
+              "Flavor strength",
+            ]),
+            { allowByBrand: true }
+          );
 
           const supplyDate = parseExcelDate(
             getExcelValue(row, [
@@ -2009,6 +2209,8 @@ function App() {
             weight,
             quantity,
             tags,
+            brandStrength,
+            strengthOverride,
             supplyDate,
             supplier,
             price,
@@ -5552,7 +5754,13 @@ if (currentView === "deadstock") {
                 {deadStockRows.map((row) => (
                   <article className="deadstock-card" key={row.id}>
                     <div>
-                      <p className="brand">{row.brand}</p>
+                      <div className="brand-with-strength">
+                          <p className="brand">{row.brand}</p>
+                          <StrengthIndicator
+                            strength={row.effectiveStrength || "unknown"}
+                            inherited={!row.strengthOverride}
+                          />
+                        </div>
                       <h3>{row.name}</h3>
 
                       <div className="analytics-flavor-tags">
@@ -5629,7 +5837,13 @@ if (currentView === "deadstock") {
                   return (
                     <article className="deadstock-card" key={row.id}>
                       <div>
-                        <p className="brand">{row.brand}</p>
+                        <div className="brand-with-strength">
+                          <p className="brand">{row.brand}</p>
+                          <StrengthIndicator
+                            strength={row.effectiveStrength || "unknown"}
+                            inherited={!row.strengthOverride}
+                          />
+                        </div>
                         <h3>{row.name}</h3>
 
                         <div className="analytics-flavor-tags">
@@ -6722,14 +6936,50 @@ if (currentView === "purchase") {
   );
 
   const supplyHistoryBrandOptions = Array.from(
-    new Set(
-      activeSupplyHistoryLogs
-        .map((log) => String(log.brand || "").trim())
-        .filter(Boolean)
-    )
-  ).sort((firstBrand, secondBrand) =>
-    firstBrand.localeCompare(secondBrand, "ru")
-  );
+    activeSupplyHistoryLogs.reduce((groups, log) => {
+      const brand = String(log.brand || "").trim();
+      const brandKey = normalizeDuplicateKey(brand);
+
+      if (!brand || !brandKey) {
+        return groups;
+      }
+
+      if (!groups.has(brandKey)) {
+        groups.set(brandKey, new Map());
+      }
+
+      const variants = groups.get(brandKey);
+
+      variants.set(
+        brand,
+        (variants.get(brand) || 0) + 1
+      );
+
+      return groups;
+    }, new Map())
+  )
+    .map(([value, variants]) => {
+      const label = Array.from(variants.entries())
+        .sort(
+          (firstVariant, secondVariant) =>
+            secondVariant[1] - firstVariant[1] ||
+            firstVariant[0].localeCompare(
+              secondVariant[0],
+              "ru"
+            )
+        )[0][0];
+
+      return {
+        value,
+        label,
+      };
+    })
+    .sort((firstBrand, secondBrand) =>
+      firstBrand.label.localeCompare(
+        secondBrand.label,
+        "ru"
+      )
+    );
 
   const supplyHistorySupplierOptions = Array.from(
     new Set(
@@ -6767,11 +7017,13 @@ if (currentView === "purchase") {
       const details = parseActionDetails(log.details);
 
       const brand = String(log.brand || "").trim();
+      const brandKey = normalizeDuplicateKey(brand);
       const supplier = String(details.supplier || "").trim();
       const weight = String(details.weight || "").trim();
 
       const brandMatches =
-        supplyBrandFilter === "all" || brand === supplyBrandFilter;
+        supplyBrandFilter === "all" ||
+        brandKey === supplyBrandFilter;
 
       const supplierMatches =
         supplySupplierFilter === "all" ||
@@ -7096,9 +7348,12 @@ if (currentView === "purchase") {
                       >
                         <option value="all">Все бренды</option>
 
-                        {supplyHistoryBrandOptions.map((brand) => (
-                          <option value={brand} key={brand}>
-                            {brand}
+                        {supplyHistoryBrandOptions.map((brandOption) => (
+                          <option
+                            value={brandOption.value}
+                            key={brandOption.value}
+                          >
+                            {brandOption.label}
                           </option>
                         ))}
                       </select>
@@ -7592,7 +7847,13 @@ if (currentView === "purchase") {
                   {purchaseFinanceData.rows.slice(0, 12).map((row) => (
                     <article className="finance-history-row" key={row.id}>
                       <div>
-                        <strong>{row.brand} — {row.name}</strong>
+                        <span className="flavor-title-with-strength">
+                            <strong>{row.brand} — {row.name}</strong>
+                            <StrengthIndicator
+                              strength={row.effectiveStrength || "unknown"}
+                              inherited={!row.strengthOverride}
+                            />
+                          </span>
                         <span>
                           {row.supplier} · {row.weight} · {row.quantity} пач. ×{" "}
                           {row.price.toLocaleString("ru-RU")} ₽
@@ -8131,6 +8392,49 @@ if (currentView === "purchase") {
                 />
               </label>
 
+              <label>
+                Крепость бренда
+                <select
+                  name="brandStrength"
+                  value={editForm.brandStrength}
+                  onChange={handleEditChange}
+                >
+                  {STRENGTH_OPTIONS.map((option) => (
+                    <option value={option.value} key={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="form-hint">
+                  Используется всеми вкусами бренда без индивидуальной настройки
+                </span>
+              </label>
+
+              <label>
+                Крепость вкуса
+                <select
+                  name="strengthOverride"
+                  value={editForm.strengthOverride}
+                  onChange={handleEditChange}
+                >
+                  <option value="">
+                    По бренду — {getStrengthLabel(editForm.brandStrength)}
+                  </option>
+
+                  {STRENGTH_OPTIONS.filter(
+                    (option) => option.value !== "unknown"
+                  ).map((option) => (
+                    <option value={option.value} key={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <span className="form-hint">
+                  Индивидуальная настройка переопределяет крепость бренда
+                </span>
+              </label>
+
               <label className="wide-field">
                 Фасовки и количество
                 <textarea
@@ -8363,7 +8667,17 @@ if (currentView === "purchase") {
                     }}
                   >
                     <div>
-                      <strong>{group.brand}</strong>
+                      <div className="brand-title-with-strength">
+                        <strong>{group.brand}</strong>
+
+                        <StrengthIndicator
+                          strength={
+                            group.items[0]?.brandStrength || "unknown"
+                          }
+                          inherited={false}
+                        />
+                      </div>
+
                       <span>
                         {group.items.length} вкусов · {group.totalPacks} пач. в наличии
                       </span>
@@ -8429,7 +8743,16 @@ if (currentView === "purchase") {
                                 }
                               >
                               <div className="flavor-row-main">
-                                <strong>{flavor.name}</strong>
+                                <div className="flavor-title-with-strength">
+                                  <strong>{flavor.name}</strong>
+
+                                  <StrengthIndicator
+                                    strength={
+                                      flavor.effectiveStrength || "unknown"
+                                    }
+                                    inherited={!flavor.strengthOverride}
+                                  />
+                                </div>
 
                                 <span>
                                   {totalQuantity} пач. ·{" "}

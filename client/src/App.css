@@ -9350,3 +9350,288 @@ body .history-panel .supply-inner-filters-top .secondary-button:hover {
     width: fit-content;
   }
 }
+
+/* === MODAL STACK AND CONTRAST FIX 2026-07-20 === */
+
+/* Уведомления всегда находятся выше импорта и остальных окон */
+.notification-stack {
+  position: fixed !important;
+  z-index: 12000 !important;
+  pointer-events: none !important;
+}
+
+.notification-toast {
+  pointer-events: auto !important;
+}
+
+/* Backdrop окна исправления поставки */
+.choice-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10000 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 20px !important;
+  overflow-y: auto !important;
+  background: rgba(9, 6, 7, 0.72) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Карточка должна находиться поверх собственного backdrop */
+.choice-modal-backdrop > .choice-modal {
+  position: relative !important;
+  z-index: 10001 !important;
+  display: grid !important;
+  width: min(560px, 100%) !important;
+  max-height: calc(100vh - 40px) !important;
+  overflow-y: auto !important;
+  gap: 14px !important;
+  padding: 28px !important;
+  border-radius: 28px !important;
+  background:
+    linear-gradient(
+      145deg,
+      #fff7ed,
+      #efd8cc
+    ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.48) !important;
+  color: #2d191e !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  pointer-events: auto !important;
+  isolation: isolate !important;
+}
+
+.choice-modal-backdrop > .choice-modal h2,
+.choice-modal-backdrop > .choice-modal strong,
+.choice-modal-backdrop > .choice-modal label,
+.choice-modal-backdrop > .choice-modal span,
+.choice-modal-backdrop > .choice-modal p {
+  color: #2d191e !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.choice-modal-backdrop > .choice-modal input {
+  display: block !important;
+  width: 100% !important;
+  background: #fffaf5 !important;
+  color: #211b18 !important;
+  border: 1px solid rgba(94, 39, 49, 0.24) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.choice-modal-backdrop .choice-modal-close {
+  position: absolute !important;
+  z-index: 2 !important;
+  top: 14px !important;
+  right: 14px !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: #2d191e !important;
+  color: #fff7ed !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.choice-modal-backdrop .choice-modal-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.choice-modal-backdrop .choice-modal-actions button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 42px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  padding: 11px 16px !important;
+  background: #2d191e !important;
+  color: #fff7ed !important;
+  font-weight: 900 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  cursor: pointer !important;
+}
+
+.choice-modal-backdrop .choice-modal-actions button.danger {
+  background: #8f2a32 !important;
+}
+
+/* Исправление слишком светлого текста на светлых карточках */
+.data-quality-item strong,
+.data-quality-item span,
+.duplicates-panel .info-message,
+.duplicate-group strong,
+.duplicate-group span,
+.duplicate-group small {
+  color: #2d191e !important;
+}
+
+.data-quality-item .data-quality-item-action {
+  color: #fff7ed !important;
+}
+
+@media (max-width: 620px) {
+  .choice-modal-backdrop {
+    padding: 10px !important;
+    place-items: end center !important;
+  }
+
+  .choice-modal-backdrop > .choice-modal {
+    width: 100% !important;
+    max-height: calc(100vh - 20px) !important;
+    border-radius: 26px 26px 18px 18px !important;
+    padding: 24px 18px !important;
+  }
+
+  .choice-modal-backdrop .choice-modal-actions {
+    flex-direction: column !important;
+  }
+
+  .choice-modal-backdrop .choice-modal-actions button {
+    width: 100% !important;
+  }
+}
+
+/* === MODAL STACK AND CONTRAST FIX END === */
+
+/* Strength indicator */
+.strength-indicator {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: default;
+}
+
+.strength-indicator.strength-unknown {
+  opacity: 0.45;
+}
+
+.strength-indicator.strength-light {
+  opacity: 0.62;
+}
+
+.strength-indicator.strength-medium {
+  opacity: 0.76;
+}
+
+.strength-indicator.strength-strong {
+  opacity: 0.9;
+}
+
+.strength-indicator.strength-extra_strong {
+  opacity: 1;
+}
+
+.strength-indicator.inherited {
+  filter: saturate(0.72);
+}
+
+.strength-form-preview {
+  display: flex;
+  align-items: center;
+  min-height: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.strength-form-preview .strength-indicator {
+  font-size: 1rem;
+}
+
+.brand-with-strength,
+.flavor-title-with-strength {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.brand-with-strength .brand {
+  margin: 0;
+}
+
+/* Strength indicators in brand and flavor cards */
+.strength-indicator {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: default;
+}
+
+.strength-indicator.strength-unknown {
+  opacity: 0.32;
+}
+
+.strength-indicator.strength-light {
+  opacity: 0.58;
+}
+
+.strength-indicator.strength-medium {
+  opacity: 0.72;
+}
+
+.strength-indicator.strength-strong {
+  opacity: 0.88;
+}
+
+.strength-indicator.strength-extra_strong {
+  opacity: 1;
+}
+
+.strength-indicator.inherited {
+  filter: saturate(0.75);
+}
+
+.brand-title-with-strength,
+.flavor-title-with-strength {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: max-content;
+  max-width: 100%;
+}
+
+.brand-title-with-strength strong,
+.flavor-title-with-strength strong {
+  min-width: 0;
+}
+
+.brand-title-with-strength .strength-indicator {
+  font-size: 0.8rem;
+}
+
+.flavor-title-with-strength .strength-indicator {
+  font-size: 0.74rem;
+}
