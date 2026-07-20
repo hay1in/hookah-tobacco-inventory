@@ -60,9 +60,12 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes("localhost")
-    ? false
-    : { rejectUnauthorized: false },
+  ssl:
+    process.env.DATABASE_URL.includes("localhost") ||
+    process.env.DATABASE_URL.includes("127.0.0.1") ||
+    process.env.DATABASE_URL.includes("@db:")
+      ? false
+      : { rejectUnauthorized: false },
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
 });
@@ -145,6 +148,8 @@ async function initDb() {
       );
     }
   }
+
+  await ensureSuppliesSchema();
 }
 
 async function getAllFlavors() {
@@ -177,8 +182,10 @@ async function getFlavorById(id) {
 
 app.delete("/api/admin/clear-database", async (req, res) => {
   try {
-    await ensureActionLogsTable();
-    await pool.query("TRUNCATE TABLE flavors, action_logs RESTART IDENTITY");
+    await ensureSuppliesSchema();
+    await pool.query(
+      "TRUNCATE TABLE flavors, action_logs, supplies RESTART IDENTITY"
+    );
 
     res.json({
       message: "База данных очищена",
@@ -225,7 +232,7 @@ app.post("/api/admin/restore-backup", async (req, res) => {
   const client = await pool.connect();
 
   try {
-    await ensureActionLogsTable();
+    await ensureSuppliesSchema();
 
     await client.query(`
       ALTER TABLE flavors
@@ -244,7 +251,9 @@ app.post("/api/admin/restore-backup", async (req, res) => {
 
     await client.query("BEGIN");
 
-    await client.query("TRUNCATE TABLE flavors, action_logs RESTART IDENTITY");
+    await client.query(
+      "TRUNCATE TABLE flavors, action_logs, supplies RESTART IDENTITY"
+    );
 
     for (const flavor of flavors) {
       const id = Number(flavor.id);
@@ -364,6 +373,7 @@ app.post("/api/admin/restore-backup", async (req, res) => {
     `);
 
     await client.query("COMMIT");
+    await ensureSuppliesSchema();
 
     res.json({
       message: "Backup восстановлен",
@@ -405,22 +415,204 @@ async function ensureActionLogsTable() {
   `);
 }
 
+function parseActionDetailsObject(details) {
+  if (!details) {
+    return {};
+  }
+
+  if (typeof details === "string") {
+    try {
+      return JSON.parse(details);
+    } catch {
+      return {};
+    }
+  }
+
+  return details;
+}
+
+function normalizeSupplyDateValue(value) {
+  const cleanValue = String(value || "").trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanValue)) {
+    return cleanValue;
+  }
+
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function ensureSuppliesSchema() {
+  await ensureActionLogsTable();
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS supplies (
+      id SERIAL PRIMARY KEY,
+      supply_date DATE NOT NULL,
+      supplier TEXT NOT NULL DEFAULT '',
+      invoice_number TEXT NOT NULL DEFAULT '',
+      note TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'received',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      UNIQUE (supply_date, supplier, invoice_number)
+    );
+  `);
+
+  await pool.query(`
+    ALTER TABLE action_logs
+    ADD COLUMN IF NOT EXISTS supply_id INTEGER;
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'action_logs_supply_id_fkey'
+      ) THEN
+        ALTER TABLE action_logs
+        ADD CONSTRAINT action_logs_supply_id_fkey
+        FOREIGN KEY (supply_id)
+        REFERENCES supplies(id)
+        ON DELETE SET NULL;
+      END IF;
+    END
+    $$;
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS action_logs_supply_id_idx
+    ON action_logs(supply_id);
+  `);
+
+  await pool.query(`
+    INSERT INTO supplies (
+      supply_date,
+      supplier,
+      invoice_number
+    )
+    SELECT DISTINCT
+      CASE
+        WHEN COALESCE(
+          NULLIF(details->>'suppliedAt', ''),
+          NULLIF(details->>'supplyDate', ''),
+          ''
+        ) ~ '^\\d{4}-\\d{2}-\\d{2}$'
+          THEN COALESCE(
+            NULLIF(details->>'suppliedAt', ''),
+            NULLIF(details->>'supplyDate', '')
+          )::date
+        ELSE created_at::date
+      END,
+      COALESCE(
+        NULLIF(BTRIM(details->>'supplier'), ''),
+        'Без поставщика'
+      ),
+      COALESCE(
+        NULLIF(BTRIM(details->>'invoiceNumber'), ''),
+        ''
+      )
+    FROM action_logs
+    WHERE action = 'supply'
+    ON CONFLICT (supply_date, supplier, invoice_number)
+    DO UPDATE SET updated_at = NOW();
+  `);
+
+  await pool.query(`
+    UPDATE action_logs AS log
+    SET supply_id = supply.id
+    FROM supplies AS supply
+    WHERE log.action = 'supply'
+      AND log.supply_id IS NULL
+      AND supply.supply_date = CASE
+        WHEN COALESCE(
+          NULLIF(log.details->>'suppliedAt', ''),
+          NULLIF(log.details->>'supplyDate', ''),
+          ''
+        ) ~ '^\\d{4}-\\d{2}-\\d{2}$'
+          THEN COALESCE(
+            NULLIF(log.details->>'suppliedAt', ''),
+            NULLIF(log.details->>'supplyDate', '')
+          )::date
+        ELSE log.created_at::date
+      END
+      AND supply.supplier = COALESCE(
+        NULLIF(BTRIM(log.details->>'supplier'), ''),
+        'Без поставщика'
+      )
+      AND supply.invoice_number = COALESCE(
+        NULLIF(BTRIM(log.details->>'invoiceNumber'), ''),
+        ''
+      );
+  `);
+}
+
+async function resolveSupplyForDetails(details, preferredSupplyId = null) {
+  await ensureSuppliesSchema();
+
+  const preferredId = Number(preferredSupplyId);
+
+  if (Number.isInteger(preferredId) && preferredId > 0) {
+    const preferredResult = await pool.query(
+      `
+        SELECT *
+        FROM supplies
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [preferredId]
+    );
+
+    if (preferredResult.rows.length > 0) {
+      return preferredResult.rows[0];
+    }
+  }
+
+  const normalizedDetails = parseActionDetailsObject(details);
+  const supplyDate = normalizeSupplyDateValue(
+    normalizedDetails.suppliedAt || normalizedDetails.supplyDate
+  );
+  const supplier =
+    String(normalizedDetails.supplier || "").trim() || "Без поставщика";
+  const invoiceNumber = String(
+    normalizedDetails.invoiceNumber || normalizedDetails.invoice || ""
+  ).trim();
+
+  const result = await pool.query(
+    `
+      INSERT INTO supplies (
+        supply_date,
+        supplier,
+        invoice_number
+      )
+      VALUES ($1, $2, $3)
+      ON CONFLICT (supply_date, supplier, invoice_number)
+      DO UPDATE SET updated_at = NOW()
+      RETURNING *
+    `,
+    [supplyDate, supplier, invoiceNumber]
+  );
+
+  return result.rows[0];
+}
+
 app.get("/api/action-logs", async (req, res) => {
   try {
-    await ensureActionLogsTable();
+    await ensureSuppliesSchema();
 
     const result = await pool.query(`
       SELECT
         id,
         action,
         flavor_id AS "flavorId",
+        supply_id AS "supplyId",
         brand,
         name,
         details,
         created_at AS "createdAt"
       FROM action_logs
       ORDER BY created_at DESC
-      
     `);
 
     res.json(result.rows);
@@ -431,23 +623,43 @@ app.get("/api/action-logs", async (req, res) => {
 });
 
 app.post("/api/action-logs", async (req, res) => {
-  const { action, flavorId, brand, name, details } = req.body;
+  const { action, flavorId, supplyId, brand, name, details } = req.body;
 
   if (!action) {
     return res.status(400).json({ message: "Не указано действие" });
   }
 
   try {
-    await ensureActionLogsTable();
+    await ensureSuppliesSchema();
+
+    const normalizedDetails = parseActionDetailsObject(details);
+    let resolvedSupplyId = null;
+
+    if (action === "supply") {
+      const supply = await resolveSupplyForDetails(
+        normalizedDetails,
+        supplyId
+      );
+
+      resolvedSupplyId = supply.id;
+    }
 
     const result = await pool.query(
       `
-        INSERT INTO action_logs (action, flavor_id, brand, name, details)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO action_logs (
+          action,
+          flavor_id,
+          supply_id,
+          brand,
+          name,
+          details
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING
           id,
           action,
           flavor_id AS "flavorId",
+          supply_id AS "supplyId",
           brand,
           name,
           details,
@@ -456,9 +668,10 @@ app.post("/api/action-logs", async (req, res) => {
       [
         action,
         flavorId || null,
+        resolvedSupplyId,
         brand || "",
         name || "",
-        JSON.stringify(details || {}),
+        JSON.stringify(normalizedDetails),
       ]
     );
 
@@ -479,28 +692,50 @@ app.patch("/api/action-logs/:id", async (req, res) => {
   }
 
   try {
-    await ensureActionLogsTable();
+    await ensureSuppliesSchema();
+
+    const currentResult = await pool.query(
+      `
+        SELECT action, supply_id
+        FROM action_logs
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [logId]
+    );
+
+    if (currentResult.rows.length === 0) {
+      return res.status(404).json({ message: "Действие не найдено" });
+    }
+
+    const normalizedDetails = parseActionDetailsObject(details);
+    const currentLog = currentResult.rows[0];
+    let resolvedSupplyId = currentLog.supply_id;
+
+    if (currentLog.action === "supply") {
+      const supply = await resolveSupplyForDetails(normalizedDetails);
+      resolvedSupplyId = supply.id;
+    }
 
     const result = await pool.query(
       `
         UPDATE action_logs
-        SET details = $1
-        WHERE id = $2
+        SET
+          details = $1,
+          supply_id = $2
+        WHERE id = $3
         RETURNING
           id,
           action,
           flavor_id AS "flavorId",
+          supply_id AS "supplyId",
           brand,
           name,
           details,
           created_at AS "createdAt"
       `,
-      [JSON.stringify(details || {}), logId]
+      [JSON.stringify(normalizedDetails), resolvedSupplyId, logId]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Действие не найдено" });
-    }
 
     res.json(result.rows[0]);
   } catch (error) {

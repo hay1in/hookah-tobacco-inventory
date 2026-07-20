@@ -1,0 +1,64 @@
+name: hookah-tobacco-inventory-local
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hookah
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: hookah_tobacco_inventory
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U hookah -d hookah_tobacco_inventory
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  backend:
+    image: node:22-alpine
+    restart: unless-stopped
+    init: true
+    working_dir: /app
+    command: sh -lc "npm ci && npm run dev"
+    environment:
+      PORT: "3000"
+      DATABASE_URL: postgresql://hookah:${POSTGRES_PASSWORD}@db:5432/hookah_tobacco_inventory
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server:/app
+      - server_node_modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: node:22-alpine
+    restart: unless-stopped
+    init: true
+    working_dir: /app
+    command: sh -lc "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      VITE_PROXY_TARGET: http://backend:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - client_node_modules:/app/node_modules
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  server_node_modules:
+  client_node_modules:
