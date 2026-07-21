@@ -60,9 +60,12 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes("localhost")
-    ? false
-    : { rejectUnauthorized: false },
+  ssl:
+    process.env.DATABASE_URL.includes("localhost") ||
+    process.env.DATABASE_URL.includes("127.0.0.1") ||
+    process.env.DATABASE_URL.includes("@db:")
+      ? false
+      : { rejectUnauthorized: false },
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
 });
@@ -97,15 +100,93 @@ const defaultFlavors = [
   },
 ];
 
+const CANONICAL_BRAND_NAMES = Object.freeze({
+  chabacco: "Chabacco",
+  "chabacco mix": "Chabacco",
+  "chabacco medium": "Chabacco",
+  deus: "Deus",
+  "deus perfume": "Deus",
+  jent: "Jent",
+  "jent cigar": "Jent",
+  "trofimoff's": "Trofimoff's",
+  "trofimoff's terror": "Trofimoff's",
+  "trofimoff’s": "Trofimoff's",
+  "trofimoff’s terror": "Trofimoff's",
+});
+
+function normalizeBrandName(value) {
+  const trimmedValue = String(value || "").trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  return CANONICAL_BRAND_NAMES[trimmedValue.toLowerCase()] || trimmedValue;
+}
+
+const STRENGTH_VALUES = Object.freeze([
+  "unknown",
+  "light",
+  "medium",
+  "strong",
+  "extra_strong",
+]);
+
+function normalizeStrengthValue(value, { allowEmpty = false } = {}) {
+  const normalizedValue = String(value ?? "").trim().toLowerCase();
+
+  if (!normalizedValue && allowEmpty) {
+    return null;
+  }
+
+  return STRENGTH_VALUES.includes(normalizedValue)
+    ? normalizedValue
+    : "unknown";
+}
+
+async function ensureStrengthSchema(queryable = pool) {
+  await queryable.query(`
+    ALTER TABLE flavors
+    ADD COLUMN IF NOT EXISTS strength_override TEXT;
+  `);
+
+  await queryable.query(`
+    CREATE TABLE IF NOT EXISTS brand_settings (
+      brand TEXT PRIMARY KEY,
+      default_strength TEXT NOT NULL DEFAULT 'unknown',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await queryable.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS brand_settings_brand_lower_unique
+    ON brand_settings (LOWER(brand));
+  `);
+}
+
 function normalizeFlavor(row) {
+  const strengthOverride =
+    row.strength_override === undefined
+      ? row.strengthOverride ?? null
+      : row.strength_override;
+
+  const brandStrength =
+    row.brand_strength === undefined
+      ? row.brandStrength ?? "unknown"
+      : row.brand_strength;
+
   return {
     id: row.id,
     brand: row.brand,
     name: row.name,
     packs: Array.isArray(row.packs) ? row.packs : [],
     tags: Array.isArray(row.tags) ? row.tags : [],
-    minStock: row.min_stock,
+    minStock: row.min_stock ?? row.minStock,
     archived: row.archived,
+    strengthOverride,
+    brandStrength,
+    effectiveStrength: strengthOverride || brandStrength || "unknown",
   };
 }
 
@@ -123,6 +204,8 @@ async function initDb() {
       updated_at TIMESTAMP DEFAULT NOW()
     );
   `);
+
+  await ensureStrengthSchema();
 
   const countResult = await pool.query("SELECT COUNT(*) FROM flavors");
   const count = Number(countResult.rows[0].count);
@@ -145,6 +228,8 @@ async function initDb() {
       );
     }
   }
+
+  await ensureSuppliesSchema();
 }
 
 async function getAllFlavors() {
@@ -177,8 +262,12 @@ async function getFlavorById(id) {
 
 app.delete("/api/admin/clear-database", async (req, res) => {
   try {
-    await ensureActionLogsTable();
-    await pool.query("TRUNCATE TABLE flavors, action_logs RESTART IDENTITY");
+    await ensureSuppliesSchema();
+    await ensureStrengthSchema();
+
+    await pool.query(
+      "TRUNCATE TABLE flavors, action_logs, supplies, brand_settings RESTART IDENTITY"
+    );
 
     res.json({
       message: "База данных очищена",
@@ -193,6 +282,7 @@ app.post("/api/admin/restore-backup", async (req, res) => {
   const backup = req.body || {};
   const flavors = Array.isArray(backup.flavors) ? backup.flavors : null;
   const actionLogs = Array.isArray(backup.actionLogs) ? backup.actionLogs : [];
+  const restoredBrandStrengths = new Map();
 
   if (!flavors) {
     return res.status(400).json({
@@ -225,7 +315,7 @@ app.post("/api/admin/restore-backup", async (req, res) => {
   const client = await pool.connect();
 
   try {
-    await ensureActionLogsTable();
+    await ensureSuppliesSchema();
 
     await client.query(`
       ALTER TABLE flavors
@@ -242,16 +332,30 @@ app.post("/api/admin/restore-backup", async (req, res) => {
       ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
     `);
 
+    await ensureStrengthSchema(client);
+
     await client.query("BEGIN");
 
-    await client.query("TRUNCATE TABLE flavors, action_logs RESTART IDENTITY");
+    await client.query(
+      "TRUNCATE TABLE flavors, action_logs, supplies, brand_settings RESTART IDENTITY"
+    );
 
     for (const flavor of flavors) {
       const id = Number(flavor.id);
-      const brand = String(flavor.brand || "").trim();
+      const brand = normalizeBrandName(flavor.brand);
       const name = String(flavor.name || "").trim();
       const packs = Array.isArray(flavor.packs) ? flavor.packs : [];
       const tags = Array.isArray(flavor.tags) ? flavor.tags : [];
+      const strengthOverride = normalizeStrengthValue(
+        flavor.strengthOverride ?? flavor.strength_override,
+        { allowEmpty: true }
+      );
+      const brandStrength = normalizeStrengthValue(
+        flavor.brandStrength ?? flavor.brand_strength
+      );
+
+      restoredBrandStrengths.set(brand, brandStrength);
+
       const rawMinStock = Number(flavor.minStock ?? flavor.min_stock ?? 1);
       const minStock = Number.isFinite(rawMinStock) ? rawMinStock : 1;
       const archived = Boolean(flavor.archived);
@@ -282,10 +386,11 @@ app.post("/api/admin/restore-backup", async (req, res) => {
             low_stock,
             purchase_confirmed,
             excluded_from_deadstock,
+            strength_override,
             created_at,
             updated_at
           )
-          VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12)
+          VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13)
         `,
         [
           id,
@@ -298,9 +403,24 @@ app.post("/api/admin/restore-backup", async (req, res) => {
           lowStock,
           purchaseConfirmed,
           excludedFromDeadstock,
+          strengthOverride,
           createdAt,
           updatedAt,
         ]
+      );
+    }
+
+    for (const [brand, defaultStrength] of restoredBrandStrengths.entries()) {
+      await client.query(
+        `
+          INSERT INTO brand_settings (brand, default_strength)
+          VALUES ($1, $2)
+          ON CONFLICT (brand)
+          DO UPDATE SET
+            default_strength = EXCLUDED.default_strength,
+            updated_at = NOW()
+        `,
+        [brand, defaultStrength]
       );
     }
 
@@ -313,9 +433,16 @@ app.post("/api/admin/restore-backup", async (req, res) => {
         Number.isInteger(flavorIdNumber) && flavorIdNumber > 0
           ? flavorIdNumber
           : null;
-      const brand = String(log.brand || log.flavorBrand || log.flavor_brand || "");
+      const brand = normalizeBrandName(
+        log.brand || log.flavorBrand || log.flavor_brand || ""
+      );
       const name = String(log.name || log.flavorName || log.flavor_name || "");
       const details = parseDetails(log.details);
+
+      if (action === "supply") {
+        details.supplier = normalizeSupplierName(details.supplier);
+      }
+
       const createdAt = log.createdAt || log.created_at || log.date || new Date().toISOString();
 
       if (!Number.isInteger(id) || id <= 0 || !action) {
@@ -364,6 +491,7 @@ app.post("/api/admin/restore-backup", async (req, res) => {
     `);
 
     await client.query("COMMIT");
+    await ensureSuppliesSchema();
 
     res.json({
       message: "Backup восстановлен",
@@ -405,22 +533,242 @@ async function ensureActionLogsTable() {
   `);
 }
 
+function parseActionDetailsObject(details) {
+  if (!details) {
+    return {};
+  }
+
+  if (typeof details === "string") {
+    try {
+      return JSON.parse(details);
+    } catch {
+      return {};
+    }
+  }
+
+  return details;
+}
+
+function normalizeSupplierName(value) {
+  const originalValue = String(value || "").trim();
+
+  if (!originalValue) {
+    return "Без поставщика";
+  }
+
+  const key = originalValue
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[«»"']/g, "")
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const keyWithoutLegalForm = key
+    .replace(/^ооо\s+/, "")
+    .replace(/^ип\s+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const compactKey = keyWithoutLegalForm.replace(/\s+/g, "");
+
+  if (
+    compactKey === "хукамаркет" ||
+    compactKey === "хукаmarket" ||
+    compactKey === "hookahmarket" ||
+    compactKey === "hookamarket"
+  ) {
+    return "Хукамаркет";
+  }
+
+  return originalValue;
+}
+
+
+function normalizeSupplyDateValue(value) {
+  const cleanValue = String(value || "").trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanValue)) {
+    return cleanValue;
+  }
+
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function ensureSuppliesSchema() {
+  await ensureActionLogsTable();
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS supplies (
+      id SERIAL PRIMARY KEY,
+      supply_date DATE NOT NULL,
+      supplier TEXT NOT NULL DEFAULT '',
+      invoice_number TEXT NOT NULL DEFAULT '',
+      note TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'received',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      UNIQUE (supply_date, supplier, invoice_number)
+    );
+  `);
+
+  await pool.query(`
+    ALTER TABLE action_logs
+    ADD COLUMN IF NOT EXISTS supply_id INTEGER;
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'action_logs_supply_id_fkey'
+      ) THEN
+        ALTER TABLE action_logs
+        ADD CONSTRAINT action_logs_supply_id_fkey
+        FOREIGN KEY (supply_id)
+        REFERENCES supplies(id)
+        ON DELETE SET NULL;
+      END IF;
+    END
+    $$;
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS action_logs_supply_id_idx
+    ON action_logs(supply_id);
+  `);
+
+  await pool.query(`
+    INSERT INTO supplies (
+      supply_date,
+      supplier,
+      invoice_number
+    )
+    SELECT DISTINCT
+      CASE
+        WHEN COALESCE(
+          NULLIF(details->>'suppliedAt', ''),
+          NULLIF(details->>'supplyDate', ''),
+          ''
+        ) ~ '^\\d{4}-\\d{2}-\\d{2}$'
+          THEN COALESCE(
+            NULLIF(details->>'suppliedAt', ''),
+            NULLIF(details->>'supplyDate', '')
+          )::date
+        ELSE created_at::date
+      END,
+      COALESCE(
+        NULLIF(BTRIM(details->>'supplier'), ''),
+        'Без поставщика'
+      ),
+      COALESCE(
+        NULLIF(BTRIM(details->>'invoiceNumber'), ''),
+        ''
+      )
+    FROM action_logs
+    WHERE action = 'supply'
+    ON CONFLICT (supply_date, supplier, invoice_number)
+    DO UPDATE SET updated_at = NOW();
+  `);
+
+  await pool.query(`
+    UPDATE action_logs AS log
+    SET supply_id = supply.id
+    FROM supplies AS supply
+    WHERE log.action = 'supply'
+      AND log.supply_id IS NULL
+      AND supply.supply_date = CASE
+        WHEN COALESCE(
+          NULLIF(log.details->>'suppliedAt', ''),
+          NULLIF(log.details->>'supplyDate', ''),
+          ''
+        ) ~ '^\\d{4}-\\d{2}-\\d{2}$'
+          THEN COALESCE(
+            NULLIF(log.details->>'suppliedAt', ''),
+            NULLIF(log.details->>'supplyDate', '')
+          )::date
+        ELSE log.created_at::date
+      END
+      AND supply.supplier = COALESCE(
+        NULLIF(BTRIM(log.details->>'supplier'), ''),
+        'Без поставщика'
+      )
+      AND supply.invoice_number = COALESCE(
+        NULLIF(BTRIM(log.details->>'invoiceNumber'), ''),
+        ''
+      );
+  `);
+}
+
+async function resolveSupplyForDetails(details, preferredSupplyId = null) {
+  await ensureSuppliesSchema();
+
+  const preferredId = Number(preferredSupplyId);
+
+  if (Number.isInteger(preferredId) && preferredId > 0) {
+    const preferredResult = await pool.query(
+      `
+        SELECT *
+        FROM supplies
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [preferredId]
+    );
+
+    if (preferredResult.rows.length > 0) {
+      return preferredResult.rows[0];
+    }
+  }
+
+  const normalizedDetails = parseActionDetailsObject(details);
+  const supplyDate = normalizeSupplyDateValue(
+    normalizedDetails.suppliedAt || normalizedDetails.supplyDate
+  );
+  const supplier = normalizeSupplierName(
+    normalizedDetails.supplier
+  );
+  const invoiceNumber = String(
+    normalizedDetails.invoiceNumber || normalizedDetails.invoice || ""
+  ).trim();
+
+  const result = await pool.query(
+    `
+      INSERT INTO supplies (
+        supply_date,
+        supplier,
+        invoice_number
+      )
+      VALUES ($1, $2, $3)
+      ON CONFLICT (supply_date, supplier, invoice_number)
+      DO UPDATE SET updated_at = NOW()
+      RETURNING *
+    `,
+    [supplyDate, supplier, invoiceNumber]
+  );
+
+  return result.rows[0];
+}
+
 app.get("/api/action-logs", async (req, res) => {
   try {
-    await ensureActionLogsTable();
+    await ensureSuppliesSchema();
 
     const result = await pool.query(`
       SELECT
         id,
         action,
         flavor_id AS "flavorId",
+        supply_id AS "supplyId",
         brand,
         name,
         details,
         created_at AS "createdAt"
       FROM action_logs
       ORDER BY created_at DESC
-      
     `);
 
     res.json(result.rows);
@@ -431,23 +779,47 @@ app.get("/api/action-logs", async (req, res) => {
 });
 
 app.post("/api/action-logs", async (req, res) => {
-  const { action, flavorId, brand, name, details } = req.body;
+  const { action, flavorId, supplyId, brand, name, details } = req.body;
 
   if (!action) {
     return res.status(400).json({ message: "Не указано действие" });
   }
 
   try {
-    await ensureActionLogsTable();
+    await ensureSuppliesSchema();
+
+    const normalizedDetails = parseActionDetailsObject(details);
+    let resolvedSupplyId = null;
+
+    if (action === "supply") {
+      normalizedDetails.supplier = normalizeSupplierName(
+        normalizedDetails.supplier
+      );
+
+      const supply = await resolveSupplyForDetails(
+        normalizedDetails,
+        supplyId
+      );
+
+      resolvedSupplyId = supply.id;
+    }
 
     const result = await pool.query(
       `
-        INSERT INTO action_logs (action, flavor_id, brand, name, details)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO action_logs (
+          action,
+          flavor_id,
+          supply_id,
+          brand,
+          name,
+          details
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING
           id,
           action,
           flavor_id AS "flavorId",
+          supply_id AS "supplyId",
           brand,
           name,
           details,
@@ -456,9 +828,10 @@ app.post("/api/action-logs", async (req, res) => {
       [
         action,
         flavorId || null,
-        brand || "",
+        resolvedSupplyId,
+        normalizeBrandName(brand),
         name || "",
-        JSON.stringify(details || {}),
+        JSON.stringify(normalizedDetails),
       ]
     );
 
@@ -479,28 +852,54 @@ app.patch("/api/action-logs/:id", async (req, res) => {
   }
 
   try {
-    await ensureActionLogsTable();
+    await ensureSuppliesSchema();
+
+    const currentResult = await pool.query(
+      `
+        SELECT action, supply_id
+        FROM action_logs
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [logId]
+    );
+
+    if (currentResult.rows.length === 0) {
+      return res.status(404).json({ message: "Действие не найдено" });
+    }
+
+    const normalizedDetails = parseActionDetailsObject(details);
+    const currentLog = currentResult.rows[0];
+    let resolvedSupplyId = currentLog.supply_id;
+
+    if (currentLog.action === "supply") {
+      normalizedDetails.supplier = normalizeSupplierName(
+        normalizedDetails.supplier
+      );
+
+      const supply = await resolveSupplyForDetails(normalizedDetails);
+      resolvedSupplyId = supply.id;
+    }
 
     const result = await pool.query(
       `
         UPDATE action_logs
-        SET details = $1
-        WHERE id = $2
+        SET
+          details = $1,
+          supply_id = $2
+        WHERE id = $3
         RETURNING
           id,
           action,
           flavor_id AS "flavorId",
+          supply_id AS "supplyId",
           brand,
           name,
           details,
           created_at AS "createdAt"
       `,
-      [JSON.stringify(details || {}), logId]
+      [JSON.stringify(normalizedDetails), resolvedSupplyId, logId]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Действие не найдено" });
-    }
 
     res.json(result.rows[0]);
   } catch (error) {
@@ -935,22 +1334,33 @@ app.get("/api/flavors", async (req, res) => {
       ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
     `);
 
+    await ensureStrengthSchema();
+
     const result = await pool.query(`
       SELECT
-        id,
-        brand,
-        name,
-        packs,
-        tags,
-        min_stock AS "minStock",
-        archived,
-        low_stock AS "lowStock",
-        purchase_confirmed AS "purchaseConfirmed",
-        excluded_from_deadstock AS "excludedFromDeadstock",
-        created_at AS "createdAt",
-        updated_at AS "updatedAt"
-      FROM flavors
-      ORDER BY brand ASC, name ASC
+        f.id,
+        f.brand,
+        f.name,
+        f.packs,
+        f.tags,
+        f.min_stock AS "minStock",
+        f.archived,
+        f.low_stock AS "lowStock",
+        f.purchase_confirmed AS "purchaseConfirmed",
+        f.excluded_from_deadstock AS "excludedFromDeadstock",
+        f.strength_override AS "strengthOverride",
+        COALESCE(bs.default_strength, 'unknown') AS "brandStrength",
+        COALESCE(
+          f.strength_override,
+          bs.default_strength,
+          'unknown'
+        ) AS "effectiveStrength",
+        f.created_at AS "createdAt",
+        f.updated_at AS "updatedAt"
+      FROM flavors AS f
+      LEFT JOIN brand_settings AS bs
+        ON LOWER(bs.brand) = LOWER(f.brand)
+      ORDER BY f.brand ASC, f.name ASC
     `);
 
     res.json(result.rows);
@@ -960,10 +1370,66 @@ app.get("/api/flavors", async (req, res) => {
   }
 });
 
+app.get("/api/brand-settings", async (req, res) => {
+  try {
+    await ensureStrengthSchema();
+
+    const result = await pool.query(`
+      SELECT
+        brand,
+        default_strength AS "defaultStrength",
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM brand_settings
+      ORDER BY brand ASC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Get brand settings error:", error);
+    res.status(500).json({ message: "Не удалось получить крепость брендов" });
+  }
+});
+
+app.put("/api/brand-settings/:brand", async (req, res) => {
+  try {
+    await ensureStrengthSchema();
+
+    const brand = normalizeBrandName(decodeURIComponent(req.params.brand || ""));
+    const defaultStrength = normalizeStrengthValue(req.body?.defaultStrength);
+
+    if (!brand) {
+      return res.status(400).json({ message: "Не указан бренд" });
+    }
+
+    const result = await pool.query(
+      `
+        INSERT INTO brand_settings (brand, default_strength)
+        VALUES ($1, $2)
+        ON CONFLICT (brand)
+        DO UPDATE SET
+          default_strength = EXCLUDED.default_strength,
+          updated_at = NOW()
+        RETURNING
+          brand,
+          default_strength AS "defaultStrength",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+      `,
+      [brand, defaultStrength]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Update brand strength error:", error);
+    res.status(500).json({ message: "Не удалось сохранить крепость бренда" });
+  }
+});
+
 app.post("/api/flavors/supply", async (req, res) => {
   const { brand, name, weight, quantity, tags = [], minStock = 0 } = req.body;
 
-  const cleanBrand = String(brand || "").trim();
+  const cleanBrand = normalizeBrandName(brand);
   const cleanName = String(name || "").trim();
   const cleanWeight = String(weight || "").trim();
   const cleanQuantity = Number(quantity || 0);
@@ -1093,6 +1559,8 @@ app.post("/api/flavors/supply", async (req, res) => {
 app.post("/api/flavors/import", async (req, res) => {
   const { rows } = req.body;
 
+  await ensureStrengthSchema();
+
   if (!Array.isArray(rows)) {
     return res.status(400).json({ message: "Неверный формат Excel-данных" });
   }
@@ -1100,7 +1568,7 @@ app.post("/api/flavors/import", async (req, res) => {
   const groupedFlavors = new Map();
 
   for (const row of rows) {
-    const brand = String(row.brand || "").trim();
+    const brand = normalizeBrandName(row.brand);
     const name = String(row.name || "").trim();
     const weight = String(row.weight || "").trim();
     const quantity = Number(row.quantity || 0);
@@ -1114,6 +1582,20 @@ app.post("/api/flavors/import", async (req, res) => {
         row.excludedFromDeadstock || row.excluded_from_deadstock
       );
     const lowStock = Boolean(row.lowStock);
+    const hasStrengthOverride =
+      row.strengthOverride !== undefined ||
+      row.strength_override !== undefined;
+
+    const strengthOverride = hasStrengthOverride
+      ? normalizeStrengthValue(
+          row.strengthOverride ?? row.strength_override,
+          { allowEmpty: true }
+        )
+      : null;
+
+    const brandStrength = normalizeStrengthValue(
+      row.brandStrength ?? row.brand_strength
+    );
 
     if (
       !brand ||
@@ -1137,7 +1619,10 @@ app.post("/api/flavors/import", async (req, res) => {
         tags: new Set(),
         archived,
         lowStock,
-                excludedFromDeadstock,
+        excludedFromDeadstock,
+        hasStrengthOverride,
+        strengthOverride,
+        brandStrength,
       });
     }
 
@@ -1178,6 +1663,15 @@ app.post("/api/flavors/import", async (req, res) => {
     if (excludedFromDeadstock) {
       flavor.excludedFromDeadstock = true;
     }
+
+    if (hasStrengthOverride) {
+      flavor.hasStrengthOverride = true;
+      flavor.strengthOverride = strengthOverride;
+    }
+
+    if (brandStrength !== "unknown") {
+      flavor.brandStrength = brandStrength;
+    }
   }
 
   const client = await pool.connect();
@@ -1198,6 +1692,22 @@ app.post("/api/flavors/import", async (req, res) => {
     let importedCount = 0;
 
     for (const flavor of groupedFlavors.values()) {
+      await client.query(
+        `
+          INSERT INTO brand_settings (brand, default_strength)
+          VALUES ($1, $2)
+          ON CONFLICT (brand)
+          DO UPDATE SET
+            default_strength = CASE
+              WHEN EXCLUDED.default_strength = 'unknown'
+                THEN brand_settings.default_strength
+              ELSE EXCLUDED.default_strength
+            END,
+            updated_at = NOW()
+        `,
+        [flavor.brand, flavor.brandStrength || "unknown"]
+      );
+
       const packs = Array.from(flavor.packsByWeight.entries()).map(
         ([weight, pack]) => ({
           weight,
@@ -1241,8 +1751,13 @@ app.post("/api/flavors/import", async (req, res) => {
                 archived = $3,
                 low_stock = $4,
                 excluded_from_deadstock = $5,
+                strength_override = CASE
+                  WHEN $6::boolean
+                    THEN $7
+                  ELSE strength_override
+                END,
                 updated_at = NOW()
-            WHERE id = $6
+            WHERE id = $8
           `,
           [
             JSON.stringify(packs),
@@ -1250,14 +1765,26 @@ app.post("/api/flavors/import", async (req, res) => {
             flavor.archived,
             flavor.lowStock,
             flavor.excludedFromDeadstock,
+            Boolean(flavor.hasStrengthOverride),
+            flavor.strengthOverride || null,
             existingFlavor.rows[0].id,
           ]
         );
       } else {
         await client.query(
           `
-            INSERT INTO flavors (brand, name, packs, tags, min_stock, archived, low_stock, excluded_from_deadstock)
-            VALUES ($1, $2, $3, $4, 0, $5, $6, $7)
+            INSERT INTO flavors (
+              brand,
+              name,
+              packs,
+              tags,
+              min_stock,
+              archived,
+              low_stock,
+              excluded_from_deadstock,
+              strength_override
+            )
+            VALUES ($1, $2, $3, $4, 0, $5, $6, $7, $8)
           `,
           [
             flavor.brand,
@@ -1267,6 +1794,7 @@ app.post("/api/flavors/import", async (req, res) => {
             flavor.archived,
             flavor.lowStock,
             flavor.excludedFromDeadstock,
+            flavor.strengthOverride || null,
           ]
         );
       }
@@ -1495,22 +2023,63 @@ app.patch("/api/flavors/:id/clear", async (req, res) => {
 });
 
 app.put("/api/flavors/:id", async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const flavorId = Number(req.params.id);
-    const { brand, name, packs, tags, minStock } = req.body;
+    const {
+      brand,
+      name,
+      packs,
+      tags,
+      minStock,
+      strengthOverride,
+      brandStrength,
+    } = req.body;
 
-    if (!brand || !name || !Array.isArray(packs) || packs.length === 0) {
+    await ensureStrengthSchema(client);
+
+    if (
+      !Number.isInteger(flavorId) ||
+      flavorId <= 0 ||
+      !brand ||
+      !name ||
+      !Array.isArray(packs) ||
+      packs.length === 0
+    ) {
       return res.status(400).json({
         message: "Бренд, вкус и хотя бы одна фасовка обязательны",
       });
     }
 
-    const currentFlavorResult = await pool.query(
-      "SELECT packs FROM flavors WHERE id = $1",
+    await client.query("BEGIN");
+
+    const currentFlavorResult = await client.query(
+      `
+        SELECT brand, packs
+        FROM flavors
+        WHERE id = $1
+        FOR UPDATE
+      `,
       [flavorId]
     );
 
-    const currentPacks = Array.isArray(currentFlavorResult.rows[0]?.packs)
+    if (currentFlavorResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        message: "Вкус не найден",
+      });
+    }
+
+    const previousBrand = String(
+      currentFlavorResult.rows[0].brand || ""
+    ).trim();
+
+    const normalizedBrand = normalizeBrandName(brand);
+    const normalizedName = String(name).trim();
+
+    const currentPacks = Array.isArray(currentFlavorResult.rows[0].packs)
       ? currentFlavorResult.rows[0].packs
       : [];
 
@@ -1518,9 +2087,12 @@ app.put("/api/flavors/:id", async (req, res) => {
       .map((pack) => {
         const weight = String(pack.weight || "").trim();
         const quantity = Number(pack.quantity);
+
         const existingPack = currentPacks.find((item) => {
-          return String(item.weight || "").trim().toLowerCase() ===
-            weight.toLowerCase();
+          return (
+            String(item.weight || "").trim().toLowerCase() ===
+            weight.toLowerCase()
+          );
         });
 
         const purchasedQuantity = Number(
@@ -1537,19 +2109,64 @@ app.put("/api/flavors/:id", async (req, res) => {
           purchasedQuantity: Math.max(purchasedQuantity, quantity),
         };
       })
-      .filter((pack) => pack.weight && pack.quantity >= 0);
+      .filter((pack) => {
+        return (
+          pack.weight &&
+          Number.isFinite(pack.quantity) &&
+          pack.quantity >= 0
+        );
+      });
 
     if (normalizedPacks.length === 0) {
+      await client.query("ROLLBACK");
+
       return res.status(400).json({
         message: "Добавьте хотя бы одну корректную фасовку",
       });
     }
 
     const normalizedTags = Array.isArray(tags)
-      ? tags.map((tag) => String(tag).trim()).filter(Boolean)
+      ? tags
+          .map((tag) => String(tag).trim())
+          .filter(Boolean)
       : [];
 
-    const result = await pool.query(
+    const normalizedBrandStrength = normalizeStrengthValue(brandStrength);
+    const normalizedStrengthOverride = normalizeStrengthValue(
+      strengthOverride,
+      { allowEmpty: true }
+    );
+
+    const updatedBrandSetting = await client.query(
+      `
+        UPDATE brand_settings
+        SET brand = $1,
+            default_strength = $2,
+            updated_at = NOW()
+        WHERE LOWER(brand) = LOWER($1)
+        RETURNING brand
+      `,
+      [normalizedBrand, normalizedBrandStrength]
+    );
+
+    if (updatedBrandSetting.rows.length === 0) {
+      await client.query(
+        `
+          INSERT INTO brand_settings (
+            brand,
+            default_strength
+          )
+          VALUES ($1, $2)
+          ON CONFLICT (brand)
+          DO UPDATE SET
+            default_strength = EXCLUDED.default_strength,
+            updated_at = NOW()
+        `,
+        [normalizedBrand, normalizedBrandStrength]
+      );
+    }
+
+    const result = await client.query(
       `
         UPDATE flavors
         SET brand = $1,
@@ -1557,37 +2174,71 @@ app.put("/api/flavors/:id", async (req, res) => {
             packs = $3::jsonb,
             tags = $4::jsonb,
             min_stock = $5,
+            strength_override = $6,
             archived = false,
             updated_at = NOW()
-        WHERE id = $6
+        WHERE id = $7
         RETURNING *
       `,
       [
-        String(brand).trim(),
-        String(name).trim(),
+        normalizedBrand,
+        normalizedName,
         JSON.stringify(normalizedPacks),
         JSON.stringify(normalizedTags),
         Number(minStock) || 1,
+        normalizedStrengthOverride,
         flavorId,
       ]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        message: "Вкус не найден",
-      });
+    if (
+      previousBrand &&
+      previousBrand.toLowerCase() !== normalizedBrand.toLowerCase()
+    ) {
+      await client.query(
+        `
+          DELETE FROM brand_settings
+          WHERE LOWER(brand) = LOWER($1)
+            AND NOT EXISTS (
+              SELECT 1
+              FROM flavors
+              WHERE LOWER(flavors.brand) = LOWER($1)
+            )
+        `,
+        [previousBrand]
+      );
     }
 
-    res.json(normalizeFlavor(result.rows[0]));
+    await client.query("COMMIT");
+
+    const brandSettingResult = await pool.query(
+      `
+        SELECT default_strength
+        FROM brand_settings
+        WHERE LOWER(brand) = LOWER($1)
+        LIMIT 1
+      `,
+      [normalizedBrand]
+    );
+
+    const responseFlavor = normalizeFlavor({
+      ...result.rows[0],
+      brand_strength:
+        brandSettingResult.rows[0]?.default_strength || "unknown",
+    });
+
+    res.json(responseFlavor);
   } catch (error) {
-    console.error(error);
+    await client.query("ROLLBACK").catch(() => null);
+    console.error("Update flavor error:", error);
+
     res.status(500).json({
       message: "Не удалось сохранить изменения",
     });
+  } finally {
+    client.release();
   }
 });
-
-
 
 
 app.patch("/api/flavors/:id/deadstock-excluded", async (req, res) => {
