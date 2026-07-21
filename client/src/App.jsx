@@ -27,6 +27,7 @@ import {
   Tags,
   X
 } from "lucide-react";
+import BrandStrengthSettings from "./components/BrandStrengthSettings";
 import ImportProgress from "./components/ImportProgress";
 import NotificationStack from "./components/NotificationStack";
 import StrengthIndicator from "./components/StrengthIndicator";
@@ -116,6 +117,8 @@ function App() {
   });
 
   const [editingFlavorId, setEditingFlavorId] = useState(null);
+  const [brandStrengthEditor, setBrandStrengthEditor] = useState(null);
+  const [isBrandStrengthSaving, setIsBrandStrengthSaving] = useState(false);
   const [editReturnTarget, setEditReturnTarget] = useState(null);
   const [editReturnIssueKey, setEditReturnIssueKey] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -126,7 +129,6 @@ function App() {
     minStock: 1,
     brandStrength: "unknown",
     strengthOverride: "",
-    initialBrandStrength: "unknown",
     initialStrengthOverride: "",
   });
 
@@ -787,7 +789,6 @@ function App() {
       minStock: flavor.minStock || 1,
       brandStrength: flavor.brandStrength || "unknown",
       strengthOverride: flavor.strengthOverride || "",
-      initialBrandStrength: flavor.brandStrength || "unknown",
       initialStrengthOverride: flavor.strengthOverride || "",
     });
   };
@@ -805,8 +806,7 @@ function App() {
       minStock: 1,
       brandStrength: "unknown",
       strengthOverride: "",
-      initialBrandStrength: "unknown",
-      initialStrengthOverride: "",
+        initialStrengthOverride: "",
     });
   };
 
@@ -817,6 +817,93 @@ function App() {
       ...currentForm,
       [name]: value,
     }));
+  };
+
+  const openBrandStrengthSettings = (brand, strength) => {
+    setBrandStrengthEditor({
+      brand,
+      strength: strength || "unknown",
+      initialStrength: strength || "unknown",
+    });
+  };
+
+  const closeBrandStrengthSettings = () => {
+    if (isBrandStrengthSaving) {
+      return;
+    }
+
+    setBrandStrengthEditor(null);
+  };
+
+  const saveBrandStrengthSettings = async () => {
+    if (!brandStrengthEditor) {
+      return;
+    }
+
+    const {
+      brand,
+      strength,
+      initialStrength,
+    } = brandStrengthEditor;
+
+    try {
+      setIsBrandStrengthSaving(true);
+
+      const response = await apiFetch(
+        `/api/brand-settings/${encodeURIComponent(brand)}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            defaultStrength: strength,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+
+        throw new Error(
+          errorData?.message ||
+            "Не удалось сохранить стандартную крепость бренда"
+        );
+      }
+
+      if (strength !== initialStrength) {
+        await addActionLog({
+          action: "brand_strength_changed",
+          flavor: {
+            brand,
+            name: "",
+          },
+          details: {
+            previousStrength: initialStrength,
+            newStrength: strength,
+          },
+          refreshLogs: false,
+        });
+      }
+
+      await refreshFlavors();
+      setBrandStrengthEditor(null);
+
+      showNotification(
+        `Стандартная крепость бренда ${brand} сохранена`,
+        "success"
+      );
+    } catch (error) {
+      console.error(error);
+
+      showNotification(
+        error.message ||
+          "Не удалось сохранить стандартную крепость бренда",
+        "error"
+      );
+    } finally {
+      setIsBrandStrengthSaving(false);
+    }
   };
 
   const parsePacksText = (packsText) => {
@@ -882,31 +969,12 @@ function App() {
         throw new Error("Не удалось сохранить изменения");
       }
 
-      const brandStrengthChanged =
-        editForm.brandStrength !== editForm.initialBrandStrength;
-
       const flavorStrengthChanged =
         editForm.strengthOverride !== editForm.initialStrengthOverride;
 
       const editedFlavor = flavors.find(
         (flavor) => flavor.id === editingFlavorId
       );
-
-      if (brandStrengthChanged) {
-        await addActionLog({
-          action: "brand_strength_changed",
-          flavor: editedFlavor || {
-            id: editingFlavorId,
-            brand: editForm.brand,
-            name: editForm.name,
-          },
-          details: {
-            previousStrength: editForm.initialBrandStrength,
-            newStrength: editForm.brandStrength,
-          },
-          refreshLogs: false,
-        });
-      }
 
       if (flavorStrengthChanged) {
         await addActionLog({
@@ -4668,6 +4736,23 @@ return "";
       {renderGlobalFileInput()}
       {renderChoiceModal()}
 
+      <BrandStrengthSettings
+        editor={brandStrengthEditor}
+        isSaving={isBrandStrengthSaving}
+        onChange={(strength) =>
+          setBrandStrengthEditor((currentEditor) =>
+            currentEditor
+              ? {
+                  ...currentEditor,
+                  strength,
+                }
+              : currentEditor
+          )
+        }
+        onClose={closeBrandStrengthSettings}
+        onSave={saveBrandStrengthSettings}
+      />
+
       {editingSupplyLog && (
         <div
           className="choice-modal-backdrop"
@@ -7985,32 +8070,15 @@ if (currentView === "purchase") {
               </label>
 
               <label>
-                Крепость бренда
-                <select
-                  name="brandStrength"
-                  value={editForm.brandStrength}
-                  onChange={handleEditChange}
-                >
-                  {STRENGTH_OPTIONS.map((option) => (
-                    <option value={option.value} key={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="form-hint">
-                  Используется всеми вкусами бренда без индивидуальной настройки
-                </span>
-              </label>
-
-              <label>
-                Крепость вкуса
+                Отклонение от крепости бренда
                 <select
                   name="strengthOverride"
                   value={editForm.strengthOverride}
                   onChange={handleEditChange}
                 >
                   <option value="">
-                    По бренду — {getStrengthLabel(editForm.brandStrength)}
+                    Без отклонения — по бренду:{" "}
+                    {getStrengthLabel(editForm.brandStrength)}
                   </option>
 
                   {STRENGTH_OPTIONS.filter(
@@ -8023,7 +8091,8 @@ if (currentView === "purchase") {
                 </select>
 
                 <span className="form-hint">
-                  Индивидуальная настройка переопределяет крепость бренда
+                  Выбирай отдельную крепость только тогда, когда этот вкус
+                  отличается от стандарта бренда.
                 </span>
               </label>
 
@@ -8294,6 +8363,40 @@ if (currentView === "purchase") {
 
                   {isOpen && (
                     <div className="brand-flavor-list flavor-list-mode">
+                      {!isDemoMode && (
+                        <button
+                          className="brand-strength-settings-button"
+                          type="button"
+                          onClick={() =>
+                            openBrandStrengthSettings(
+                              group.brand,
+                              group.items[0]?.brandStrength || "unknown"
+                            )
+                          }
+                        >
+                          <span>
+                            <em>Стандарт крепости бренда</em>
+                            <strong>
+                              {getStrengthLabel(
+                                group.items[0]?.brandStrength || "unknown"
+                              )}
+                            </strong>
+                          </span>
+
+                          <StrengthIndicator
+                            strength={
+                              group.items[0]?.brandStrength || "unknown"
+                            }
+                            inherited={false}
+                          />
+
+                          <Pencil
+                            className="ui-icon"
+                            aria-hidden="true"
+                          />
+                        </button>
+                      )}
+
                       {group.items.map((flavor) => {
                         const status = getStatus(flavor);
                         const isFlavorOpen = openFlavorId === flavor.id;
