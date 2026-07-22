@@ -1925,18 +1925,6 @@ h1 {
   min-width: 96px;
 }
 
-.header-dropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  z-index: 1000;
-  width: min(360px, calc(100vw - 32px));
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 22px;
-}
-
 .dropdown-section {
   display: grid;
   gap: 8px;
@@ -1987,15 +1975,6 @@ h1 {
 
 .dropdown-section .dropdown-danger:hover {
   background: #5f1c13;
-}
-
-@media (max-width: 760px) {
-
-  .header-dropdown {
-    left: 0;
-    right: auto;
-    width: 100%;
-  }
 }
 
 .flavor-row-header {
@@ -5222,6 +5201,7 @@ body::before {
 /* Выпадающее меню */
 
 .header-dropdown {
+  display: grid;
   width: min(570px, calc(100vw - 32px)) !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 10px !important;
