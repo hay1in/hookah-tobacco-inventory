@@ -7781,14 +7781,12 @@ body::before {
   Верхнее меню остаётся доступным для дополнительных действий.
 */
 
-.bottom-navigation,
 .bottom-more-backdrop,
 .bottom-more-sheet {
   display: none;
 }
 
-@media (min-width: 0px) {
-  .content {
+.content {
     padding-bottom:
       calc(112px + env(safe-area-inset-bottom)) !important;
   }
@@ -8095,7 +8093,6 @@ body::before {
     background: rgba(199, 42, 56, 0.17);
     transform: scale(0.98);
   }
-}
 
 @media (max-width: 480px) {
   .bottom-navigation {
