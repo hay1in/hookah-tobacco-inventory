@@ -5783,11 +5783,6 @@ body::before {
     align-items: flex-start !important;
   }
 
-  .header::before {
-    right: 8%;
-    opacity: 0.55;
-  }
-
   .header-actions {
     width: 100%;
     justify-content: flex-start !important;
@@ -5810,11 +5805,6 @@ body::before {
 
   .header h1 {
     font-size: 42px !important;
-  }
-
-  .header::before,
-  .header::after {
-    opacity: 0.28;
   }
 
   .header-actions {
