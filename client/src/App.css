@@ -5012,23 +5012,6 @@ body::before {
   padding: clamp(24px, 4vw, 46px) !important;
   border-radius: var(--ui-radius-xl) !important;
   align-items: flex-end !important;
-  background:
-    radial-gradient(
-      circle at 86% 22%,
-      rgba(255, 129, 122, 0.25),
-      transparent 23%
-    ),
-    radial-gradient(
-      circle at 68% 110%,
-      rgba(217, 54, 66, 0.22),
-      transparent 35%
-    ),
-    linear-gradient(
-      138deg,
-      rgba(38, 24, 28, 0.98),
-      rgba(28, 17, 21, 0.98) 52%,
-      rgba(15, 10, 12, 0.98)
-    ) !important;
   border: 1px solid var(--ui-border) !important;
   box-shadow:
     var(--ui-shadow-xl),
