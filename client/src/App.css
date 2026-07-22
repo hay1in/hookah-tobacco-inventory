@@ -3691,15 +3691,6 @@ textarea {
 
 /* LAYOUT */
 
-.header {
-  background:
-    radial-gradient(circle at top right, rgba(255, 77, 89, 0.18), transparent 36%),
-    linear-gradient(135deg, #211519 0%, #30181e 52%, #120d0f 100%) !important;
-  color: var(--app-text) !important;
-  border: 1px solid var(--app-border) !important;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.44) !important;
-}
-
 .content,
 .inventory-page,
 .purchase-page,
