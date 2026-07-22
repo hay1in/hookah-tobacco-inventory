@@ -439,30 +439,10 @@ h1 {
   color: #fff7ed;
 }
 
-.header-actions {
-  position: relative;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
 .secondary-button {
   background: rgba(255, 247, 237, 0.12);
   color: #fff7ed;
   border: 1px solid rgba(255, 247, 237, 0.18);
-}
-
-@media (max-width: 900px) {
-  .header-actions {
-    width: 100%;
-  }
-
-  .header-actions .primary-button,
-  .header-actions .secondary-button {
-    width: 100%;
-  }
 }
 
 .file-button {
@@ -5112,14 +5092,6 @@ body::before {
   color: var(--ui-cream-soft) !important;
   font-size: clamp(14px, 1.5vw, 17px) !important;
   line-height: 1.55 !important;
-}
-
-.header-actions {
-  position: relative;
-  z-index: 20;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  gap: 9px !important;
 }
 
 /* Кнопки */
