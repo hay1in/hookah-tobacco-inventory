@@ -4996,8 +4996,7 @@ body::before {
   animation: ui-page-enter 420ms var(--ui-ease) both;
 }
 
-.content,
-.header {
+.content {
   width: min(100%, 1320px) !important;
   max-width: 1320px !important;
 }
@@ -5005,6 +5004,8 @@ body::before {
 /* Шапка */
 
 .header {
+  width: min(100%, 1320px) !important;
+  max-width: 1320px !important;
   position: relative !important;
   z-index: 1000 !important;
   isolation: auto !important;
@@ -5688,16 +5689,6 @@ body::before {
 @media (max-width: 900px) {
   .header {
     min-height: auto;
-    align-items: flex-start !important;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: flex-start !important;
-  }
-
-  .header-dropdown {
-    grid-template-columns: 1fr 1fr !important;
   }
 }
 
@@ -5713,11 +5704,6 @@ body::before {
 
   .header h1 {
     font-size: 42px !important;
-  }
-
-  .header-actions {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .header-actions > button {
