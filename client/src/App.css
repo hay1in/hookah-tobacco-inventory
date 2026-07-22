@@ -506,19 +506,6 @@ h1 {
 }
 
 /* Contrast fixes for desktop visibility */
-.header h1 {
-  color: #fff7ed !important;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.22);
-}
-
-.header .subtitle {
-  color: #f4dcc4 !important;
-}
-
-.header .eyebrow {
-  color: #ffd39d !important;
-}
-
 .tag-filter-panel {
   background: rgba(24, 18, 15, 0.22);
   border: 1px solid rgba(255, 247, 237, 0.12);
@@ -3778,16 +3765,6 @@ textarea {
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.44) !important;
 }
 
-.header h1,
-.header .subtitle {
-  color: var(--app-text) !important;
-}
-
-.header .eyebrow,
-.eyebrow {
-  color: var(--app-red-hover) !important;
-}
-
 .content,
 .inventory-page,
 .purchase-page,
@@ -5138,41 +5115,6 @@ body::before {
   box-shadow:
     var(--ui-shadow-xl),
     inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
-}
-
-.header::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: 26px;
-  right: 28%;
-  width: 108px;
-  height: 108px;
-  border-radius: 42% 58% 65% 35% / 38% 36% 64% 62%;
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255, 129, 122, 0.22),
-      rgba(217, 54, 66, 0.04)
-    );
-  transform: rotate(18deg);
-  filter: blur(0.2px);
-}
-
-.header::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  right: 7%;
-  bottom: 18px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--ui-red);
-  box-shadow:
-    -58px -42px 0 -17px rgba(255, 243, 235, 0.58),
-    34px -82px 0 -12px rgba(255, 129, 122, 0.2);
-  opacity: 0.76;
 }
 
 .header > div:first-child {
