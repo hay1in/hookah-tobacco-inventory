@@ -142,3 +142,12 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 server/.env
+
+# Local backups and database dumps
+backups/
+backup/
+*.dump
+*.sql
+*.backup
+*.patch
+*-backup-*.json
