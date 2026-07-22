@@ -5143,9 +5143,13 @@ body::before {
 /* Выпадающее меню */
 
 .header-dropdown {
-  display: grid;
+  position: absolute !important;
+  z-index: 9999 !important;
+  top: calc(100% + 12px) !important;
   right: 0 !important;
   left: auto !important;
+  overflow: visible !important;
+  display: grid;
   width: min(570px, calc(100vw - 32px)) !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 10px !important;
@@ -5759,14 +5763,6 @@ body::before {
   Шапка и меню всегда находятся выше основного интерфейса.
   Декоративные круги удалены.
 */
-
-.header-dropdown {
-  position: absolute !important;
-  z-index: 9999 !important;
-  top: calc(100% + 12px) !important;
-  right: 0 !important;
-  overflow: visible !important;
-}
 
 .content {
   position: relative !important;
