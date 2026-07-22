@@ -5758,12 +5758,6 @@ body::before {
   Декоративные круги удалены.
 */
 
-.header-actions {
-  position: relative !important;
-  z-index: 1100 !important;
-  overflow: visible !important;
-}
-
 .header-dropdown {
   position: absolute !important;
   z-index: 9999 !important;
@@ -6367,6 +6361,9 @@ body::before {
 }
 
 .header-actions {
+  position: relative !important;
+  z-index: 1100 !important;
+  overflow: visible !important;
   width: auto !important;
   min-width: max-content !important;
   display: grid !important;
@@ -6374,7 +6371,6 @@ body::before {
   align-items: center !important;
   justify-content: end !important;
   gap: 9px !important;
-  flex-wrap: nowrap !important;
 }
 
 .header-actions > button {
