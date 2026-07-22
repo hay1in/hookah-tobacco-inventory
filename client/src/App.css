@@ -4063,14 +4063,6 @@ textarea:focus,
   border-color: var(--app-border) !important;
 }
 
-.header-dropdown {
-  background:
-    linear-gradient(135deg, rgba(36, 25, 29, 0.98), rgba(18, 13, 15, 0.98)) !important;
-  color: var(--app-text) !important;
-  border: 1px solid var(--app-border-strong) !important;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58) !important;
-}
-
 .dropdown-section {
   border-color: var(--app-border) !important;
 }
