@@ -5005,8 +5005,10 @@ body::before {
 /* Шапка */
 
 .header {
-  position: relative;
-  isolation: isolate;
+  position: relative !important;
+  z-index: 1000 !important;
+  isolation: auto !important;
+  overflow: visible !important;
   min-height: 210px;
   margin: 0 auto 22px !important;
   padding: clamp(24px, 4vw, 46px) !important;
@@ -5769,13 +5771,6 @@ body::before {
   Шапка и меню всегда находятся выше основного интерфейса.
   Декоративные круги удалены.
 */
-
-.header {
-  position: relative !important;
-  z-index: 1000 !important;
-  isolation: auto !important;
-  overflow: visible !important;
-}
 
 .header::before,
 .header::after {
