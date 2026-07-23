@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
-require("dotenv").config();
+const { createPool } = require("./db/pool");
+
+require("dotenv").config({ quiet: true });
 
 const app = express();
 
@@ -58,17 +59,7 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.DATABASE_URL.includes("localhost") ||
-    process.env.DATABASE_URL.includes("127.0.0.1") ||
-    process.env.DATABASE_URL.includes("@db:")
-      ? false
-      : { rejectUnauthorized: false },
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 30000,
-});
+const pool = createPool();
 
 const CANONICAL_BRAND_NAMES = Object.freeze({
   chabacco: "Chabacco",

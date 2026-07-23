@@ -1,7 +1,7 @@
 const crypto = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { Pool } = require("pg");
+const { createPool } = require("./pool");
 
 require("dotenv").config({
   path: path.resolve(__dirname, "..", ".env"),
@@ -17,17 +17,7 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const isLocalDatabase =
-  process.env.DATABASE_URL.includes("localhost") ||
-  process.env.DATABASE_URL.includes("127.0.0.1") ||
-  process.env.DATABASE_URL.includes("@db:");
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: isLocalDatabase ? false : { rejectUnauthorized: false },
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 30000,
-});
+const pool = createPool();
 
 function calculateChecksum(content) {
   return crypto.createHash("sha256").update(content).digest("hex");
@@ -127,11 +117,37 @@ function printStatus(migrations, applied) {
   }
 }
 
+async function migrationTableExists(client) {
+  const result = await client.query(`
+    SELECT TO_REGCLASS('public.schema_migrations') AS table_name
+  `);
+
+  return Boolean(result.rows[0]?.table_name);
+}
+
+async function showStatus(client, migrations) {
+  const tableExists = await migrationTableExists(client);
+
+  if (!tableExists) {
+    printStatus(migrations, new Map());
+    return;
+  }
+
+  const applied = await getAppliedMigrations(client);
+  printStatus(migrations, applied);
+}
+
 async function migrate() {
+  const migrations = await readMigrations();
   const client = await pool.connect();
   let lockAcquired = false;
 
   try {
+    if (STATUS_ONLY) {
+      await showStatus(client, migrations);
+      return;
+    }
+
     await client.query(
       "SELECT pg_advisory_lock($1)",
       [MIGRATION_LOCK_ID]
@@ -140,13 +156,7 @@ async function migrate() {
 
     await ensureMigrationTable(client);
 
-    const migrations = await readMigrations();
     const applied = await getAppliedMigrations(client);
-
-    if (STATUS_ONLY) {
-      printStatus(migrations, applied);
-      return;
-    }
 
     for (const migration of migrations) {
       const existing = applied.get(migration.name);
