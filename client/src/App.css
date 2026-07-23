@@ -5712,10 +5712,6 @@ body::before {
     font-size: 42px !important;
   }
 
-  .header-actions > button {
-    width: 100%;
-  }
-
   .header-dropdown {
     width: min(100%, calc(100vw - 20px)) !important;
     grid-template-columns: 1fr !important;
