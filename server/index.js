@@ -114,27 +114,6 @@ function normalizeStrengthValue(value, { allowEmpty = false } = {}) {
     : "unknown";
 }
 
-async function ensureStrengthSchema(queryable = pool) {
-  await queryable.query(`
-    ALTER TABLE flavors
-    ADD COLUMN IF NOT EXISTS strength_override TEXT;
-  `);
-
-  await queryable.query(`
-    CREATE TABLE IF NOT EXISTS brand_settings (
-      brand TEXT PRIMARY KEY,
-      default_strength TEXT NOT NULL DEFAULT 'unknown',
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    );
-  `);
-
-  await queryable.query(`
-    CREATE UNIQUE INDEX IF NOT EXISTS brand_settings_brand_lower_unique
-    ON brand_settings (LOWER(brand));
-  `);
-}
-
 function normalizeFlavor(row) {
   const strengthOverride =
     row.strength_override === undefined
@@ -161,23 +140,52 @@ function normalizeFlavor(row) {
 }
 
 async function initDb() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS flavors (
-      id SERIAL PRIMARY KEY,
-      brand TEXT NOT NULL,
-      name TEXT NOT NULL,
-      packs JSONB NOT NULL DEFAULT '[]'::jsonb,
-      tags JSONB NOT NULL DEFAULT '[]'::jsonb,
-      min_stock INTEGER NOT NULL DEFAULT 1,
-      archived BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    );
+  const migrationTableResult = await pool.query(`
+    SELECT TO_REGCLASS('public.schema_migrations') AS table_name;
   `);
 
-  await ensureStrengthSchema();
+  if (!migrationTableResult.rows[0]?.table_name) {
+    throw new Error(
+      "Database migrations are not initialized. Run: npm run migrate"
+    );
+  }
 
-  await ensureSuppliesSchema();
+  const baselineResult = await pool.query(
+    `
+      SELECT 1
+      FROM schema_migrations
+      WHERE filename = $1
+      LIMIT 1
+    `,
+    ["001_baseline.sql"]
+  );
+
+  if (baselineResult.rows.length === 0) {
+    throw new Error(
+      "Required migration 001_baseline.sql is not applied. Run: npm run migrate"
+    );
+  }
+
+  const requiredTablesResult = await pool.query(`
+    SELECT
+      TO_REGCLASS('public.flavors') AS flavors,
+      TO_REGCLASS('public.brand_settings') AS brand_settings,
+      TO_REGCLASS('public.supplies') AS supplies,
+      TO_REGCLASS('public.action_logs') AS action_logs;
+  `);
+
+  const requiredTables = requiredTablesResult.rows[0];
+
+  if (
+    !requiredTables?.flavors ||
+    !requiredTables?.brand_settings ||
+    !requiredTables?.supplies ||
+    !requiredTables?.action_logs
+  ) {
+    throw new Error(
+      "Database schema is incomplete. Run: npm run migrate"
+    );
+  }
 }
 
 async function getAllFlavors() {
@@ -206,7 +214,6 @@ async function getFlavorById(id) {
 
   return normalizeFlavor(result.rows[0]);
 }
-
 
 app.delete("/api/admin/clear-database", async (req, res) => {
   try {
@@ -435,29 +442,11 @@ app.post("/api/admin/restore-backup", async (req, res) => {
   }
 });
 
-
 app.get("/", (req, res) => {
   res.json({
     message: "Hookah Tobacco Inventory API is running",
   });
 });
-
-
-
-
-async function ensureActionLogsTable() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS action_logs (
-      id SERIAL PRIMARY KEY,
-      action TEXT NOT NULL,
-      flavor_id INTEGER,
-      brand TEXT,
-      name TEXT,
-      details JSONB DEFAULT '{}'::jsonb,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW()
-    );
-  `);
-}
 
 function parseActionDetailsObject(details) {
   if (!details) {
@@ -510,7 +499,6 @@ function normalizeSupplierName(value) {
 
   return originalValue;
 }
-
 
 function normalizeSupplyDateValue(value) {
   const cleanValue = String(value || "").trim();
@@ -583,54 +571,6 @@ async function backfillSuppliesFromActionLogs() {
         ''
       );
   `);
-}
-
-async function ensureSuppliesSchema() {
-  await ensureActionLogsTable();
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS supplies (
-      id SERIAL PRIMARY KEY,
-      supply_date DATE NOT NULL,
-      supplier TEXT NOT NULL DEFAULT '',
-      invoice_number TEXT NOT NULL DEFAULT '',
-      note TEXT NOT NULL DEFAULT '',
-      status TEXT NOT NULL DEFAULT 'received',
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      UNIQUE (supply_date, supplier, invoice_number)
-    );
-  `);
-
-  await pool.query(`
-    ALTER TABLE action_logs
-    ADD COLUMN IF NOT EXISTS supply_id INTEGER;
-  `);
-
-  await pool.query(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'action_logs_supply_id_fkey'
-      ) THEN
-        ALTER TABLE action_logs
-        ADD CONSTRAINT action_logs_supply_id_fkey
-        FOREIGN KEY (supply_id)
-        REFERENCES supplies(id)
-        ON DELETE SET NULL;
-      END IF;
-    END
-    $$;
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS action_logs_supply_id_idx
-    ON action_logs(supply_id);
-  `);
-
-  await backfillSuppliesFromActionLogs();
 }
 
 async function resolveSupplyForDetails(details, preferredSupplyId = null) {
@@ -766,7 +706,6 @@ app.post("/api/action-logs", async (req, res) => {
   }
 });
 
-
 app.patch("/api/action-logs/:id", async (req, res) => {
   const logId = Number(req.params.id);
   const { details } = req.body;
@@ -829,8 +768,6 @@ app.patch("/api/action-logs/:id", async (req, res) => {
     res.status(500).json({ message: "Не удалось обновить действие" });
   }
 });
-
-
 
 app.post("/api/admin/transfer-action-logs", async (req, res) => {
   const { fromBrand, fromName, toBrand, toName } = req.body;
@@ -901,7 +838,6 @@ app.post("/api/admin/transfer-action-logs", async (req, res) => {
     client.release();
   }
 });
-
 
 app.post("/api/flavors/merge", async (req, res) => {
   const { primaryId, duplicateIds } = req.body;
@@ -1036,7 +972,6 @@ app.post("/api/flavors/merge", async (req, res) => {
   }
 });
 
-
 app.post("/api/tags/merge", async (req, res) => {
   const { fromTags, toTag } = req.body;
 
@@ -1125,7 +1060,6 @@ app.post("/api/tags/merge", async (req, res) => {
     client.release();
   }
 });
-
 
 app.post("/api/flavors/bulk", async (req, res) => {
   const { ids, action } = req.body;
@@ -1433,7 +1367,6 @@ app.post("/api/flavors/supply", async (req, res) => {
 app.post("/api/flavors/import", async (req, res) => {
   const { rows } = req.body;
 
-
   if (!Array.isArray(rows)) {
     return res.status(400).json({ message: "Неверный формат Excel-данных" });
   }
@@ -1682,8 +1615,6 @@ app.post("/api/flavors/import", async (req, res) => {
   }
 });
 
-
-
 app.patch("/api/flavors/:id/packs/:packIndex/adjust", async (req, res) => {
   const delta = Number(req.body.delta);
 
@@ -1900,7 +1831,6 @@ app.put("/api/flavors/:id", async (req, res) => {
       brandStrength,
     } = req.body;
 
-
     if (
       !Number.isInteger(flavorId) ||
       flavorId <= 0 ||
@@ -2101,7 +2031,6 @@ app.put("/api/flavors/:id", async (req, res) => {
     client.release();
   }
 });
-
 
 app.patch("/api/flavors/:id/deadstock-excluded", async (req, res) => {
   const { id } = req.params;
