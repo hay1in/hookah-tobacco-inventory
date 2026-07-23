@@ -2139,7 +2139,6 @@ const [selectedTag, setSelectedTag] = useState("all");
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [analyticsSection, setAnalyticsSection] = useState("finance");
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all");
-  const [priceComparisonBrand, setPriceComparisonBrand] = useState("all");
   const [openPriceComparisonBrand, setOpenPriceComparisonBrand] = useState("");
   const [isSupplierComparisonOpen, setIsSupplierComparisonOpen] = useState(false);
   const [openDataQualityIssue, setOpenDataQualityIssue] = useState(null);
@@ -3366,6 +3365,39 @@ const titles = {
     };
   })();
 
+  const PRICE_FRESHNESS_DAYS = 90;
+
+  const getPriceFreshness = (dateValue) => {
+    const date = new Date(dateValue);
+    const now = new Date();
+
+    if (Number.isNaN(date.getTime())) {
+      return {
+        ageDays: null,
+        isStale: true,
+        freshnessLabel: "дата неизвестна",
+        formattedDate: "дата неизвестна",
+      };
+    }
+
+    const ageDays = Math.max(
+      Math.floor((now.getTime() - date.getTime()) / 86400000),
+      0
+    );
+
+    return {
+      ageDays,
+      isStale: ageDays > PRICE_FRESHNESS_DAYS,
+      freshnessLabel:
+        ageDays > PRICE_FRESHNESS_DAYS
+          ? "цена устарела"
+          : ageDays > 30
+            ? "лучше проверить"
+            : "актуальная цена",
+      formattedDate: date.toLocaleDateString("ru-RU"),
+    };
+  };
+
   const supplierPriceComparisonData = (() => {
     const groups = new Map();
 
@@ -3410,27 +3442,38 @@ const titles = {
     const comparisonGroups = Array.from(groups.values())
       .map((group) => {
         const suppliers = Array.from(group.suppliers.values())
-          .map((supplier) => ({
-            ...supplier,
-            averagePrice:
-              supplier.quantity > 0
-                ? supplier.total / supplier.quantity
-                : 0,
-            latestPricePerGram:
-              group.weightGrams > 0
-                ? supplier.latestPrice / group.weightGrams
-                : 0,
-          }))
+          .map((supplier) => {
+            const freshness = getPriceFreshness(supplier.latestDate);
+
+            return {
+              ...supplier,
+              ...freshness,
+              averagePrice:
+                supplier.quantity > 0
+                  ? supplier.total / supplier.quantity
+                  : 0,
+              latestPricePerGram:
+                group.weightGrams > 0
+                  ? supplier.latestPrice / group.weightGrams
+                  : 0,
+            };
+          })
           .sort(
             (a, b) =>
+              Number(a.isStale) - Number(b.isStale) ||
               a.latestPrice - b.latestPrice ||
               a.averagePrice - b.averagePrice
           );
 
+        const freshSuppliers = suppliers.filter(
+          (supplier) => !supplier.isStale
+        );
+
         return {
           ...group,
           suppliers,
-          bestPrice: suppliers[0]?.latestPrice || 0,
+          freshSuppliers,
+          bestPrice: freshSuppliers[0]?.latestPrice || 0,
         };
       })
       .filter((group) => group.suppliers.length >= 2)
@@ -3440,19 +3483,87 @@ const titles = {
           a.weight.localeCompare(b.weight, "ru")
       );
 
+    const savingsRows = comparisonGroups
+      .map((group) => {
+        const currentPrices = group.freshSuppliers.map(
+          (supplier) => supplier.latestPrice
+        );
+
+        const minPrice = currentPrices.length
+          ? Math.min(...currentPrices)
+          : 0;
+
+        const maxPrice = currentPrices.length
+          ? Math.max(...currentPrices)
+          : 0;
+
+        return {
+          key: group.key,
+          brand: group.brand,
+          weight: group.weight,
+          minPrice,
+          maxPrice,
+          priceDifference: Math.max(maxPrice - minPrice, 0),
+        };
+      })
+      .filter((row) => row.priceDifference > 0)
+      .sort((a, b) => b.priceDifference - a.priceDifference);
+
+    const brandsWithSavingOpportunity = new Set(
+      savingsRows.map((row) => row.brand)
+    ).size;
+
+    const topSavingOpportunity = savingsRows[0] || null;
+
+    const actionableRecommendations = comparisonGroups
+      .map((group) => {
+        const latestPurchase = purchaseFinanceData.rows.find(
+          (row) =>
+            row.brand === group.brand &&
+            row.weight === group.weight
+        );
+
+        const latestPurchaseFreshness = latestPurchase
+          ? getPriceFreshness(latestPurchase.suppliedAt)
+          : null;
+
+        const cheapestSupplier = group.freshSuppliers[0];
+
+        if (
+          !latestPurchase ||
+          latestPurchaseFreshness?.isStale ||
+          !cheapestSupplier ||
+          latestPurchase.supplier === cheapestSupplier.name ||
+          latestPurchase.price <= cheapestSupplier.latestPrice
+        ) {
+          return null;
+        }
+
+        return {
+          key: group.key,
+          brand: group.brand,
+          weight: group.weight,
+          latestSupplier: latestPurchase.supplier,
+          latestPrice: latestPurchase.price,
+          latestDate: latestPurchase.suppliedAt,
+          recommendedSupplier: cheapestSupplier.name,
+          recommendedPrice: cheapestSupplier.latestPrice,
+          savingPerPack:
+            latestPurchase.price - cheapestSupplier.latestPrice,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.savingPerPack - a.savingPerPack);
+
+    const topActionableRecommendation =
+      actionableRecommendations[0] || null;
+
     const brands = Array.from(
       new Set(comparisonGroups.map((group) => group.brand))
     ).sort((a, b) => a.localeCompare(b, "ru"));
 
-    const visibleGroups =
-      priceComparisonBrand === "all"
-        ? comparisonGroups
-        : comparisonGroups.filter(
-            (group) => group.brand === priceComparisonBrand
-          );
-
     const brandGroups = Array.from(
-      visibleGroups.reduce((map, group) => {
+      comparisonGroups.reduce((map, group) => {
         if (!map.has(group.brand)) {
           map.set(group.brand, {
             brand: group.brand,
@@ -3482,6 +3593,11 @@ const titles = {
     return {
       brands,
       brandGroups,
+      savingsRows,
+      brandsWithSavingOpportunity,
+      topSavingOpportunity,
+      actionableRecommendations,
+      topActionableRecommendation,
     };
   })();
 
@@ -7571,6 +7687,57 @@ if (currentView === "purchase") {
             </article>
           </section>
 
+          <section className="analytics-grid supplier-savings-grid">
+            <article className="analytics-card supplier-saving-card">
+              <span>Брендов с разницей цен</span>
+              <strong>
+                {supplierPriceComparisonData.brandsWithSavingOpportunity}
+              </strong>
+              <small>
+                По последним ценам поставщиков
+              </small>
+            </article>
+
+            <article className="analytics-card supplier-saving-card">
+              <span>Максимальная разница за пачку</span>
+              <strong>
+                {supplierPriceComparisonData.topSavingOpportunity
+                  ? `${supplierPriceComparisonData.topSavingOpportunity.priceDifference.toLocaleString("ru-RU")} ₽`
+                  : "0 ₽"}
+              </strong>
+              <small>
+                Между самой низкой и высокой актуальной ценой
+              </small>
+            </article>
+
+            <article className="analytics-card supplier-saving-card wide-saving-card">
+              <span>Наибольшая возможность экономии</span>
+
+              {supplierPriceComparisonData.topSavingOpportunity ? (
+                <>
+                  <strong>
+                    {supplierPriceComparisonData.topSavingOpportunity.brand} ·{" "}
+                    {supplierPriceComparisonData.topSavingOpportunity.weight}
+                  </strong>
+                  <small>
+                    до{" "}
+                    {supplierPriceComparisonData.topSavingOpportunity.priceDifference.toLocaleString(
+                      "ru-RU"
+                    )}{" "}
+                    ₽ на пачке
+                  </small>
+                </>
+              ) : (
+                <>
+                  <strong>Возможности экономии сейчас нет</strong>
+                  <small>
+                    Актуальные цены сопоставимых поставщиков идентичны
+                  </small>
+                </>
+              )}
+            </article>
+          </section>
+
           <section className="analytics-panel wide supplier-comparison-panel">
             <button
               type="button"
@@ -7595,7 +7762,7 @@ if (currentView === "purchase") {
 
             {isSupplierComparisonOpen && (
               <div className="supplier-comparison-master-content">
-            <div className="supplier-comparison-header">
+            <div className="supplier-comparison-header simplified">
               <div>
                 <h2>Детальное сравнение</h2>
                 <p className="analytics-note">
@@ -7603,24 +7770,37 @@ if (currentView === "purchase") {
                   минимум у двух поставщиков.
                 </p>
               </div>
-
-              <label>
-                <span>Бренд</span>
-                <select
-                  value={priceComparisonBrand}
-                  onChange={(event) =>
-                    setPriceComparisonBrand(event.target.value)
-                  }
-                >
-                  <option value="all">Все бренды</option>
-                  {supplierPriceComparisonData.brands.map((brand) => (
-                    <option value={brand} key={brand}>
-                      {brand}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </div>
+
+            {supplierPriceComparisonData.topActionableRecommendation && (() => {
+              const recommendation =
+                supplierPriceComparisonData.topActionableRecommendation;
+
+              return (
+                <section className="supplier-recommendation-card">
+                  <span>Последняя закупка была невыгодной</span>
+
+                  <strong>
+                    {recommendation.brand} · {recommendation.weight}
+                  </strong>
+
+                  <p>
+                    Последняя покупка у{" "}
+                    <b>{recommendation.latestSupplier}</b> —{" "}
+                    {recommendation.latestPrice.toLocaleString("ru-RU")} ₽.
+                    Сейчас выгоднее у{" "}
+                    <b>{recommendation.recommendedSupplier}</b> —{" "}
+                    {recommendation.recommendedPrice.toLocaleString("ru-RU")} ₽.
+                  </p>
+
+                  <em>
+                    Можно сэкономить{" "}
+                    {recommendation.savingPerPack.toLocaleString("ru-RU")} ₽
+                    на пачке
+                  </em>
+                </section>
+              );
+            })()}
 
             {supplierPriceComparisonData.brandGroups.length === 0 && (
               <p className="info-message dark">
@@ -7705,9 +7885,11 @@ if (currentView === "purchase") {
                               return (
                                 <div
                                   className={
-                                    index === 0
-                                      ? "supplier-price-row best"
-                                      : "supplier-price-row"
+                                    supplier.isStale
+                                      ? "supplier-price-row stale"
+                                      : index === 0
+                                        ? "supplier-price-row best"
+                                        : "supplier-price-row"
                                   }
                                   key={supplier.name}
                                 >
@@ -7718,6 +7900,19 @@ if (currentView === "purchase") {
                                       {Math.round(
                                         supplier.averagePrice
                                       ).toLocaleString("ru-RU")} ₽
+                                    </span>
+
+                                    <span
+                                      className={
+                                        supplier.isStale
+                                          ? "supplier-price-date stale"
+                                          : supplier.ageDays > 30
+                                            ? "supplier-price-date warning"
+                                            : "supplier-price-date fresh"
+                                      }
+                                    >
+                                      Цена от {supplier.formattedDate} ·{" "}
+                                      {supplier.freshnessLabel}
                                     </span>
                                   </div>
 

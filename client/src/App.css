@@ -10217,3 +10217,256 @@ body .history-panel .supply-inner-filters-top .secondary-button:hover {
   font-size: 13px !important;
   font-weight: 500 !important;
 }
+
+/* supplier savings analytics */
+.supplier-savings-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.supplier-saving-card {
+  min-height: 142px;
+  align-content: center;
+}
+
+.supplier-saving-card small {
+  display: block;
+  margin-top: 8px;
+  color: var(--app-text-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.supplier-saving-card strong {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .supplier-savings-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .supplier-savings-grid .wide-saving-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .supplier-savings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .supplier-savings-grid .wide-saving-card {
+    grid-column: auto;
+  }
+
+  .supplier-saving-card {
+    min-height: 126px;
+  }
+}
+
+/* supplier opportunity ranking */
+.supplier-opportunity-list {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(55, 31, 35, 0.1);
+  border-radius: 16px;
+  background: rgba(244, 239, 239, 0.72);
+}
+
+.supplier-opportunity-list h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.supplier-opportunity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(55, 31, 35, 0.08);
+}
+
+.supplier-opportunity-row:first-of-type {
+  border-top: 0;
+}
+
+.supplier-opportunity-row > div {
+  display: grid;
+  gap: 3px;
+}
+
+.supplier-opportunity-row > div:last-child {
+  justify-items: end;
+  text-align: right;
+}
+
+.supplier-opportunity-row strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.supplier-opportunity-row span {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(43, 32, 34, 0.66);
+}
+
+@media (max-width: 640px) {
+  .supplier-opportunity-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .supplier-opportunity-row > div:last-child {
+    justify-items: start;
+    text-align: left;
+  }
+}
+
+/* supplier opportunity appearance fix */
+.supplier-comparison-panel .supplier-opportunity-list {
+  background: #f4efef !important;
+  border: 1px solid rgba(55, 31, 35, 0.12) !important;
+  color: #2b2022 !important;
+}
+
+.supplier-comparison-panel .supplier-opportunity-list h3 {
+  color: #2b2022 !important;
+  -webkit-text-fill-color: #2b2022 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  text-align: left;
+}
+
+.supplier-comparison-panel .supplier-opportunity-row {
+  border-top-color: rgba(55, 31, 35, 0.1) !important;
+}
+
+.supplier-comparison-panel .supplier-opportunity-row strong {
+  color: #2b2022 !important;
+  -webkit-text-fill-color: #2b2022 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.supplier-comparison-panel .supplier-opportunity-row span {
+  color: rgba(43, 32, 34, 0.68) !important;
+  -webkit-text-fill-color: rgba(43, 32, 34, 0.68) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.supplier-comparison-panel
+  .supplier-opportunity-row
+  > div:last-child
+  strong {
+  color: #9f3e4b !important;
+  -webkit-text-fill-color: #9f3e4b !important;
+}
+
+.supplier-comparison-panel .supplier-opportunity-row:hover {
+  background: rgba(159, 62, 75, 0.05);
+}
+
+/* supplier actionable recommendation */
+.supplier-comparison-panel .supplier-recommendation-card {
+  display: grid;
+  gap: 7px;
+  padding: 17px 18px;
+  border: 1px solid rgba(159, 62, 75, 0.2);
+  border-radius: 16px;
+  background: #f4efef;
+  color: #2b2022;
+}
+
+.supplier-comparison-panel .supplier-recommendation-card > span {
+  color: #9f3e4b !important;
+  -webkit-text-fill-color: #9f3e4b !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.supplier-comparison-panel .supplier-recommendation-card > strong {
+  color: #2b2022 !important;
+  -webkit-text-fill-color: #2b2022 !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+}
+
+.supplier-comparison-panel .supplier-recommendation-card p {
+  margin: 0;
+  color: rgba(43, 32, 34, 0.74) !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.supplier-comparison-panel .supplier-recommendation-card b {
+  color: #2b2022 !important;
+  font-weight: 700;
+}
+
+.supplier-comparison-panel .supplier-recommendation-card em {
+  color: #9f3e4b !important;
+  -webkit-text-fill-color: #9f3e4b !important;
+  font-size: 14px !important;
+  font-style: normal;
+  font-weight: 700 !important;
+}
+
+/* supplier price freshness */
+.supplier-comparison-panel .supplier-price-date {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.supplier-comparison-panel .supplier-price-date.fresh {
+  color: #4f7657 !important;
+  -webkit-text-fill-color: #4f7657 !important;
+}
+
+.supplier-comparison-panel .supplier-price-date.warning {
+  color: #9a6b28 !important;
+  -webkit-text-fill-color: #9a6b28 !important;
+}
+
+.supplier-comparison-panel .supplier-price-date.stale {
+  color: #9f3e4b !important;
+  -webkit-text-fill-color: #9f3e4b !important;
+}
+
+.supplier-comparison-panel .supplier-price-row.stale {
+  background: #eee8e8 !important;
+  opacity: 0.72;
+}
+
+.supplier-comparison-panel .supplier-price-row.stale .supplier-price-values {
+  text-decoration: none;
+}
+
+.supplier-comparison-panel .supplier-price-row.stale .supplier-price-values::before {
+  content: "Не участвует в рекомендации";
+  color: #9f3e4b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* supplier comparison simplified header */
+.supplier-comparison-header.simplified {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.supplier-comparison-header.simplified > div {
+  max-width: 680px;
+}
+
+.supplier-comparison-header.simplified h2,
+.supplier-comparison-header.simplified .analytics-note {
+  text-align: center;
+}
