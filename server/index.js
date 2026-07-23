@@ -154,7 +154,7 @@ async function initDb() {
     `
       SELECT 1
       FROM schema_migrations
-      WHERE filename = $1
+      WHERE name = $1
       LIMIT 1
     `,
     ["001_baseline.sql"]
