@@ -2139,6 +2139,9 @@ const [selectedTag, setSelectedTag] = useState("all");
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [analyticsSection, setAnalyticsSection] = useState("finance");
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all");
+  const [priceComparisonBrand, setPriceComparisonBrand] = useState("all");
+  const [openPriceComparisonBrand, setOpenPriceComparisonBrand] = useState("");
+  const [isSupplierComparisonOpen, setIsSupplierComparisonOpen] = useState(false);
   const [openDataQualityIssue, setOpenDataQualityIssue] = useState(null);
   const [dataQualityReturnTarget, setDataQualityReturnTarget] = useState(null);
   const [activeChoiceModal, setActiveChoiceModal] = useState(null);
@@ -3360,6 +3363,125 @@ const titles = {
       bySupplier: groupBy("supplier"),
       priceIncreases,
       priceDecreases,
+    };
+  })();
+
+  const supplierPriceComparisonData = (() => {
+    const groups = new Map();
+
+    purchaseFinanceData.rows.forEach((row) => {
+      const key = `${row.brand}::${row.weight}`;
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          brand: row.brand,
+          weight: row.weight,
+          weightGrams: row.weightGrams,
+          suppliers: new Map(),
+        });
+      }
+
+      const group = groups.get(key);
+      const supplier = group.suppliers.get(row.supplier) || {
+        name: row.supplier,
+        quantity: 0,
+        total: 0,
+        supplyCount: 0,
+        latestPrice: 0,
+        latestDate: "",
+      };
+
+      supplier.quantity += row.quantity;
+      supplier.total += row.total;
+      supplier.supplyCount += 1;
+
+      if (
+        !supplier.latestDate ||
+        new Date(row.suppliedAt) > new Date(supplier.latestDate)
+      ) {
+        supplier.latestDate = row.suppliedAt;
+        supplier.latestPrice = row.price;
+      }
+
+      group.suppliers.set(row.supplier, supplier);
+    });
+
+    const comparisonGroups = Array.from(groups.values())
+      .map((group) => {
+        const suppliers = Array.from(group.suppliers.values())
+          .map((supplier) => ({
+            ...supplier,
+            averagePrice:
+              supplier.quantity > 0
+                ? supplier.total / supplier.quantity
+                : 0,
+            latestPricePerGram:
+              group.weightGrams > 0
+                ? supplier.latestPrice / group.weightGrams
+                : 0,
+          }))
+          .sort(
+            (a, b) =>
+              a.latestPrice - b.latestPrice ||
+              a.averagePrice - b.averagePrice
+          );
+
+        return {
+          ...group,
+          suppliers,
+          bestPrice: suppliers[0]?.latestPrice || 0,
+        };
+      })
+      .filter((group) => group.suppliers.length >= 2)
+      .sort(
+        (a, b) =>
+          a.brand.localeCompare(b.brand, "ru") ||
+          a.weight.localeCompare(b.weight, "ru")
+      );
+
+    const brands = Array.from(
+      new Set(comparisonGroups.map((group) => group.brand))
+    ).sort((a, b) => a.localeCompare(b, "ru"));
+
+    const visibleGroups =
+      priceComparisonBrand === "all"
+        ? comparisonGroups
+        : comparisonGroups.filter(
+            (group) => group.brand === priceComparisonBrand
+          );
+
+    const brandGroups = Array.from(
+      visibleGroups.reduce((map, group) => {
+        if (!map.has(group.brand)) {
+          map.set(group.brand, {
+            brand: group.brand,
+            groups: [],
+          });
+        }
+
+        map.get(group.brand).groups.push(group);
+        return map;
+      }, new Map()).values()
+    ).map((brandGroup) => {
+      const prices = brandGroup.groups.flatMap((group) =>
+        group.suppliers.map((supplier) => supplier.latestPrice)
+      );
+
+      const uniquePrices = Array.from(new Set(prices));
+
+      return {
+        ...brandGroup,
+        isUniformPrice: uniquePrices.length === 1,
+        uniformPrice: uniquePrices[0] || 0,
+        minPrice: prices.length ? Math.min(...prices) : 0,
+        maxPrice: prices.length ? Math.max(...prices) : 0,
+      };
+    });
+
+    return {
+      brands,
+      brandGroups,
     };
   })();
 
@@ -7447,6 +7569,204 @@ if (currentView === "purchase") {
               <span>Поставок с ценой</span>
               <strong>{purchaseFinanceData.rows.length}</strong>
             </article>
+          </section>
+
+          <section className="analytics-panel wide supplier-comparison-panel">
+            <button
+              type="button"
+              className={
+                isSupplierComparisonOpen
+                  ? "supplier-comparison-master-toggle open"
+                  : "supplier-comparison-master-toggle"
+              }
+              onClick={() =>
+                setIsSupplierComparisonOpen((current) => !current)
+              }
+            >
+              <div>
+                <strong>Сравнение цен поставщиков</strong>
+                <span>
+                  {supplierPriceComparisonData.brandGroups.length} брендов для сравнения
+                </span>
+              </div>
+
+              <em>{isSupplierComparisonOpen ? "↑" : "↓"}</em>
+            </button>
+
+            {isSupplierComparisonOpen && (
+              <div className="supplier-comparison-master-content">
+            <div className="supplier-comparison-header">
+              <div>
+                <h2>Детальное сравнение</h2>
+                <p className="analytics-note">
+                  Сравниваются одинаковые бренды и фасовки, закупавшиеся
+                  минимум у двух поставщиков.
+                </p>
+              </div>
+
+              <label>
+                <span>Бренд</span>
+                <select
+                  value={priceComparisonBrand}
+                  onChange={(event) =>
+                    setPriceComparisonBrand(event.target.value)
+                  }
+                >
+                  <option value="all">Все бренды</option>
+                  {supplierPriceComparisonData.brands.map((brand) => (
+                    <option value={brand} key={brand}>
+                      {brand}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {supplierPriceComparisonData.brandGroups.length === 0 && (
+              <p className="info-message dark">
+                Пока нет одинаковых фасовок, закупленных у нескольких поставщиков.
+              </p>
+            )}
+
+            <div className="supplier-comparison-list">
+              {supplierPriceComparisonData.brandGroups.map((brandGroup) => {
+                const isOpen =
+                  openPriceComparisonBrand === brandGroup.brand;
+
+                return (
+                  <article
+                    className="supplier-brand-accordion"
+                    key={brandGroup.brand}
+                  >
+                    <button
+                      type="button"
+                      className={
+                        isOpen
+                          ? "supplier-brand-toggle open"
+                          : "supplier-brand-toggle"
+                      }
+                      onClick={() =>
+                        setOpenPriceComparisonBrand(
+                          isOpen ? "" : brandGroup.brand
+                        )
+                      }
+                    >
+                      <div>
+                        <strong>{brandGroup.brand}</strong>
+                        <span>
+                          {brandGroup.groups.length} фасовок для сравнения
+                        </span>
+                      </div>
+
+                      <div className="supplier-brand-summary">
+                        {brandGroup.isUniformPrice ? (
+                          <span>
+                            Цена идентична —{" "}
+                            <strong>
+                              {brandGroup.uniformPrice.toLocaleString("ru-RU")} ₽
+                            </strong>
+                          </span>
+                        ) : (
+                          <span>
+                            от {brandGroup.minPrice.toLocaleString("ru-RU")} до{" "}
+                            {brandGroup.maxPrice.toLocaleString("ru-RU")} ₽
+                          </span>
+                        )}
+
+                        <em>{isOpen ? "↑" : "↓"}</em>
+                      </div>
+                    </button>
+
+                    {isOpen && (
+                      <div className="supplier-brand-content">
+                        {brandGroup.groups.map((group) => (
+                          <article
+                            className="supplier-comparison-card"
+                            key={group.key}
+                          >
+                            <div className="supplier-comparison-card-title">
+                              <strong>{group.weight}</strong>
+
+                              {group.suppliers.every(
+                                (supplier) =>
+                                  supplier.latestPrice === group.bestPrice
+                              ) && (
+                                <span>
+                                  Цена идентична —{" "}
+                                  {group.bestPrice.toLocaleString("ru-RU")} ₽
+                                </span>
+                              )}
+                            </div>
+
+                            {group.suppliers.map((supplier, index) => {
+                              const saving =
+                                supplier.latestPrice - group.bestPrice;
+
+                              return (
+                                <div
+                                  className={
+                                    index === 0
+                                      ? "supplier-price-row best"
+                                      : "supplier-price-row"
+                                  }
+                                  key={supplier.name}
+                                >
+                                  <div>
+                                    <strong>{supplier.name}</strong>
+                                    <span>
+                                      {supplier.supplyCount} поставок · средняя{" "}
+                                      {Math.round(
+                                        supplier.averagePrice
+                                      ).toLocaleString("ru-RU")} ₽
+                                    </span>
+                                  </div>
+
+                                  <div className="supplier-price-values">
+                                    {index === 0 &&
+                                      saving === 0 &&
+                                      !group.suppliers.every(
+                                        (item) =>
+                                          item.latestPrice === group.bestPrice
+                                      ) && <em>Лучшая цена</em>}
+
+                                    {saving > 0 && (
+                                      <em>
+                                        дороже на{" "}
+                                        {Math.round(saving).toLocaleString(
+                                          "ru-RU"
+                                        )} ₽
+                                      </em>
+                                    )}
+
+                                    <strong>
+                                      {supplier.latestPrice.toLocaleString(
+                                        "ru-RU"
+                                      )} ₽
+                                    </strong>
+
+                                    {supplier.latestPricePerGram > 0 && (
+                                      <span>
+                                        {supplier.latestPricePerGram
+                                          .toFixed(2)
+                                          .replace(".", ",")}{" "}
+                                        ₽/г
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+
+              </div>
+            )}
           </section>
 
           {purchaseFinanceData.rows.length === 0 && (

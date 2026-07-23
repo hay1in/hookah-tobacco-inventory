@@ -9560,3 +9560,660 @@ body .history-panel .supply-inner-filters-top .secondary-button:hover {
     z-index: 5;
   }
 }
+
+
+.supplier-comparison-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.supplier-comparison-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.supplier-comparison-header label {
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.supplier-comparison-header label span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.supplier-comparison-header select {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgba(32, 37, 31, 0.16);
+  border-radius: 12px;
+  background: #ffffff;
+  font: inherit;
+}
+
+.supplier-comparison-list {
+  display: grid;
+  gap: 14px;
+}
+
+.supplier-comparison-card {
+  overflow: hidden;
+  border: 1px solid rgba(32, 37, 31, 0.1);
+  border-radius: 16px;
+}
+
+.supplier-comparison-card-title,
+.supplier-price-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 17px;
+}
+
+.supplier-comparison-card-title {
+  background: rgba(32, 37, 31, 0.06);
+}
+
+.supplier-price-row {
+  align-items: center;
+  border-top: 1px solid rgba(32, 37, 31, 0.08);
+}
+
+.supplier-price-row.best {
+  background: rgba(91, 131, 82, 0.1);
+}
+
+.supplier-price-row > div,
+.supplier-price-values {
+  display: grid;
+  gap: 4px;
+}
+
+.supplier-price-values {
+  justify-items: end;
+  text-align: right;
+}
+
+.supplier-price-row span,
+.supplier-price-row em {
+  font-size: 12px;
+  color: rgba(32, 37, 31, 0.66);
+}
+
+.supplier-price-values em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .supplier-comparison-header,
+  .supplier-price-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .supplier-comparison-header label {
+    min-width: 0;
+  }
+
+  .supplier-price-values {
+    justify-items: start;
+    text-align: left;
+  }
+}
+
+
+.supplier-brand-accordion {
+  overflow: hidden;
+  border: 1px solid rgba(32, 37, 31, 0.1);
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.supplier-brand-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.supplier-brand-toggle.open {
+  background: rgba(32, 37, 31, 0.05);
+}
+
+.supplier-brand-toggle > div,
+.supplier-brand-summary {
+  display: grid;
+  gap: 4px;
+}
+
+.supplier-brand-toggle span {
+  font-size: 13px;
+  color: rgba(32, 37, 31, 0.66);
+}
+
+.supplier-brand-summary {
+  grid-auto-flow: column;
+  align-items: center;
+  text-align: right;
+}
+
+.supplier-brand-summary em {
+  font-style: normal;
+  font-weight: 800;
+}
+
+.supplier-brand-content {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-top: 1px solid rgba(32, 37, 31, 0.08);
+}
+
+@media (max-width: 640px) {
+  .supplier-brand-toggle {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .supplier-brand-summary {
+    grid-auto-flow: column;
+    justify-content: space-between;
+    text-align: left;
+  }
+}
+
+
+/* supplier comparison contrast fix */
+.supplier-comparison-panel {
+  color: #f6ecec;
+}
+
+.supplier-comparison-panel .analytics-note,
+.supplier-comparison-panel .info-message.dark {
+  color: rgba(246, 236, 236, 0.88);
+}
+
+.supplier-comparison-header label span {
+  color: #f6ecec;
+}
+
+.supplier-comparison-header select {
+  color: #20251f;
+}
+
+.supplier-brand-accordion {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #fffefe;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.supplier-brand-toggle {
+  background: #fffefe;
+  color: #20251f;
+}
+
+.supplier-brand-toggle.open {
+  background: #f6eeee;
+}
+
+.supplier-brand-toggle strong,
+.supplier-comparison-card-title strong,
+.supplier-price-row strong,
+.supplier-price-values strong {
+  color: #20251f;
+}
+
+.supplier-brand-toggle span,
+.supplier-brand-summary span,
+.supplier-comparison-card-title span,
+.supplier-price-row span,
+.supplier-price-row em,
+.supplier-price-values span,
+.supplier-price-values em {
+  color: rgba(32, 37, 31, 0.72);
+}
+
+.supplier-brand-summary strong {
+  color: #8f2d38;
+}
+
+.supplier-brand-toggle > div:first-child span {
+  color: rgba(32, 37, 31, 0.62);
+}
+
+.supplier-brand-summary em {
+  color: #8f2d38;
+}
+
+.supplier-brand-content {
+  background: #fffefe;
+}
+
+.supplier-comparison-card {
+  border: 1px solid rgba(32, 37, 31, 0.12);
+  background: #ffffff;
+}
+
+.supplier-comparison-card-title {
+  background: rgba(143, 45, 56, 0.08);
+}
+
+.supplier-price-row {
+  background: #ffffff;
+}
+
+.supplier-price-row.best {
+  background: rgba(95, 141, 101, 0.14);
+}
+
+.supplier-price-values strong {
+  font-size: 18px;
+}
+
+.supplier-price-row + .supplier-price-row {
+  border-top: 1px solid rgba(32, 37, 31, 0.1);
+}
+
+/* supplier comparison final contrast override */
+.supplier-comparison-panel .supplier-brand-accordion,
+.supplier-comparison-panel .supplier-brand-toggle,
+.supplier-comparison-panel .supplier-brand-content,
+.supplier-comparison-panel .supplier-comparison-card,
+.supplier-comparison-panel .supplier-comparison-card-title,
+.supplier-comparison-panel .supplier-price-row {
+  opacity: 1 !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle,
+.supplier-comparison-panel .supplier-brand-toggle *,
+.supplier-comparison-panel .supplier-comparison-card *,
+.supplier-comparison-panel .supplier-price-row * {
+  -webkit-text-fill-color: initial !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle strong,
+.supplier-comparison-panel .supplier-comparison-card-title strong,
+.supplier-comparison-panel .supplier-price-row > div > strong,
+.supplier-comparison-panel .supplier-price-values > strong {
+  color: #24191b !important;
+  -webkit-text-fill-color: #24191b !important;
+  opacity: 1 !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle span,
+.supplier-comparison-panel .supplier-comparison-card-title span,
+.supplier-comparison-panel .supplier-price-row span {
+  color: #66575a !important;
+  -webkit-text-fill-color: #66575a !important;
+  opacity: 1 !important;
+}
+
+.supplier-comparison-panel .supplier-price-values em {
+  color: #9b3542 !important;
+  -webkit-text-fill-color: #9b3542 !important;
+  opacity: 1 !important;
+}
+
+.supplier-comparison-panel .supplier-brand-summary em {
+  color: #9b3542 !important;
+  -webkit-text-fill-color: #9b3542 !important;
+}
+
+.supplier-comparison-panel .supplier-price-row.best {
+  background: #e9f1e9 !important;
+}
+
+.supplier-comparison-panel .supplier-comparison-card-title {
+  background: #f4e9eb !important;
+}
+
+/* supplier comparison theme alignment */
+.supplier-comparison-panel .supplier-brand-accordion {
+  border-color: rgba(255, 220, 224, 0.13) !important;
+  background: rgba(68, 31, 36, 0.82) !important;
+  box-shadow: none !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle {
+  background: rgba(68, 31, 36, 0.82) !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle.open {
+  background: rgba(101, 42, 51, 0.72) !important;
+}
+
+.supplier-comparison-panel .supplier-brand-content {
+  background: rgba(39, 20, 23, 0.68) !important;
+  border-top-color: rgba(255, 220, 224, 0.1) !important;
+}
+
+.supplier-comparison-panel .supplier-comparison-card {
+  border-color: rgba(255, 220, 224, 0.12) !important;
+  background: rgba(74, 34, 40, 0.74) !important;
+}
+
+.supplier-comparison-panel .supplier-comparison-card-title {
+  background: rgba(119, 47, 58, 0.58) !important;
+}
+
+.supplier-comparison-panel .supplier-price-row {
+  background: rgba(61, 29, 34, 0.72) !important;
+  border-top-color: rgba(255, 220, 224, 0.09) !important;
+}
+
+.supplier-comparison-panel .supplier-price-row.best {
+  background: rgba(119, 47, 58, 0.48) !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle strong,
+.supplier-comparison-panel .supplier-comparison-card-title strong,
+.supplier-comparison-panel .supplier-price-row > div > strong,
+.supplier-comparison-panel .supplier-price-values > strong {
+  color: #fff5f5 !important;
+  -webkit-text-fill-color: #fff5f5 !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle span,
+.supplier-comparison-panel .supplier-comparison-card-title span,
+.supplier-comparison-panel .supplier-price-row span {
+  color: rgba(255, 235, 237, 0.7) !important;
+  -webkit-text-fill-color: rgba(255, 235, 237, 0.7) !important;
+}
+
+.supplier-comparison-panel .supplier-price-values em,
+.supplier-comparison-panel .supplier-brand-summary strong,
+.supplier-comparison-panel .supplier-brand-summary em {
+  color: #f29aa5 !important;
+  -webkit-text-fill-color: #f29aa5 !important;
+}
+
+.supplier-comparison-panel .supplier-price-values > strong {
+  font-size: 17px;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle:hover {
+  background: rgba(101, 42, 51, 0.58) !important;
+}
+
+
+.supplier-comparison-master-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(68, 31, 36, 0.82);
+  color: #fff5f5;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.supplier-comparison-master-toggle.open {
+  border-radius: 16px 16px 0 0;
+  background: rgba(101, 42, 51, 0.72);
+}
+
+.supplier-comparison-master-toggle > div {
+  display: grid;
+  gap: 4px;
+}
+
+.supplier-comparison-master-toggle strong {
+  font-size: 18px;
+}
+
+.supplier-comparison-master-toggle span {
+  font-size: 13px;
+  color: rgba(255, 235, 237, 0.7);
+}
+
+.supplier-comparison-master-toggle em {
+  font-style: normal;
+  color: #f29aa5;
+  font-weight: 800;
+}
+
+.supplier-comparison-master-content {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  border-top: 1px solid rgba(255, 220, 224, 0.1);
+  background: rgba(39, 20, 23, 0.42);
+  border-radius: 0 0 16px 16px;
+}
+
+.supplier-comparison-panel:has(.supplier-comparison-master-toggle:not(.open)) {
+  padding: 0;
+  overflow: hidden;
+}
+
+.supplier-comparison-panel:has(.supplier-comparison-master-toggle.open) {
+  padding: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .supplier-comparison-master-toggle {
+    padding: 16px;
+  }
+
+  .supplier-comparison-master-content {
+    padding: 14px;
+  }
+}
+
+/* supplier comparison balanced palette */
+.supplier-comparison-panel .supplier-brand-accordion {
+  background: #f4efef !important;
+  border-color: rgba(55, 31, 35, 0.12) !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle {
+  background: #f4efef !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle.open {
+  background: #ebe2e3 !important;
+}
+
+.supplier-comparison-panel .supplier-brand-content {
+  background: #e7dddd !important;
+  border-top-color: rgba(55, 31, 35, 0.1) !important;
+}
+
+.supplier-comparison-panel .supplier-comparison-card {
+  background: #f7f3f3 !important;
+  border-color: rgba(55, 31, 35, 0.12) !important;
+}
+
+.supplier-comparison-panel .supplier-comparison-card-title {
+  background: #e9dfe0 !important;
+}
+
+.supplier-comparison-panel .supplier-price-row {
+  background: #f7f3f3 !important;
+  border-top-color: rgba(55, 31, 35, 0.08) !important;
+}
+
+.supplier-comparison-panel .supplier-price-row.best {
+  background: #e3e7e1 !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle strong,
+.supplier-comparison-panel .supplier-comparison-card-title strong,
+.supplier-comparison-panel .supplier-price-row > div > strong,
+.supplier-comparison-panel .supplier-price-values > strong {
+  color: #2b2022 !important;
+  -webkit-text-fill-color: #2b2022 !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle span,
+.supplier-comparison-panel .supplier-comparison-card-title span,
+.supplier-comparison-panel .supplier-price-row span {
+  color: rgba(43, 32, 34, 0.66) !important;
+  -webkit-text-fill-color: rgba(43, 32, 34, 0.66) !important;
+}
+
+.supplier-comparison-panel .supplier-price-values em,
+.supplier-comparison-panel .supplier-brand-summary strong,
+.supplier-comparison-panel .supplier-brand-summary em {
+  color: #9f3e4b !important;
+  -webkit-text-fill-color: #9f3e4b !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle:hover {
+  background: #eee6e7 !important;
+}
+
+/* supplier comparison typography alignment */
+.supplier-comparison-panel,
+.supplier-comparison-panel button,
+.supplier-comparison-panel select,
+.supplier-comparison-panel strong,
+.supplier-comparison-panel span,
+.supplier-comparison-panel em {
+  font-family: inherit !important;
+  letter-spacing: normal !important;
+}
+
+.supplier-comparison-panel h2,
+.supplier-comparison-master-toggle strong {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.supplier-comparison-master-toggle span,
+.supplier-comparison-header label span,
+.supplier-comparison-panel .analytics-note {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle strong,
+.supplier-comparison-panel .supplier-comparison-card-title strong {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.supplier-comparison-panel .supplier-price-row > div > strong {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.supplier-comparison-panel .supplier-price-values > strong {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 1.3;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle span,
+.supplier-comparison-panel .supplier-comparison-card-title span,
+.supplier-comparison-panel .supplier-price-row span,
+.supplier-comparison-panel .supplier-price-values span,
+.supplier-comparison-panel .supplier-price-values em {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  font-style: normal;
+}
+
+.supplier-comparison-panel select {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.supplier-comparison-panel .supplier-brand-summary strong,
+.supplier-comparison-panel .supplier-brand-summary em {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* supplier comparison typography scale fix */
+.supplier-comparison-panel .supplier-comparison-master-toggle strong {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+}
+
+.supplier-comparison-panel .supplier-comparison-master-toggle span {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle {
+  min-height: 72px;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle strong {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.supplier-comparison-panel .supplier-brand-toggle span,
+.supplier-comparison-panel .supplier-brand-summary span {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.supplier-comparison-panel .supplier-comparison-card-title strong {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.supplier-comparison-panel .supplier-comparison-card-title span {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.supplier-comparison-panel .supplier-price-row {
+  min-height: 76px;
+}
+
+.supplier-comparison-panel .supplier-price-row > div > strong {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.supplier-comparison-panel .supplier-price-row > div > span {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.supplier-comparison-panel .supplier-price-values > strong {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+}
+
+.supplier-comparison-panel .supplier-price-values > span,
+.supplier-comparison-panel .supplier-price-values > em {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.supplier-comparison-panel .supplier-comparison-header h2 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+.supplier-comparison-panel .analytics-note {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
