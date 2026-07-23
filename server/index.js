@@ -210,8 +210,6 @@ async function getFlavorById(id) {
 
 app.delete("/api/admin/clear-database", async (req, res) => {
   try {
-    await ensureSuppliesSchema();
-
     await pool.query(
       "TRUNCATE TABLE flavors, action_logs, supplies, brand_settings RESTART IDENTITY"
     );
@@ -262,9 +260,6 @@ app.post("/api/admin/restore-backup", async (req, res) => {
   const client = await pool.connect();
 
   try {
-    await ensureSuppliesSchema();
-
-
     await client.query("BEGIN");
 
     await client.query(
@@ -422,7 +417,7 @@ app.post("/api/admin/restore-backup", async (req, res) => {
     `);
 
     await client.query("COMMIT");
-    await ensureSuppliesSchema();
+    await backfillSuppliesFromActionLogs();
 
     res.json({
       message: "Backup восстановлен",
@@ -527,51 +522,7 @@ function normalizeSupplyDateValue(value) {
   return new Date().toISOString().slice(0, 10);
 }
 
-async function ensureSuppliesSchema() {
-  await ensureActionLogsTable();
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS supplies (
-      id SERIAL PRIMARY KEY,
-      supply_date DATE NOT NULL,
-      supplier TEXT NOT NULL DEFAULT '',
-      invoice_number TEXT NOT NULL DEFAULT '',
-      note TEXT NOT NULL DEFAULT '',
-      status TEXT NOT NULL DEFAULT 'received',
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      UNIQUE (supply_date, supplier, invoice_number)
-    );
-  `);
-
-  await pool.query(`
-    ALTER TABLE action_logs
-    ADD COLUMN IF NOT EXISTS supply_id INTEGER;
-  `);
-
-  await pool.query(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'action_logs_supply_id_fkey'
-      ) THEN
-        ALTER TABLE action_logs
-        ADD CONSTRAINT action_logs_supply_id_fkey
-        FOREIGN KEY (supply_id)
-        REFERENCES supplies(id)
-        ON DELETE SET NULL;
-      END IF;
-    END
-    $$;
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS action_logs_supply_id_idx
-    ON action_logs(supply_id);
-  `);
-
+async function backfillSuppliesFromActionLogs() {
   await pool.query(`
     INSERT INTO supplies (
       supply_date,
@@ -634,9 +585,55 @@ async function ensureSuppliesSchema() {
   `);
 }
 
-async function resolveSupplyForDetails(details, preferredSupplyId = null) {
-  await ensureSuppliesSchema();
+async function ensureSuppliesSchema() {
+  await ensureActionLogsTable();
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS supplies (
+      id SERIAL PRIMARY KEY,
+      supply_date DATE NOT NULL,
+      supplier TEXT NOT NULL DEFAULT '',
+      invoice_number TEXT NOT NULL DEFAULT '',
+      note TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'received',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      UNIQUE (supply_date, supplier, invoice_number)
+    );
+  `);
+
+  await pool.query(`
+    ALTER TABLE action_logs
+    ADD COLUMN IF NOT EXISTS supply_id INTEGER;
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'action_logs_supply_id_fkey'
+      ) THEN
+        ALTER TABLE action_logs
+        ADD CONSTRAINT action_logs_supply_id_fkey
+        FOREIGN KEY (supply_id)
+        REFERENCES supplies(id)
+        ON DELETE SET NULL;
+      END IF;
+    END
+    $$;
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS action_logs_supply_id_idx
+    ON action_logs(supply_id);
+  `);
+
+  await backfillSuppliesFromActionLogs();
+}
+
+async function resolveSupplyForDetails(details, preferredSupplyId = null) {
   const preferredId = Number(preferredSupplyId);
 
   if (Number.isInteger(preferredId) && preferredId > 0) {
@@ -686,8 +683,6 @@ async function resolveSupplyForDetails(details, preferredSupplyId = null) {
 
 app.get("/api/action-logs", async (req, res) => {
   try {
-    await ensureSuppliesSchema();
-
     const result = await pool.query(`
       SELECT
         id,
@@ -717,8 +712,6 @@ app.post("/api/action-logs", async (req, res) => {
   }
 
   try {
-    await ensureSuppliesSchema();
-
     const normalizedDetails = parseActionDetailsObject(details);
     let resolvedSupplyId = null;
 
@@ -783,8 +776,6 @@ app.patch("/api/action-logs/:id", async (req, res) => {
   }
 
   try {
-    await ensureSuppliesSchema();
-
     const currentResult = await pool.query(
       `
         SELECT action, supply_id
