@@ -265,21 +265,6 @@ app.post("/api/admin/restore-backup", async (req, res) => {
   try {
     await ensureSuppliesSchema();
 
-    await client.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
-    await client.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
-    await client.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
     await ensureStrengthSchema(client);
 
     await client.query("BEGIN");
@@ -945,16 +930,6 @@ app.post("/api/flavors/merge", async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    await client.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
-    await client.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
     const result = await client.query(
       "SELECT * FROM flavors WHERE id = ANY($1::int[])",
       [ids]
@@ -1188,16 +1163,6 @@ app.post("/api/flavors/bulk", async (req, res) => {
   }
 
   try {
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
     let query = "";
 
     if (action === "archive") {
@@ -1267,21 +1232,6 @@ app.post("/api/flavors/bulk", async (req, res) => {
 
 app.get("/api/flavors", async (req, res) => {
   try {
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
     await ensureStrengthSchema();
 
     const result = await pool.query(`
@@ -1387,16 +1337,6 @@ app.post("/api/flavors/supply", async (req, res) => {
   }
 
   try {
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
     const existingFlavor = await pool.query(
       `
         SELECT *
@@ -1625,16 +1565,6 @@ app.post("/api/flavors/import", async (req, res) => {
   const client = await pool.connect();
 
   try {
-    await client.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
-    await client.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
     await client.query("BEGIN");
 
     let importedCount = 0;
@@ -2194,11 +2124,6 @@ app.patch("/api/flavors/:id/deadstock-excluded", async (req, res) => {
   const { excludedFromDeadstock } = req.body;
 
   try {
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS excluded_from_deadstock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
     const result = await pool.query(
       `
         UPDATE flavors
@@ -2225,11 +2150,6 @@ app.patch("/api/flavors/:id/purchase-confirmed", async (req, res) => {
   const { purchaseConfirmed } = req.body;
 
   try {
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS purchase_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
     const result = await pool.query(
       `
         UPDATE flavors
@@ -2255,11 +2175,6 @@ app.patch("/api/flavors/:id/low-stock", async (req, res) => {
   const { lowStock } = req.body;
 
   try {
-    await pool.query(`
-      ALTER TABLE flavors
-      ADD COLUMN IF NOT EXISTS low_stock BOOLEAN NOT NULL DEFAULT FALSE;
-    `);
-
     const result = await pool.query(
       `
         UPDATE flavors
