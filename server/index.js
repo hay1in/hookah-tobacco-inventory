@@ -70,36 +70,6 @@ const pool = new Pool({
   idleTimeoutMillis: 30000,
 });
 
-const defaultFlavors = [
-  {
-    brand: "Musthave",
-    name: "Ванильный крем",
-    packs: [
-      { weight: "100 г", quantity: 2 },
-      { weight: "25 г", quantity: 1 },
-    ],
-    tags: ["десертный", "сливочный", "сладкий"],
-    minStock: 1,
-    archived: false,
-  },
-  {
-    brand: "Северный",
-    name: "Mountain Dew",
-    packs: [{ weight: "100 г", quantity: 0 }],
-    tags: ["цитрус", "газировка", "свежий"],
-    minStock: 1,
-    archived: false,
-  },
-  {
-    brand: "База",
-    name: "Белый чай",
-    packs: [{ weight: "100 г", quantity: 1 }],
-    tags: ["чайный", "лёгкий", "цветочный"],
-    minStock: 1,
-    archived: false,
-  },
-];
-
 const CANONICAL_BRAND_NAMES = Object.freeze({
   chabacco: "Chabacco",
   "chabacco mix": "Chabacco",
@@ -206,28 +176,6 @@ async function initDb() {
   `);
 
   await ensureStrengthSchema();
-
-  const countResult = await pool.query("SELECT COUNT(*) FROM flavors");
-  const count = Number(countResult.rows[0].count);
-
-  if (count === 0) {
-    for (const flavor of defaultFlavors) {
-      await pool.query(
-        `
-          INSERT INTO flavors (brand, name, packs, tags, min_stock, archived)
-          VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6)
-        `,
-        [
-          flavor.brand,
-          flavor.name,
-          JSON.stringify(flavor.packs),
-          JSON.stringify(flavor.tags),
-          flavor.minStock,
-          flavor.archived,
-        ]
-      );
-    }
-  }
 
   await ensureSuppliesSchema();
 }
