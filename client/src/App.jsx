@@ -2607,7 +2607,10 @@ const titles = {
     const status = getStatus(flavor).text;
 
     const matchesStatus =
-      statusFilter === "all" ? !flavor.archived : status === statusFilter;
+      currentView === "archive"
+        ? Boolean(flavor.archived)
+        : !flavor.archived &&
+          (statusFilter === "all" || status === statusFilter);
 
     const flavorTags = Array.isArray(flavor.tags) ? flavor.tags : [];
 
@@ -4720,6 +4723,16 @@ return "";
 
     const goToView = (view) => {
       setDataQualityReturnTarget(null);
+
+      if (view === "inventory" || view === "archive") {
+        setSearchText("");
+        setStatusFilter("all");
+        setSelectedTag("all");
+        setOpenBrandName("");
+        setOpenFlavorId(null);
+        clearSelectedFlavors();
+      }
+
       setCurrentView(view);
       closeMenu();
     };
@@ -4939,6 +4952,11 @@ return "";
                       : ""}
                   </span>
                 </button>
+
+                <button type="button" onClick={() => goToView("archive")}>
+                  <Archive className="ui-icon" aria-hidden="true" />
+                  <span>Архив</span>
+                </button>
               </div>
 
               <div className="dropdown-section">
@@ -4975,7 +4993,8 @@ return "";
                       closeMenu();
                     }}
                   >
-                    Импорт
+                    <FileUp className="ui-icon" aria-hidden="true" />
+                    <span>Импорт</span>
                   </button>
                 )}
 
@@ -4985,7 +5004,8 @@ return "";
                     closeMenu();
                   }}
                 >
-                  Экспорт
+                  <FileDown className="ui-icon" aria-hidden="true" />
+                  <span>Экспорт</span>
                 </button>
 
                 <button
@@ -4994,7 +5014,8 @@ return "";
                     closeMenu();
                   }}
                 >
-                  История
+                  <History className="ui-icon" aria-hidden="true" />
+                  <span>История</span>
                 </button>
 
                 {!isDemoMode && (
@@ -5096,7 +5117,7 @@ return "";
           type="button"
           className={
             isBottomMoreOpen ||
-            ["deadstock", "tags", "history"].includes(currentView)
+            ["archive", "deadstock", "tags", "history"].includes(currentView)
               ? "bottom-navigation-item active"
               : "bottom-navigation-item"
           }
@@ -5143,6 +5164,14 @@ return "";
             </div>
 
             <div className="bottom-more-sheet-grid">
+              <button
+                type="button"
+                onClick={() => goToView("archive")}
+              >
+                <Archive className="ui-icon" aria-hidden="true" />
+                <span>Архив</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => goToView("deadstock")}
@@ -7720,9 +7749,12 @@ if (currentView === "purchase") {
   return (
     <div className="app">
       {renderAppHeader({
-        title: "Склад табака",
-        subtitle: "Отслеживание вкусов, фасовок, остатков и закупки",
-        isInventory: true,
+        title: currentView === "archive" ? "Архив" : "Склад табака",
+        subtitle:
+          currentView === "archive"
+            ? "Архивные вкусы с возможностью восстановления"
+            : "Отслеживание вкусов, фасовок, остатков и закупки",
+        isInventory: currentView === "inventory",
       })}
 
       <main className="content">
@@ -8181,13 +8213,15 @@ if (currentView === "purchase") {
             </div>
 
             <div className="bulk-action-buttons">
-              <button onClick={() => applyBulkAction("archive")}>
-                В архив
-              </button>
-
-              <button onClick={() => applyBulkAction("restore")}>
-                Вернуть
-              </button>
+              {currentView === "archive" ? (
+                <button onClick={() => applyBulkAction("restore")}>
+                  Восстановить
+                </button>
+              ) : (
+                <button onClick={() => applyBulkAction("archive")}>
+                  В архив
+                </button>
+              )}
 
               <button onClick={() => applyBulkAction("purchase_confirmed_on")}>
                 Подтвердить закупку
@@ -8267,16 +8301,7 @@ if (currentView === "purchase") {
     Без тегов
   </button>
 
-  <button
-    className={
-      statusFilter === "Архив" && selectedTag === "all"
-        ? "inventory-quick-filter-button active"
-        : "inventory-quick-filter-button"
-    }
-    onClick={() => applyInventoryQuickFilter("Архив")}
-  >
-    Архив
-  </button>
+
 </section>
         <section className="tag-filter-panel">
           <button
