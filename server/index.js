@@ -211,7 +211,6 @@ async function getFlavorById(id) {
 app.delete("/api/admin/clear-database", async (req, res) => {
   try {
     await ensureSuppliesSchema();
-    await ensureStrengthSchema();
 
     await pool.query(
       "TRUNCATE TABLE flavors, action_logs, supplies, brand_settings RESTART IDENTITY"
@@ -265,7 +264,6 @@ app.post("/api/admin/restore-backup", async (req, res) => {
   try {
     await ensureSuppliesSchema();
 
-    await ensureStrengthSchema(client);
 
     await client.query("BEGIN");
 
@@ -1232,7 +1230,6 @@ app.post("/api/flavors/bulk", async (req, res) => {
 
 app.get("/api/flavors", async (req, res) => {
   try {
-    await ensureStrengthSchema();
 
     const result = await pool.query(`
       SELECT
@@ -1270,7 +1267,6 @@ app.get("/api/flavors", async (req, res) => {
 
 app.get("/api/brand-settings", async (req, res) => {
   try {
-    await ensureStrengthSchema();
 
     const result = await pool.query(`
       SELECT
@@ -1291,7 +1287,6 @@ app.get("/api/brand-settings", async (req, res) => {
 
 app.put("/api/brand-settings/:brand", async (req, res) => {
   try {
-    await ensureStrengthSchema();
 
     const brand = normalizeBrandName(decodeURIComponent(req.params.brand || ""));
     const defaultStrength = normalizeStrengthValue(req.body?.defaultStrength);
@@ -1447,7 +1442,6 @@ app.post("/api/flavors/supply", async (req, res) => {
 app.post("/api/flavors/import", async (req, res) => {
   const { rows } = req.body;
 
-  await ensureStrengthSchema();
 
   if (!Array.isArray(rows)) {
     return res.status(400).json({ message: "Неверный формат Excel-данных" });
@@ -1915,7 +1909,6 @@ app.put("/api/flavors/:id", async (req, res) => {
       brandStrength,
     } = req.body;
 
-    await ensureStrengthSchema(client);
 
     if (
       !Number.isInteger(flavorId) ||
