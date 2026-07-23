@@ -9527,3 +9527,36 @@ body .history-panel .supply-inner-filters-top .secondary-button:hover {
 }
 
 /* === BRAND STRENGTH SETTINGS END === */
+
+
+.analytics-section-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.analytics-section-tabs button {
+  flex: 1;
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.analytics-section-tabs button.active {
+  background: #20251f;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .analytics-section-tabs {
+    position: sticky;
+    top: 8px;
+    z-index: 5;
+  }
+}

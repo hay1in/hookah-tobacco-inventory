@@ -24,7 +24,6 @@ import {
   FileUp,
   History,
   ShieldAlert,
-  Tags,
   X
 } from "lucide-react";
 import BrandStrengthSettings from "./components/BrandStrengthSettings";
@@ -2138,6 +2137,7 @@ const [selectedTag, setSelectedTag] = useState("all");
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
   const [isBottomMoreOpen, setIsBottomMoreOpen] = useState(false);
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
+  const [analyticsSection, setAnalyticsSection] = useState("finance");
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all");
   const [openDataQualityIssue, setOpenDataQualityIssue] = useState(null);
   const [dataQualityReturnTarget, setDataQualityReturnTarget] = useState(null);
@@ -4978,8 +4978,6 @@ return "";
 
                 <button type="button" onClick={() => goToView("dataQuality")}>
                   Проверка базы{dataQualityTotalIssues > 0 ? ` (${dataQualityTotalIssues})` : ""}
-                </button><button type="button" onClick={() => goToView("tags")}>
-                  Теги
                 </button>
               </div>
 
@@ -5117,7 +5115,7 @@ return "";
           type="button"
           className={
             isBottomMoreOpen ||
-            ["archive", "deadstock", "tags", "history"].includes(currentView)
+            ["archive", "deadstock", "history"].includes(currentView)
               ? "bottom-navigation-item active"
               : "bottom-navigation-item"
           }
@@ -5180,13 +5178,7 @@ return "";
                 <span>Залежи</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => goToView("tags")}
-              >
-                <Tags className="ui-icon" aria-hidden="true" />
-                <span>Теги</span>
-              </button>
+
 
               <button
                 type="button"
@@ -7283,10 +7275,30 @@ if (currentView === "purchase") {
       <div className="app">
         {renderAppHeader({
           title: "Аналитика",
-          subtitle: "Сводка по складу, остаткам и закупленному весу",
+          subtitle: "Финансовые показатели и аналитика вкусового ассортимента",
         })}
 
         <main className="content analytics-page">
+          <section className="analytics-section-tabs">
+            <button
+              type="button"
+              className={analyticsSection === "finance" ? "active" : ""}
+              onClick={() => setAnalyticsSection("finance")}
+            >
+              Финансы
+            </button>
+
+            <button
+              type="button"
+              className={analyticsSection === "flavors" ? "active" : ""}
+              onClick={() => setAnalyticsSection("flavors")}
+            >
+              Вкусы
+            </button>
+          </section>
+
+          {analyticsSection === "flavors" && (
+            <>
           <section className="analytics-grid">
             <article
               className={
@@ -7384,7 +7396,11 @@ if (currentView === "purchase") {
               <strong>{formatWeight(analyticsData.totalUsedGrams)}</strong>
             </article>
           </section>
+            </>
+          )}
 
+          {analyticsSection === "finance" && (
+            <>
           <section className="analytics-period-panel">
             <span>Период финансовой аналитики</span>
 
@@ -7591,6 +7607,16 @@ if (currentView === "purchase") {
             </section>
           )}
 
+            </>
+          )}
+
+          {analyticsSection === "flavors" && (
+            <>
+            </>
+          )}
+
+          {analyticsSection === "flavors" && (
+            <>
           <section className="analytics-sections">
             <article className="analytics-panel">
               <h2>Топ брендов по общему весу</h2>
@@ -7741,6 +7767,120 @@ if (currentView === "purchase") {
 
             </article>
           </section>
+
+          <section className="analytics-grid">
+            <article className="analytics-card">
+              <span>Всего тегов</span>
+              <strong>{tagRows.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Основных категорий</span>
+              <strong>{mainTasteTagRows.length}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Самый частый тег</span>
+              <strong>{tagRows[0]?.tag ? `#${tagRows[0].tag}` : "—"}</strong>
+            </article>
+
+            <article className="analytics-card">
+              <span>Возможных дублей</span>
+              <strong>{tagDuplicateGroups.length}</strong>
+            </article>
+          </section>
+
+          <section className="analytics-sections flavor-tag-sections">
+            <article className="analytics-panel">
+              <h2>Основные вкусовые категории</h2>
+
+              {mainTasteTagRows.length === 0 && (
+                <p className="info-message dark">Основные теги пока не используются</p>
+              )}
+
+              {(isMainTagsExpanded
+                ? mainTasteTagRows
+                : mainTasteTagRows.slice(0, 6)
+              ).map((row) => (
+                <div className="analytics-row" key={row.tag}>
+                  <span>
+                    #{row.tag} · {row.activeFlavorCount} активных ·{" "}
+                    {row.totalPacks} пач.
+                  </span>
+
+                  <button
+                    type="button"
+                    className="secondary-button small dark"
+                    onClick={() => {
+                      setSearchText("");
+                      setStatusFilter("all");
+                      setSelectedTag(row.tag);
+                      setCurrentView("inventory");
+                    }}
+                  >
+                    Показать
+                  </button>
+                </div>
+              ))}
+
+              {mainTasteTagRows.length > 6 && (
+                <button
+                  type="button"
+                  className="secondary-button dark"
+                  onClick={() => setIsMainTagsExpanded((value) => !value)}
+                >
+                  {isMainTagsExpanded ? "Свернуть" : "Показать все"}
+                </button>
+              )}
+            </article>
+
+            <article className="analytics-panel">
+              <h2>Дополнительные теги</h2>
+
+              {otherTagRows.length === 0 && (
+                <p className="info-message dark">
+                  Дополнительные теги пока не используются
+                </p>
+              )}
+
+              {(isOtherTagsExpanded
+                ? otherTagRows
+                : otherTagRows.slice(0, 6)
+              ).map((row) => (
+                <div className="analytics-row" key={row.tag}>
+                  <span>
+                    #{row.tag} · {row.activeFlavorCount} активных ·{" "}
+                    {row.totalPacks} пач.
+                  </span>
+
+                  <button
+                    type="button"
+                    className="secondary-button small dark"
+                    onClick={() => {
+                      setSearchText("");
+                      setStatusFilter("all");
+                      setSelectedTag(row.tag);
+                      setCurrentView("inventory");
+                    }}
+                  >
+                    Показать
+                  </button>
+                </div>
+              ))}
+
+              {otherTagRows.length > 6 && (
+                <button
+                  type="button"
+                  className="secondary-button dark"
+                  onClick={() => setIsOtherTagsExpanded((value) => !value)}
+                >
+                  {isOtherTagsExpanded ? "Свернуть" : "Показать все"}
+                </button>
+              )}
+            </article>
+          </section>
+            </>
+          )}
         </main>
       </div>
     );
