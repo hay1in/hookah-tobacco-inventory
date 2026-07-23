@@ -151,3 +151,7 @@ backup/
 *.backup
 *.patch
 *-backup-*.json
+
+# Versioned database migrations
+!server/db/migrations/
+!server/db/migrations/*.sql
