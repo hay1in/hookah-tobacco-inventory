@@ -10986,3 +10986,52 @@ body .history-panel .supply-inner-filters-top .secondary-button:hover {
 .top-used-flavor-row + .top-used-flavor-row {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+/* import progress contrast fix */
+.import-progress-backdrop,
+.import-progress-overlay {
+  background: rgba(9, 6, 7, 0.72) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.import-progress,
+.import-progress-card,
+.import-progress-panel {
+  background: linear-gradient(145deg, #fff7ed, #efd8cc) !important;
+  border: 1px solid rgba(94, 39, 49, 0.22) !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4) !important;
+  color: #2d191e !important;
+}
+
+.import-progress *,
+.import-progress-card *,
+.import-progress-panel * {
+  color: #2d191e !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.import-progress strong,
+.import-progress-card strong,
+.import-progress-panel strong,
+.import-progress-value,
+.import-progress-percent {
+  color: #9b3542 !important;
+  font-weight: 800 !important;
+}
+
+.import-progress .progress-bar,
+.import-progress-card .progress-bar,
+.import-progress-panel .progress-bar,
+.import-progress-track {
+  background: rgba(94, 39, 49, 0.14) !important;
+}
+
+.import-progress .progress-fill,
+.import-progress-card .progress-fill,
+.import-progress-panel .progress-fill,
+.import-progress-track > div,
+.import-progress-bar > div {
+  background: linear-gradient(135deg, #d93642, #5e2731) !important;
+}
