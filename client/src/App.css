@@ -11035,3 +11035,38 @@ body .history-panel .supply-inner-filters-top .secondary-button:hover {
 .import-progress-bar > div {
   background: linear-gradient(135deg, #d93642, #5e2731) !important;
 }
+
+/* duplicates dark cards contrast fix */
+.duplicates-panel .duplicate-group {
+  color: #fff3eb !important;
+}
+
+.duplicates-panel .duplicate-group h3,
+.duplicates-panel .duplicate-group p,
+.duplicates-panel .duplicate-group strong,
+.duplicates-panel .duplicate-group span,
+.duplicates-panel .duplicate-group small {
+  color: #fff3eb !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.duplicates-panel .duplicate-group-top p,
+.duplicates-panel .duplicate-item span,
+.duplicates-panel .duplicate-item small {
+  color: rgba(255, 243, 235, 0.72) !important;
+}
+
+.duplicates-panel .duplicate-item {
+  background: rgba(255, 255, 255, 0.025) !important;
+  border-color: rgba(255, 238, 233, 0.12) !important;
+}
+
+.duplicates-panel .duplicate-item strong {
+  color: #ffffff !important;
+}
+
+.duplicates-panel .duplicate-group .submit-button {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
