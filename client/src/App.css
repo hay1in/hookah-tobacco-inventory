@@ -10470,3 +10470,519 @@ body .history-panel .supply-inner-filters-top .secondary-button:hover {
 .supplier-comparison-header.simplified .analytics-note {
   text-align: center;
 }
+
+/* top used flavors */
+.top-used-flavors-panel {
+  display: grid;
+  gap: 15px;
+}
+
+.top-used-flavors-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.top-used-flavors-header > div {
+  display: grid;
+  gap: 5px;
+}
+
+.top-used-flavors-header h2,
+.top-used-flavors-header p {
+  margin: 0;
+}
+
+.top-used-flavors-header > strong {
+  white-space: nowrap;
+  color: var(--app-text-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.top-used-flavors-list {
+  display: grid;
+}
+
+.top-used-flavor-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-used-flavor-row > div {
+  display: grid;
+  gap: 4px;
+}
+
+.top-used-flavor-row > div > strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.top-used-flavor-row > div > span {
+  color: var(--app-text-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.top-used-flavor-position {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--app-border);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .top-used-flavors-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .top-used-flavor-row {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .top-used-flavor-row > strong:last-child {
+    grid-column: 2;
+  }
+}
+
+/* compact application header */
+.compact-app-header {
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.header-title-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.header-title-row > div {
+  min-width: 0;
+}
+
+.compact-supply-button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding-inline: 18px;
+}
+
+@media (max-width: 620px) {
+  .header-title-row {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .compact-supply-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* destructive action in bottom more menu */
+.bottom-more-sheet-grid .bottom-more-danger-action {
+  color: #a83f3f;
+}
+
+/* final inventory header and filters alignment */
+.compact-app-header {
+  padding: 34px 32px;
+}
+
+.compact-app-header .header-title-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 32px;
+}
+
+.compact-app-header .header-title-row > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  text-align: left;
+}
+
+.compact-app-header .eyebrow,
+.compact-app-header h1,
+.compact-app-header .subtitle,
+.compact-app-header .demo-badge {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+}
+
+.compact-app-header .eyebrow {
+  line-height: 1;
+}
+
+.compact-app-header h1 {
+  line-height: 1.08;
+}
+
+.compact-app-header .subtitle {
+  line-height: 1.45;
+}
+
+.compact-supply-button {
+  width: 174px;
+  min-width: 174px;
+  min-height: 48px;
+  padding: 0 22px;
+  display: inline-flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  white-space: nowrap;
+}
+
+.compact-supply-button .ui-icon,
+.compact-supply-button span {
+  flex: 0 0 auto;
+}
+
+.centered-filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.centered-filter-panel button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .compact-app-header {
+    padding: 28px 22px;
+  }
+
+  .compact-app-header .header-title-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .compact-supply-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .centered-filter-panel {
+    justify-content: center;
+  }
+}
+
+/* inventory filters two-column layout */
+.compact-app-header .header-title-row {
+  align-items: start;
+}
+
+.compact-supply-button {
+  justify-self: end;
+  align-self: start;
+}
+
+.inventory-filters-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(520px, 1.6fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.inventory-filters-grid .centered-filter-panel,
+.inventory-filters-grid .tag-filter-panel {
+  height: 100%;
+  margin: 0;
+}
+
+.inventory-filters-status-column .centered-filter-panel {
+  justify-content: center;
+  align-content: center;
+  min-height: 100%;
+}
+
+.inventory-filters-tags-column .tag-filter-panel {
+  justify-content: center;
+  align-content: center;
+}
+
+@media (max-width: 900px) {
+  .inventory-filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-supply-button {
+    justify-self: end;
+  }
+}
+
+/* final header edge and equal filter columns */
+.compact-app-header .header-title-row {
+  width: 100% !important;
+  max-width: none !important;
+  grid-template-columns: minmax(0, 1fr) max-content;
+}
+
+.compact-app-header .header-title-row > div {
+  width: auto !important;
+  max-width: none !important;
+}
+
+.compact-app-header .compact-supply-button {
+  justify-self: end !important;
+  margin-left: auto !important;
+  align-self: center;
+}
+
+.inventory-filters-grid {
+  align-items: stretch;
+}
+
+.inventory-filters-status-column,
+.inventory-filters-tags-column {
+  display: flex;
+  min-width: 0;
+}
+
+.inventory-filters-grid .centered-filter-panel {
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  align-content: center;
+}
+
+@media (max-width: 900px) {
+  .inventory-filters-status-column,
+  .inventory-filters-tags-column {
+    display: block;
+  }
+
+  .inventory-filters-grid .centered-filter-panel {
+    min-height: 0;
+  }
+}
+
+/* spacing below inventory filters */
+.inventory-filters-grid {
+  margin-bottom: 20px;
+}
+
+/* final contrast fix for light UI surfaces */
+
+/* Окно настройки крепости бренда */
+.choice-modal-backdrop > .choice-modal.brand-strength-modal,
+.choice-modal-backdrop > .choice-modal.brand-strength-modal * {
+  opacity: 1 !important;
+}
+
+.choice-modal-backdrop > .choice-modal.brand-strength-modal {
+  color: #2d191e !important;
+}
+
+.choice-modal-backdrop > .choice-modal.brand-strength-modal h2,
+.choice-modal-backdrop > .choice-modal.brand-strength-modal label,
+.choice-modal-backdrop > .choice-modal.brand-strength-modal p,
+.choice-modal-backdrop > .choice-modal.brand-strength-modal span,
+.choice-modal-backdrop > .choice-modal.brand-strength-modal strong {
+  color: #2d191e !important;
+  text-shadow: none !important;
+}
+
+.choice-modal-backdrop > .choice-modal.brand-strength-modal
+  .choice-modal-eyebrow {
+  color: #6f303b !important;
+}
+
+.choice-modal-backdrop > .choice-modal.brand-strength-modal select {
+  background: #fffaf5 !important;
+  color: #2d191e !important;
+  -webkit-text-fill-color: #2d191e !important;
+  opacity: 1 !important;
+}
+
+.choice-modal-backdrop > .choice-modal.brand-strength-modal
+  .choice-modal-actions
+  button {
+  background: #351b22 !important;
+  color: #fff7ed !important;
+  -webkit-text-fill-color: #fff7ed !important;
+  opacity: 1 !important;
+}
+
+/* Светлая раскрытая строка бренда */
+.brand-row.open,
+.brand-row.open *,
+.brand-row[aria-expanded="true"],
+.brand-row[aria-expanded="true"] * {
+  opacity: 1 !important;
+}
+
+.brand-row.open,
+.brand-row[aria-expanded="true"] {
+  color: #2d191e !important;
+}
+
+.brand-row.open strong,
+.brand-row.open span,
+.brand-row.open em,
+.brand-row[aria-expanded="true"] strong,
+.brand-row[aria-expanded="true"] span,
+.brand-row[aria-expanded="true"] em {
+  color: #2d191e !important;
+  text-shadow: none !important;
+}
+
+.brand-row.open .brand-row-meta span,
+.brand-row[aria-expanded="true"] .brand-row-meta span {
+  color: #5f3e35 !important;
+}
+
+/* Светлая карточка настройки внутри раскрытого бренда */
+.brand-strength-settings-button,
+.brand-strength-settings-button * {
+  color: #2d191e !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* Уведомления */
+.notification-toast {
+  color: #2d191e !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.notification-toast *,
+.notification-toast span,
+.notification-toast strong,
+.notification-toast p {
+  color: #2d191e !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.notification-toast button {
+  color: #2d191e !important;
+  opacity: 1 !important;
+}
+
+/* compact top used flavors */
+.top-used-flavors-panel {
+  gap: 10px;
+}
+
+.top-used-flavors-header {
+  align-items: center;
+}
+
+.top-used-flavors-list {
+  gap: 0;
+}
+
+.top-used-flavor-row {
+  min-height: 56px;
+  padding: 8px 0;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.top-used-flavor-position {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+
+.top-used-flavor-row > div {
+  gap: 2px;
+}
+
+.top-used-flavor-row > div > strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.top-used-flavor-row > div > span {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.top-used-flavor-row > strong:last-child {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.top-used-flavor-row + .top-used-flavor-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* compact top used flavors */
+.top-used-flavors-panel {
+  gap: 10px;
+}
+
+.top-used-flavors-header {
+  align-items: center;
+}
+
+.top-used-flavors-list {
+  gap: 0;
+}
+
+.top-used-flavor-row {
+  min-height: 56px;
+  padding: 8px 0;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.top-used-flavor-position {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+
+.top-used-flavor-row > div {
+  gap: 2px;
+}
+
+.top-used-flavor-row > div > strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.top-used-flavor-row > div > span {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.top-used-flavor-row > strong:last-child {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.top-used-flavor-row + .top-used-flavor-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}

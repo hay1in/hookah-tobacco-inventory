@@ -8,7 +8,6 @@ import {
   Eye,
   EyeOff,
   LogOut,
-  Menu as MenuIcon,
   Package,
   PackageMinus,
   PackagePlus,
@@ -2134,7 +2133,6 @@ const [selectedTag, setSelectedTag] = useState("all");
   const [highlightedFlavorId, setHighlightedFlavorId] = useState(null);
   const [openAnalyticsBrandName, setOpenAnalyticsBrandName] = useState("");
   const [openAnalyticsFlavorId, setOpenAnalyticsFlavorId] = useState(null);
-  const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
   const [isBottomMoreOpen, setIsBottomMoreOpen] = useState(false);
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [analyticsSection, setAnalyticsSection] = useState("finance");
@@ -3128,6 +3126,17 @@ const titles = {
       usageRows,
     };
   })();
+
+  const topUsedFlavorRows = [...analyticsData.usageRows]
+    .filter((row) => row.usedGrams > 0)
+    .sort(
+      (a, b) =>
+        b.usedGrams - a.usedGrams ||
+        b.usedPacks - a.usedPacks ||
+        a.brand.localeCompare(b.brand, "ru") ||
+        a.name.localeCompare(b.name, "ru")
+    )
+    .slice(0, 10);
 
   const getAnalyticsRows = () => {
     if (analyticsFilter === "inStock") {
@@ -4886,6 +4895,34 @@ return "";
             </>
           )}
 
+          {activeChoiceModal === "supply" && (
+            <>
+              <span className="choice-modal-eyebrow">Поставка</span>
+              <h2>Как добавить поставку?</h2>
+
+              <div className="choice-modal-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveChoiceModal(null);
+                    setIsSupplyFormOpen(true);
+                  }}
+                >
+                  Один вкус
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    startExcelImport("supply");
+                  }}
+                >
+                  Импорт из Excel
+                </button>
+              </div>
+            </>
+          )}
+
           {activeChoiceModal === "import" && (
             <>
               <span className="choice-modal-eyebrow">Импорт</span>
@@ -4955,7 +4992,6 @@ return "";
 
   const renderAppHeader = ({ title, subtitle, isInventory = false }) => {
     const closeMenu = () => {
-      setIsHeaderMenuOpen(false);
       setIsBottomMoreOpen(false);
     };
 
@@ -5109,164 +5145,27 @@ return "";
         </div>
       )}
 
-      <header className="header">
-        <div>
-          <p className="eyebrow">Hookah Inventory</p>
-          <h1>{title}</h1>
-          <p className="subtitle">{subtitle}</p>
+      <header className="header compact-app-header">
+        <div className="header-title-row">
+          <div>
+            <p className="eyebrow">Hookah Inventory</p>
+            <h1>{title}</h1>
+            <p className="subtitle">{subtitle}</p>
 
-          {isDemoMode && (
-            <p className="demo-badge">Ознакомительный режим</p>
-          )}
-        </div>
-
-        <div className="header-actions">
-          {isInventory ? (
-            !isDemoMode && (
-              <button
-                className="primary-button"
-                onClick={() => setIsSupplyFormOpen(true)}
-              >
-                <Plus className="ui-icon" aria-hidden="true" />
-                <span>Поставка</span>
-              </button>
-            )
-          ) : (
-            <button
-              className="secondary-button"
-              onClick={() => goToView("inventory")}
-            >
-              <Package className="ui-icon" aria-hidden="true" />
-              <span>Склад</span>
-            </button>
-          )}
-
-          <button
-            className="secondary-button menu-toggle-button"
-            onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
-          >
-            <MenuIcon className="ui-icon" aria-hidden="true" />
-            <span>Меню</span>
-
-            {isHeaderMenuOpen ? (
-              <ChevronUp
-                className="ui-icon ui-icon-chevron"
-                aria-hidden="true"
-              />
-            ) : (
-              <ChevronDown
-                className="ui-icon ui-icon-chevron"
-                aria-hidden="true"
-              />
+            {isDemoMode && (
+              <p className="demo-badge">Ознакомительный режим</p>
             )}
-          </button>
+          </div>
 
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={handleLogout}
-          >
-            <LogOut className="ui-icon" aria-hidden="true" />
-            <span>Выйти</span>
-          </button>
-
-          {isHeaderMenuOpen && (
-            <div className="header-dropdown">
-              <div className="dropdown-section">
-                <p>Работа</p>
-
-                <button type="button" onClick={() => goToView("inventory")}>
-                  <Package className="ui-icon" aria-hidden="true" />
-                  <span>Склад</span>
-                </button>
-
-                <button type="button" onClick={() => goToView("purchase")}>
-                  <ShoppingCart className="ui-icon" aria-hidden="true" />
-
-                  <span>
-                    Закупка
-                    {purchaseFlavors.length > 0
-                      ? ` (${purchaseFlavors.length})`
-                      : ""}
-                  </span>
-                </button>
-
-                <button type="button" onClick={() => goToView("archive")}>
-                  <Archive className="ui-icon" aria-hidden="true" />
-                  <span>Архив</span>
-                </button>
-              </div>
-
-              <div className="dropdown-section">
-                <p>Аналитика</p>
-
-                <button type="button" onClick={() => goToView("analytics")}>
-                  <BarChart3 className="ui-icon" aria-hidden="true" />
-                  <span>Общая аналитика</span>
-                </button>
-
-                <button type="button" onClick={() => goToView("deadstock")}>
-                  <Archive className="ui-icon" aria-hidden="true" />
-                  <span>Залежи</span>
-                </button>
-              </div>
-
-              <div className="dropdown-section">
-                <p>Порядок в базе</p>
-
-                <button type="button" onClick={() => goToView("dataQuality")}>
-                  Проверка базы{dataQualityTotalIssues > 0 ? ` (${dataQualityTotalIssues})` : ""}
-                </button>
-              </div>
-
-              <div className="dropdown-section">
-                <p>Данные</p>
-
-                {!isDemoMode && (
-                  <button
-                    onClick={() => {
-                      openImportChoice();
-                      closeMenu();
-                    }}
-                  >
-                    <FileUp className="ui-icon" aria-hidden="true" />
-                    <span>Импорт</span>
-                  </button>
-                )}
-
-                <button
-                  onClick={() => {
-                    openExportChoice();
-                    closeMenu();
-                  }}
-                >
-                  <FileDown className="ui-icon" aria-hidden="true" />
-                  <span>Экспорт</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    openHistory();
-                    closeMenu();
-                  }}
-                >
-                  <History className="ui-icon" aria-hidden="true" />
-                  <span>История</span>
-                </button>
-
-                {!isDemoMode && (
-                  <button
-                    className="dropdown-danger"
-                    onClick={() => {
-                      clearDatabase();
-                      closeMenu();
-                    }}
-                  >
-                    Очистить базу
-                  </button>
-                )}
-              </div>
-            </div>
+          {isInventory && !isDemoMode && (
+            <button
+              className="primary-button compact-supply-button"
+              type="button"
+              onClick={() => setActiveChoiceModal("supply")}
+            >
+              <Plus className="ui-icon" aria-hidden="true" />
+              <span>Поставка</span>
+            </button>
           )}
         </div>
       </header>
@@ -5357,10 +5256,9 @@ return "";
               ? "bottom-navigation-item active"
               : "bottom-navigation-item"
           }
-          onClick={() => {
-            setIsHeaderMenuOpen(false);
-            setIsBottomMoreOpen((current) => !current);
-          }}
+          onClick={() =>
+            setIsBottomMoreOpen((current) => !current)
+          }
         >
           <Ellipsis className="ui-icon" aria-hidden="true" />
           <span>Ещё</span>
@@ -5451,6 +5349,30 @@ return "";
               >
                 <FileDown className="ui-icon" aria-hidden="true" />
                 <span>Экспорт</span>
+              </button>
+
+              {!isDemoMode && (
+                <button
+                  className="bottom-more-danger-action"
+                  type="button"
+                  onClick={() => {
+                    clearDatabase();
+                    closeMenu();
+                  }}
+                >
+                  <span>Очистить базу</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  handleLogout();
+                }}
+              >
+                <LogOut className="ui-icon" aria-hidden="true" />
+                <span>Выйти</span>
               </button>
             </div>
           </section>
@@ -8132,6 +8054,45 @@ if (currentView === "purchase") {
 
           {analyticsSection === "flavors" && (
             <>
+          <section className="analytics-panel wide top-used-flavors-panel">
+            <div className="top-used-flavors-header">
+              <div>
+                <h2>Самые используемые вкусы</h2>
+                <p className="analytics-note">
+                  Расход за всё время: закуплено минус текущий остаток.
+                </p>
+              </div>
+
+              <strong>{topUsedFlavorRows.length} позиций</strong>
+            </div>
+
+            {topUsedFlavorRows.length === 0 && (
+              <p className="info-message dark">
+                Расход появится после уменьшения остатков закупленных вкусов.
+              </p>
+            )}
+
+            <div className="top-used-flavors-list">
+              {topUsedFlavorRows.map((row, index) => (
+                <div className="analytics-row top-used-flavor-row" key={row.id}>
+                  <span className="top-used-flavor-position">
+                    {index + 1}
+                  </span>
+
+                  <div>
+                    <strong>{row.brand} — {row.name}</strong>
+                    <span>
+                      Использовано {row.usedPacks} пач. · осталось{" "}
+                      {row.quantity} пач.
+                    </span>
+                  </div>
+
+                  <strong>{formatWeight(row.usedGrams)}</strong>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <section className="analytics-sections">
             <article className="analytics-panel">
               <h2>Топ брендов по общему весу</h2>
@@ -8900,7 +8861,9 @@ if (currentView === "purchase") {
             </div>
           </section>
         )}
-<section className="inventory-quick-filter-panel">
+<div className="inventory-filters-grid">
+  <div className="inventory-filters-status-column">
+<section className="inventory-quick-filter-panel centered-filter-panel">
   <button
     className={
       statusFilter === "all" && selectedTag === "all"
@@ -8958,7 +8921,9 @@ if (currentView === "purchase") {
 
 
 </section>
-        <section className="tag-filter-panel">
+  </div>
+  <div className="inventory-filters-tags-column">
+<section className="tag-filter-panel centered-filter-panel">
           <button
             className={
               selectedTag === "all"
@@ -8984,6 +8949,8 @@ if (currentView === "purchase") {
             </button>
           ))}
         </section>
+  </div>
+</div>
 
         {isLoading && <p className="info-message">Загрузка вкусов...</p>}
 
